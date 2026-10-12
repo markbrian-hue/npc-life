@@ -8,6 +8,7 @@ import './styles.css';
 import './phase2.css';
 import './phase4c.css';
 import './phase5.css';
+import './phase6.css';
 
 ReactDOM.createRoot(
   document.getElementById('root')!
