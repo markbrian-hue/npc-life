@@ -1,0 +1,324 @@
+
+/* NPC LIFE — Alpha 0.6 */
+
+.alpha6-hud {
+  position: absolute;
+  right: 245px;
+  top: 200px;
+  background: #182538ed;
+  border: 1px solid #fff3;
+  padding: 11px 13px;
+  color: #e9f2f5;
+  border-radius: 14px;
+  width: 205px;
+  box-shadow: 0 6px 24px #0003;
+  pointer-events: none;
+}
+
+.alpha6-hud small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1.4px;
+  font-weight: 900;
+  color: #ecd587;
+}
+
+.alpha6-hud strong {
+  display: block;
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.alpha6-hud span {
+  color: #aabed2;
+  font-size: 10px;
+}
+
+.alpha6-toolbar {
+  background: #25364c;
+  color: #f7dc92;
+  border: 1px solid #fff4;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 11px 13px;
+}
+
+.alpha6-toolbar span {
+  margin-left: 5px;
+  opacity: 0.7;
+  font-size: 10px;
+}
+
+.alpha6-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #0c1422cb;
+  backdrop-filter: blur(4px);
+}
+
+.alpha6-board,
+.alpha6-arcade {
+  width: min(620px, 100%);
+  max-height: 91dvh;
+  overflow-y: auto;
+  border-radius: 20px;
+  border: 1px solid #8193a055;
+  background: #19273b;
+  color: #f7f8fb;
+  padding: 22px;
+  box-shadow: 0 20px 80px #0009;
+}
+
+.alpha6-arcade {
+  width: min(510px, 100%);
+}
+
+.alpha6-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.alpha6-heading small {
+  color: #f5d98b;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.alpha6-heading h2 {
+  margin: 7px 0;
+  font-size: 25px;
+  line-height: 1.15;
+}
+
+.alpha6-heading p {
+  font-size: 12px;
+  color: #afc1d5;
+  line-height: 1.5;
+  margin: 7px 0 15px;
+}
+
+.alpha6-heading > button {
+  border: 0;
+  background: #36465c;
+  color: #fff;
+  font-size: 23px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+
+.alpha6-rep-card {
+  background: #253750;
+  border: 1px solid #fff1;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.alpha6-rep-card > span {
+  color: #e9d08c;
+  letter-spacing: 1.4px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.alpha6-rep-card strong {
+  display: block;
+  font-size: 19px;
+  margin-top: 4px;
+}
+
+.alpha6-rep-card p {
+  font-size: 10px;
+  color: #b7cada;
+}
+
+.alpha6-track {
+  width: 100%;
+  height: 7px;
+  border-radius: 8px;
+  background: #506178;
+  overflow: hidden;
+}
+
+.alpha6-track span {
+  height: 100%;
+  background: #eacb75;
+  display: block;
+  border-radius: 8px;
+}
+
+.alpha6-challenge-list {
+  display: grid;
+  gap: 9px;
+}
+
+.alpha6-challenge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #25364b;
+  border: 1px solid #fff2;
+  padding: 13px;
+  border-radius: 12px;
+}
+
+.alpha6-challenge-icon {
+  font-size: 23px;
+  flex: 0 0 30px;
+}
+
+.alpha6-challenge-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.alpha6-challenge-details strong {
+  font-size: 13px;
+}
+
+.alpha6-challenge-details p {
+  font-size: 11px;
+  color: #b7c8dc;
+  margin: 4px 0;
+}
+
+.alpha6-challenge-details small {
+  font-size: 10px;
+  color: #eed88e;
+}
+
+.alpha6-challenge > button,
+.alpha6-arcade-footer > button {
+  border: 0;
+  border-radius: 9px;
+  background: #f2d581;
+  color: #1f2c3c;
+  font-weight: 900;
+  padding: 10px 12px;
+}
+
+.alpha6-challenge > button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.alpha6-note {
+  color: #9eb2c6;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.alpha6-score {
+  display: flex;
+  justify-content: space-between;
+  background: #263851;
+  border-radius: 12px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  color: #afc8df;
+}
+
+.alpha6-score strong {
+  color: #f7e1a1;
+  font-size: 17px;
+  margin-left: 4px;
+}
+
+.alpha6-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.alpha6-grid button {
+  min-height: 75px;
+  border: 2px solid #52647d;
+  border-radius: 13px;
+  font-size: 30px;
+  background: #294057;
+  color: #648098;
+}
+
+.alpha6-grid button.bird {
+  background: #e3c77c;
+  border-color: #fff0b6;
+  animation: pigeon-pop 0.15s ease-out;
+}
+
+.alpha6-grid button:disabled {
+  cursor: default;
+}
+
+.alpha6-arcade-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.alpha6-arcade-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #cbd6e3;
+  line-height: 1.4;
+}
+
+.alpha6-arcade-footer button {
+  white-space: nowrap;
+}
+
+@keyframes pigeon-pop {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  .alpha6-hud {
+    right: 18px;
+    top: 195px;
+  }
+}
+
+@media (max-width: 650px) {
+  .alpha6-hud {
+    display: none;
+  }
+
+  .alpha6-board,
+  .alpha6-arcade {
+    padding: 15px;
+  }
+
+  .alpha6-challenge {
+    gap: 7px;
+  }
+
+  .alpha6-challenge > button {
+    padding: 8px;
+    font-size: 10px;
+  }
+
+  .alpha6-grid button {
+    min-height: 60px;
+  }
+
+  .alpha6-toolbar {
+    padding: 9px;
+  }
+}

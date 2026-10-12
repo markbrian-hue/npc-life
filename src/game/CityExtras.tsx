@@ -1,69 +1,546 @@
-
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
-import type { CityEvent } from './Player';
+import type {
+  CityEvent,
+  PlayerLocation,
+} from './Player';
 
-export const SHOP_POSITION = { x: -6, z: -3 };
-export const CITIZEN_POSITION = { x: 6, z: -4 };
+export const SHOP_POSITION = {
+  x: -6,
+  z: -3,
+};
 
-function Citizen({
+export const CITIZEN_POSITION = {
+  x: 6,
+  z: -4,
+};
+
+type RoutePoint = readonly [
+  number,
+  number
+];
+
+type WalkerDef = {
+  id: string;
+  shirt: string;
+  pants: string;
+  hair: string;
+  speed: number;
+  path: readonly RoutePoint[];
+};
+
+const WALKERS: readonly WalkerDef[] = [
+  {
+    id: 'commuter',
+    shirt: '#658ba1',
+    pants: '#374858',
+    hair: '#55423a',
+    speed: 1.18,
+    path: [
+      [-27, -9.5],
+      [-13, -9.5],
+    ],
+  },
+  {
+    id: 'tourist',
+    shirt: '#d8a167',
+    pants: '#506072',
+    hair: '#3b3134',
+    speed: 1.02,
+    path: [
+      [13, 9.5],
+      [27, 9.5],
+    ],
+  },
+  {
+    id: 'neighbor',
+    shirt: '#ae8db8',
+    pants: '#3b4f58',
+    hair: '#715242',
+    speed: 1.12,
+    path: [
+      [-8, 13],
+      [-8, 27],
+    ],
+  },
+  {
+    id: 'runner',
+    shirt: '#74a47b',
+    pants: '#354056',
+    hair: '#473930',
+    speed: 1.55,
+    path: [
+      [8, -27],
+      [8, -13],
+    ],
+  },
+];
+
+function rotateToward(
+  current: number,
+  target: number,
+  delta: number,
+  speed: number
+) {
+  const error = Math.atan2(
+    Math.sin(target - current),
+    Math.cos(target - current)
+  );
+
+  return current + error * (1 - Math.exp(-speed * delta));
+}
+
+function CitizenBody({
+  shirt,
+  hair,
+  pants = '#38466e',
+  bodyRef,
+  leftArmRef,
+  rightArmRef,
+  leftLegRef,
+  rightLegRef,
+}: {
+  shirt: string;
+  hair: string;
+  pants?: string;
+  bodyRef?: React.RefObject<THREE.Group | null>;
+  leftArmRef?: React.RefObject<THREE.Group | null>;
+  rightArmRef?: React.RefObject<THREE.Group | null>;
+  leftLegRef?: React.RefObject<THREE.Group | null>;
+  rightLegRef?: React.RefObject<THREE.Group | null>;
+}) {
+  return (
+    <group ref={bodyRef}>
+      <mesh
+        castShadow
+        position={[0, 1.1, 0]}
+      >
+        <boxGeometry
+          args={[0.9, 1.28, 0.55]}
+        />
+        <meshStandardMaterial
+          color={shirt}
+          roughness={0.94}
+        />
+      </mesh>
+
+      <mesh
+        castShadow
+        position={[0, 2.1, 0]}
+      >
+        <sphereGeometry
+          args={[0.53, 12, 10]}
+        />
+        <meshStandardMaterial
+          color="#f4c49d"
+        />
+      </mesh>
+
+      <mesh
+        castShadow
+        position={[0, 2.53, 0]}
+      >
+        <sphereGeometry
+          args={[
+            0.53,
+            12,
+            8,
+            0,
+            Math.PI * 2,
+            0,
+            Math.PI / 2,
+          ]}
+        />
+        <meshStandardMaterial color={hair} />
+      </mesh>
+
+      {[-0.19, 0.19].map((offset) => (
+        <mesh
+          key={offset}
+          position={[
+            offset,
+            2.18,
+            0.5,
+          ]}
+        >
+          <sphereGeometry
+            args={[0.055, 8, 8]}
+          />
+          <meshBasicMaterial
+            color="#1b2531"
+          />
+        </mesh>
+      ))}
+
+      <group
+        ref={leftArmRef}
+        position={[-0.56, 1.58, 0]}
+      >
+        <mesh
+          castShadow
+          position={[0, -0.48, 0]}
+        >
+          <boxGeometry
+            args={[0.23, 0.95, 0.3]}
+          />
+          <meshStandardMaterial
+            color="#f4c49d"
+          />
+        </mesh>
+      </group>
+
+      <group
+        ref={rightArmRef}
+        position={[0.56, 1.58, 0]}
+      >
+        <mesh
+          castShadow
+          position={[0, -0.48, 0]}
+        >
+          <boxGeometry
+            args={[0.23, 0.95, 0.3]}
+          />
+          <meshStandardMaterial
+            color="#f4c49d"
+          />
+        </mesh>
+      </group>
+
+      <group
+        ref={leftLegRef}
+        position={[-0.22, 0.72, 0]}
+      >
+        <mesh
+          castShadow
+          position={[0, -0.32, 0]}
+        >
+          <boxGeometry
+            args={[0.31, 0.66, 0.4]}
+          />
+          <meshStandardMaterial
+            color={pants}
+          />
+        </mesh>
+      </group>
+
+      <group
+        ref={rightLegRef}
+        position={[0.22, 0.72, 0]}
+      >
+        <mesh
+          castShadow
+          position={[0, -0.32, 0]}
+        >
+          <boxGeometry
+            args={[0.31, 0.66, 0.4]}
+          />
+          <meshStandardMaterial
+            color={pants}
+          />
+        </mesh>
+      </group>
+
+      <mesh
+        position={[0, 2.98, 0]}
+        rotation={[0, 0, Math.PI]}
+      >
+        <coneGeometry args={[0.18, 0.42, 6]} />
+        <meshStandardMaterial
+          color="#ffe27c"
+          emissive="#b78710"
+          emissiveIntensity={0.22}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function StaticCitizen({
   x,
   z,
   shirt,
+  hair,
+  player,
 }: {
   x: number;
   z: number;
   shirt: string;
+  hair: string;
+  player: PlayerLocation;
 }) {
+  const root = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
+  const rightArm = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }, delta) => {
+    if (!root.current || !body.current) return;
+
+    const dx = player.x - x;
+    const dz = player.z - z;
+    const playerDistance = Math.hypot(dx, dz);
+    const lookingAtPlayer = playerDistance < 4.25;
+
+    const idleBob =
+      Math.sin(clock.elapsedTime * 1.8 + x) *
+      0.03;
+
+    body.current.position.y =
+      THREE.MathUtils.damp(
+        body.current.position.y,
+        idleBob,
+        5,
+        delta
+      );
+
+    body.current.rotation.z =
+      THREE.MathUtils.damp(
+        body.current.rotation.z,
+        Math.sin(clock.elapsedTime * 1.2 + z) *
+          0.02,
+        4,
+        delta
+      );
+
+    const targetYaw = lookingAtPlayer
+      ? Math.atan2(dx, dz)
+      : 0;
+
+    root.current.rotation.y = rotateToward(
+      root.current.rotation.y,
+      targetYaw,
+      delta,
+      lookingAtPlayer ? 6 : 3
+    );
+
+    if (rightArm.current) {
+      rightArm.current.rotation.z =
+        THREE.MathUtils.damp(
+          rightArm.current.rotation.z,
+          lookingAtPlayer && playerDistance < 2.8
+            ? 2.15 +
+                Math.sin(
+                  clock.elapsedTime * 10
+                ) *
+                  0.16
+            : 0,
+          8,
+          delta
+        );
+    }
+  });
+
   return (
-    <group position={[x, 0, z]}>
-      <mesh castShadow position={[0, 1.08, 0]}>
-        <boxGeometry args={[0.95, 1.32, 0.55]} />
-        <meshStandardMaterial color={shirt} />
-      </mesh>
+    <group ref={root} position={[x, 0, z]}>
+      <CitizenBody
+        shirt={shirt}
+        hair={hair}
+        bodyRef={body}
+        rightArmRef={rightArm}
+      />
+    </group>
+  );
+}
 
-      <mesh castShadow position={[0, 2.12, 0]}>
-        <sphereGeometry args={[0.55, 12, 10]} />
-        <meshStandardMaterial color="#f4c49d" />
-      </mesh>
+function WalkingCitizen({
+  data,
+  player,
+}: {
+  data: WalkerDef;
+  player: PlayerLocation;
+}) {
+  const root = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
 
-      <mesh position={[0, 2.55, 0]}>
-        <sphereGeometry
-          args={[0.55, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]}
-        />
-        <meshStandardMaterial color="#694b39" />
-      </mesh>
+  const leftLeg = useRef<THREE.Group>(null);
+  const rightLeg = useRef<THREE.Group>(null);
+  const leftArm = useRef<THREE.Group>(null);
+  const rightArm = useRef<THREE.Group>(null);
 
-      {[-0.2, 0.2].map((x) => (
-        <mesh key={x} position={[x, 2.19, 0.52]}>
-          <sphereGeometry args={[0.065, 8, 8]} />
-          <meshBasicMaterial color="#1b2531" />
-        </mesh>
-      ))}
+  const nextPoint = useRef(1);
+  const pauseTimer = useRef(0);
+  const animationTime = useRef(0);
 
-      {[-0.26, 0.26].map((x) => (
-        <mesh
-          key={x}
-          castShadow
-          position={[x, 0.35, 0]}
-        >
-          <boxGeometry args={[0.33, 0.7, 0.42]} />
-          <meshStandardMaterial color="#38466e" />
-        </mesh>
-      ))}
+  useFrame(({ clock }, rawDelta) => {
+    const delta = Math.min(rawDelta, 0.05);
+    const actor = root.current;
 
-      <mesh
-        position={[0, 3.1, 0]}
-        rotation={[0, 0, Math.PI]}
-      >
-        <coneGeometry args={[0.24, 0.55, 6]} />
-        <meshStandardMaterial
-          color="#ffe27c"
-          emissive="#b78710"
-          emissiveIntensity={0.3}
-        />
-      </mesh>
+    if (!actor || !body.current) return;
+
+    const dxPlayer =
+      player.x - actor.position.x;
+    const dzPlayer =
+      player.z - actor.position.z;
+    const playerDistance = Math.hypot(
+      dxPlayer,
+      dzPlayer
+    );
+
+    const reactingToPlayer =
+      playerDistance < 3.6;
+
+    if (pauseTimer.current > 0) {
+      pauseTimer.current -= delta;
+
+      body.current.position.y =
+        THREE.MathUtils.damp(
+          body.current.position.y,
+          Math.sin(
+            clock.elapsedTime * 2.1 +
+              actor.position.x
+          ) * 0.04,
+          5,
+          delta
+        );
+
+      body.current.rotation.z =
+        THREE.MathUtils.damp(
+          body.current.rotation.z,
+          Math.sin(
+            clock.elapsedTime * 1.6 +
+              actor.position.z
+          ) * 0.02,
+          4,
+          delta
+        );
+    } else {
+      const target =
+        data.path[nextPoint.current];
+
+      const dx =
+        target[0] - actor.position.x;
+      const dz =
+        target[1] - actor.position.z;
+      const distance = Math.hypot(dx, dz);
+
+      if (distance < 0.18) {
+        nextPoint.current =
+          (nextPoint.current + 1) %
+          data.path.length;
+
+        pauseTimer.current =
+          0.8 +
+          ((nextPoint.current + 1) % 3) * 0.35;
+      } else {
+        const speed =
+          reactingToPlayer
+            ? data.speed * 0.42
+            : data.speed;
+
+        const step = Math.min(
+          distance,
+          speed * delta
+        );
+
+        const moveX = (dx / distance) * step;
+        const moveZ = (dz / distance) * step;
+
+        actor.position.x += moveX;
+        actor.position.z += moveZ;
+
+        const heading = reactingToPlayer
+          ? Math.atan2(dxPlayer, dzPlayer)
+          : Math.atan2(
+              moveX,
+              moveZ
+            );
+
+        actor.rotation.y = rotateToward(
+          actor.rotation.y,
+          heading,
+          delta,
+          reactingToPlayer ? 7 : 8
+        );
+
+        animationTime.current +=
+          speed * delta * 5.4;
+
+        const swing =
+          Math.sin(animationTime.current) *
+          (reactingToPlayer ? 0.2 : 0.42);
+
+        if (leftLeg.current) {
+          leftLeg.current.rotation.x = swing;
+        }
+
+        if (rightLeg.current) {
+          rightLeg.current.rotation.x = -swing;
+        }
+
+        if (leftArm.current) {
+          leftArm.current.rotation.x =
+            -swing * 0.7;
+        }
+
+        if (rightArm.current) {
+          rightArm.current.rotation.x =
+            swing * 0.7;
+        }
+
+        body.current.position.y =
+          THREE.MathUtils.damp(
+            body.current.position.y,
+            Math.abs(
+              Math.sin(animationTime.current)
+            ) * 0.045,
+            8,
+            delta
+          );
+
+        body.current.rotation.z =
+          THREE.MathUtils.damp(
+            body.current.rotation.z,
+            0,
+            8,
+            delta
+          );
+      }
+    }
+
+    if (reactingToPlayer && rightArm.current) {
+      rightArm.current.rotation.z =
+        THREE.MathUtils.damp(
+          rightArm.current.rotation.z,
+          playerDistance < 2.5
+            ? 2.12 +
+                Math.sin(
+                  clock.elapsedTime * 11
+                ) *
+                  0.15
+            : 0,
+          7,
+          delta
+        );
+    } else if (rightArm.current) {
+      rightArm.current.rotation.z =
+        THREE.MathUtils.damp(
+          rightArm.current.rotation.z,
+          0,
+          8,
+          delta
+        );
+    }
+  });
+
+  return (
+    <group
+      ref={root}
+      position={[
+        data.path[0][0],
+        0,
+        data.path[0][1],
+      ]}
+    >
+      <CitizenBody
+        shirt={data.shirt}
+        hair={data.hair}
+        pants={data.pants}
+        bodyRef={body}
+        leftArmRef={leftArm}
+        rightArmRef={rightArm}
+        leftLegRef={leftLeg}
+        rightLegRef={rightLeg}
+      />
     </group>
   );
 }
@@ -71,26 +548,59 @@ function Citizen({
 function ShopStand() {
   return (
     <group position={[-6, 0, -6]}>
-      <mesh castShadow position={[0, 0.75, 0]}>
-        <boxGeometry args={[3.4, 1.5, 1.7]} />
-        <meshStandardMaterial color="#f4c18f" />
+      <mesh
+        position={[0, 0.75, 0]}
+        castShadow
+      >
+        <boxGeometry
+          args={[3.4, 1.5, 1.7]}
+        />
+        <meshStandardMaterial
+          color="#deb18a"
+          roughness={0.88}
+        />
       </mesh>
 
-      <mesh castShadow position={[0, 2.75, 0]}>
-        <boxGeometry args={[3.7, 0.3, 2.25]} />
-        <meshStandardMaterial color="#ff7d86" />
+      <mesh
+        position={[0, 2.75, 0]}
+        castShadow
+      >
+        <boxGeometry
+          args={[3.7, 0.3, 2.25]}
+        />
+        <meshStandardMaterial
+          color="#e16e76"
+          roughness={0.86}
+        />
       </mesh>
 
-      {[-1.5, 1.5].map((x) => (
-        <mesh key={x} position={[x, 1.85, -0.75]}>
-          <boxGeometry args={[0.15, 1.6, 0.15]} />
-          <meshStandardMaterial color="#614a57" />
+      {[-1.5, 1.5].map((offset) => (
+        <mesh
+          key={offset}
+          position={[
+            offset,
+            1.85,
+            -0.75,
+          ]}
+        >
+          <boxGeometry
+            args={[0.15, 1.6, 0.15]}
+          />
+          <meshStandardMaterial
+            color="#614a57"
+          />
         </mesh>
       ))}
 
-      <mesh position={[0, 2.36, 1.16]}>
-        <boxGeometry args={[2.3, 0.45, 0.12]} />
-        <meshStandardMaterial color="#fff5d5" />
+      <mesh
+        position={[0, 2.36, 1.16]}
+      >
+        <boxGeometry
+          args={[2.3, 0.45, 0.12]}
+        />
+        <meshStandardMaterial
+          color="#fff5d5"
+        />
       </mesh>
 
       <mesh
@@ -98,101 +608,268 @@ function ShopStand() {
         rotation={[0, 0, -0.18]}
       >
         <coneGeometry args={[0.32, 0.72, 5]} />
-        <meshStandardMaterial color="#ff9d39" />
+        <meshStandardMaterial
+          color="#ff9d39"
+        />
       </mesh>
 
-      <mesh position={[0.55, 1.66, 0.45]}>
-        <torusGeometry args={[0.38, 0.12, 8, 15]} />
-        <meshStandardMaterial color="#76e8dd" />
+      <mesh
+        position={[0.55, 1.66, 0.45]}
+      >
+        <torusGeometry
+          args={[0.38, 0.12, 8, 15]}
+        />
+        <meshStandardMaterial
+          color="#76e8dd"
+        />
       </mesh>
+
+      {[-1.2, -0.4, 0.4, 1.2].map(
+        (offset) => (
+          <mesh
+            key={offset}
+            position={[
+              offset,
+              2.54,
+              0.98,
+            ]}
+          >
+            <boxGeometry
+              args={[0.38, 0.24, 0.06]}
+            />
+            <meshStandardMaterial
+              color="#f2c9a8"
+            />
+          </mesh>
+        )
+      )}
     </group>
+  );
+}
+
+function Clouds() {
+  const clouds = useRef<
+    (THREE.Group | null)[]
+  >([]);
+
+  useFrame(({ clock }) => {
+    clouds.current.forEach(
+      (cloud, index) => {
+        if (!cloud) return;
+
+        cloud.position.x =
+          (
+            (
+              clock.elapsedTime *
+                (0.35 + index * 0.08) +
+              index * 32 +
+              65
+            ) %
+            138
+          ) - 69;
+      }
+    );
+  });
+
+  return (
+    <>
+      {[
+        [-43, 35, -28],
+        [0, 39, 21],
+        [38, 36, -42],
+        [-9, 42, 45],
+      ].map((position, index) => (
+        <group
+          key={index}
+          ref={(node) => {
+            clouds.current[index] = node;
+          }}
+          position={
+            position as [
+              number,
+              number,
+              number
+            ]
+          }
+        >
+          <mesh scale={[3.5, 0.8, 1.3]}>
+            <sphereGeometry
+              args={[1, 10, 7]}
+            />
+            <meshBasicMaterial
+              color="#f5f7f5"
+            />
+          </mesh>
+
+          <mesh
+            position={[
+              -2.05,
+              -0.12,
+              0.18,
+            ]}
+            scale={[1.9, 0.6, 1.05]}
+          >
+            <sphereGeometry
+              args={[1, 9, 7]}
+            />
+            <meshBasicMaterial
+              color="#f5f7f5"
+            />
+          </mesh>
+
+          <mesh
+            position={[2.02, -0.18, -0.08]}
+            scale={[1.7, 0.55, 1.1]}
+          >
+            <sphereGeometry
+              args={[1, 9, 7]}
+            />
+            <meshBasicMaterial
+              color="#f5f7f5"
+            />
+          </mesh>
+        </group>
+      ))}
+    </>
   );
 }
 
 function GiantDuck() {
   const duck = useRef<THREE.Group>(null);
 
-  useFrame(({ clock }) => {
-    if (duck.current) {
-      duck.current.position.y =
-        Math.sin(clock.elapsedTime * 3) * 0.22;
+  useFrame(({ clock }, delta) => {
+    if (!duck.current) return;
 
-      duck.current.rotation.y += 0.008;
-    }
+    duck.current.position.y =
+      Math.sin(clock.elapsedTime * 3) *
+      0.22;
+
+    duck.current.rotation.y += delta * 0.46;
   });
 
   return (
-    <group ref={duck} position={[0, 0, -19]}>
-      {/* Body */}
-      <mesh castShadow position={[0, 2.4, 0]}>
-        <sphereGeometry args={[2.6, 18, 14]} />
-        <meshStandardMaterial color="#ffe066" />
+    <group
+      ref={duck}
+      position={[0, 0, -19]}
+    >
+      <mesh
+        position={[0, 2.4, 0]}
+        castShadow
+      >
+        <sphereGeometry
+          args={[2.6, 18, 14]}
+        />
+        <meshStandardMaterial
+          color="#ffe066"
+        />
       </mesh>
 
-      {/* Head */}
-      <mesh castShadow position={[0, 4.7, 1.0]}>
-        <sphereGeometry args={[1.65, 16, 12]} />
-        <meshStandardMaterial color="#ffe066" />
+      <mesh
+        position={[0, 4.7, 1]}
+        castShadow
+      >
+        <sphereGeometry
+          args={[1.65, 16, 12]}
+        />
+        <meshStandardMaterial
+          color="#ffe066"
+        />
       </mesh>
 
-      {/* Beak */}
-      <mesh position={[0, 4.25, 2.68]}>
+      <mesh
+        position={[0, 4.25, 2.68]}
+      >
         <coneGeometry args={[0.55, 1.8, 4]} />
-        <meshStandardMaterial color="#ff9e42" />
+        <meshStandardMaterial
+          color="#ff9e42"
+        />
       </mesh>
 
-      {/* Eyes */}
-      {[-0.65, 0.65].map((x) => (
-        <mesh key={x} position={[x, 5.12, 2.33]}>
-          <sphereGeometry args={[0.17, 8, 8]} />
-          <meshBasicMaterial color="#252636" />
+      {[-0.65, 0.65].map((offset) => (
+        <mesh
+          key={offset}
+          position={[
+            offset,
+            5.12,
+            2.33,
+          ]}
+        >
+          <sphereGeometry
+            args={[0.17, 8, 8]}
+          />
+          <meshBasicMaterial
+            color="#252636"
+          />
         </mesh>
       ))}
 
-      {/* Wings */}
-      <mesh
-        castShadow
-        position={[-2.4, 2.9, 0]}
-        rotation={[0, 0, 0.4]}
-      >
-        <sphereGeometry args={[0.8, 1.25, 0.5, 9, 8]} />
-        <meshStandardMaterial color="#f7ce54" />
-      </mesh>
-
-      <mesh
-        castShadow
-        position={[2.4, 2.9, 0]}
-        rotation={[0, 0, -0.4]}
-      >
-        <sphereGeometry args={[0.8, 1.25, 0.5, 9, 8]} />
-        <meshStandardMaterial color="#f7ce54" />
-      </mesh>
+      {[-1, 1].map((side) => (
+        <mesh
+          key={side}
+          position={[
+            side * 2.4,
+            2.9,
+            0,
+          ]}
+          rotation={[
+            0,
+            0,
+            -side * 0.4,
+          ]}
+          castShadow
+        >
+          <sphereGeometry
+            args={[0.8, 1.25, 0.5, 9, 8]}
+          />
+          <meshStandardMaterial
+            color="#f7ce54"
+          />
+        </mesh>
+      ))}
     </group>
   );
 }
 
 export function CityExtras({
   cityEvent,
+  player,
 }: {
   cityEvent: CityEvent;
+  player: PlayerLocation;
 }) {
   return (
     <>
       <ShopStand />
 
-      <Citizen
+      <StaticCitizen
         x={SHOP_POSITION.x}
         z={SHOP_POSITION.z}
         shirt="#63a9db"
+        hair="#5a4237"
+        player={player}
       />
 
-      <Citizen
+      <StaticCitizen
         x={CITIZEN_POSITION.x}
         z={CITIZEN_POSITION.z}
         shirt="#b49af2"
+        hair="#4e4037"
+        player={player}
       />
 
-      {cityEvent === 'duck-invasion' && <GiantDuck />}
+      {WALKERS.map((data) => (
+        <WalkingCitizen
+          key={data.id}
+          data={data}
+          player={player}
+        />
+      ))}
+
+      <Clouds />
+
+      {cityEvent === 'duck-invasion' && (
+        <GiantDuck />
+      )}
     </>
   );
 }

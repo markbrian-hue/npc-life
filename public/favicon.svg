@@ -1,0 +1,8 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect x="7" y="7" width="114" height="114" rx="28" fill="#ffeb91" stroke="#152337" stroke-width="9"></rect>
+
+  <text x="26" y="92" font-family="Arial,sans-serif" font-weight="900" font-size="78" fill="#1b293d">N</text>
+
+  <text x="86" y="88" font-family="Arial,sans-serif" font-weight="900" font-size="69" fill="#d75d76">!</text>
+</svg>
