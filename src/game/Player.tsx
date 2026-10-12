@@ -1,57 +1,53 @@
+
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { blocked } from './world';
 
-export type PlayerLocation = { x: number; z: number };
-export type CityEvent = 'none' | 'low-gravity' | 'duck-invasion';
+export type PlayerLocation = {
+  x: number;
+  z: number;
+};
 
-interface PlayerProps {
+export type CityEvent =
+  | 'none'
+  | 'low-gravity'
+  | 'duck-invasion';
+
+type Props = {
   onMove: (position: PlayerLocation) => void;
   equipped: string;
+  shirtColor: string;
   emote: boolean;
   cityEvent: CityEvent;
   inputLocked: boolean;
-}
-
-const WALK_SPEED = 5.6;
-const RUN_SPEED = 9.2;
-const MOVEMENT_RESPONSE = 11;
-const STOP_RESPONSE = 15;
-const TURN_RESPONSE = 12;
-const CAMERA_FOLLOW_RESPONSE = 9;
-const CAMERA_POSITION_RESPONSE = 8;
-const GROUND_GRAVITY = 19;
-const LOW_GRAVITY = 6;
-const JUMP_SPEED = 7.8;
-const LOW_GRAVITY_JUMP_SPEED = 9;
-const JUMP_BUFFER_SECONDS = 0.12;
-const COYOTE_SECONDS = 0.1;
+};
 
 export function Player({
   onMove,
   equipped,
+  shirtColor,
   emote,
   cityEvent,
   inputLocked,
-}: PlayerProps) {
+}: Props) {
   const actor = useRef<THREE.Group>(null);
-  const visual = useRef<THREE.Group>(null);
+  const model = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
   const rightLeg = useRef<THREE.Group>(null);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
 
-  const pressedKeys = useRef(new Set<string>());
+  const keys = useRef(new Set<string>());
   const position = useRef(new THREE.Vector3());
-  const movementVelocity = useRef(new THREE.Vector2());
-  const verticalVelocity = useRef(0);
-  const isGrounded = useRef(true);
+  const velocity = useRef(new THREE.Vector2());
+  const upwardSpeed = useRef(0);
+  const grounded = useRef(true);
   const jumpBuffer = useRef(0);
-  const coyoteTimer = useRef(COYOTE_SECONDS);
+  const coyote = useRef(0.1);
   const walkCycle = useRef(0);
   const walkBlend = useRef(0);
-  const reportTimer = useRef(0);
+  const reporting = useRef(0);
 
   const orbit = useRef({
     yaw: 0.6,
@@ -59,30 +55,32 @@ export function Player({
     zoom: 13,
   });
 
-  const activeDragPointer = useRef<number | null>(null);
-  const cameraFocus = useRef(new THREE.Vector3(0, 1.7, 0));
+  const dragging = useRef<number | null>(null);
+  const focus = useRef(
+    new THREE.Vector3(0, 1.7, 0)
+  );
+
   const desiredFocus = useRef(new THREE.Vector3());
   const desiredCamera = useRef(new THREE.Vector3());
-
   const { camera, gl } = useThree();
 
   useEffect(() => {
     const canvas = gl.domElement;
 
-    const endDragging = () => {
-      const pointerId = activeDragPointer.current;
+    const release = () => {
+      const id = dragging.current;
 
       if (
-        pointerId !== null &&
-        canvas.hasPointerCapture(pointerId)
+        id !== null &&
+        canvas.hasPointerCapture(id)
       ) {
-        canvas.releasePointerCapture(pointerId);
+        canvas.releasePointerCapture(id);
       }
 
-      activeDragPointer.current = null;
+      dragging.current = null;
     };
 
-    const onPointerDown = (event: PointerEvent) => {
+    const down = (event: PointerEvent) => {
       if (
         inputLocked ||
         (event.button !== 0 && event.button !== 2)
@@ -90,52 +88,52 @@ export function Player({
         return;
       }
 
-      activeDragPointer.current = event.pointerId;
+      dragging.current = event.pointerId;
       canvas.setPointerCapture(event.pointerId);
     };
 
-    const onPointerMove = (event: PointerEvent) => {
+    const move = (event: PointerEvent) => {
       if (
         inputLocked ||
-        activeDragPointer.current !== event.pointerId
+        dragging.current !== event.pointerId
       ) {
         return;
       }
 
-      orbit.current.yaw -= event.movementX * 0.005;
+      orbit.current.yaw -=
+        event.movementX * 0.005;
 
       orbit.current.pitch = THREE.MathUtils.clamp(
-        orbit.current.pitch - event.movementY * 0.0035,
+        orbit.current.pitch -
+          event.movementY * 0.0035,
         0.2,
         1.3
       );
     };
 
-    const onPointerUp = (event: PointerEvent) => {
-      if (activeDragPointer.current === event.pointerId) {
-        endDragging();
+    const up = (event: PointerEvent) => {
+      if (dragging.current === event.pointerId) {
+        release();
       }
     };
 
-    const onWheel = (event: WheelEvent) => {
+    const wheel = (event: WheelEvent) => {
       if (inputLocked) return;
-
       event.preventDefault();
 
       orbit.current.zoom = THREE.MathUtils.clamp(
-        orbit.current.zoom + event.deltaY * 0.01,
+        orbit.current.zoom +
+          event.deltaY * 0.01,
         5.5,
         20
       );
     };
 
-    const onContextMenu = (event: MouseEvent) => {
-      if (!inputLocked) {
-        event.preventDefault();
-      }
+    const context = (event: MouseEvent) => {
+      if (!inputLocked) event.preventDefault();
     };
 
-    const onKeyDown = (event: KeyboardEvent) => {
+    const keyDown = (event: KeyboardEvent) => {
       if (inputLocked) return;
 
       if (
@@ -159,277 +157,257 @@ export function Player({
         event.preventDefault();
       }
 
-      if (event.code === 'Space' && !event.repeat) {
-        jumpBuffer.current = JUMP_BUFFER_SECONDS;
+      if (
+        event.code === 'Space' &&
+        !event.repeat
+      ) {
+        jumpBuffer.current = 0.12;
       }
 
-      pressedKeys.current.add(event.code);
+      keys.current.add(event.code);
     };
 
-    const onKeyUp = (event: KeyboardEvent) => {
-      pressedKeys.current.delete(event.code);
+    const keyUp = (event: KeyboardEvent) => {
+      keys.current.delete(event.code);
     };
 
-    const onBlur = () => {
-      pressedKeys.current.clear();
+    const blur = () => {
+      keys.current.clear();
       jumpBuffer.current = 0;
-      endDragging();
+      release();
     };
 
     if (inputLocked) {
-      pressedKeys.current.clear();
+      keys.current.clear();
       jumpBuffer.current = 0;
-      movementVelocity.current.set(0, 0);
-      endDragging();
+      velocity.current.set(0, 0);
+      release();
     }
 
-    canvas.addEventListener('pointerdown', onPointerDown);
-    canvas.addEventListener('pointermove', onPointerMove);
-    canvas.addEventListener('pointerup', onPointerUp);
-    canvas.addEventListener('pointercancel', onPointerUp);
-    canvas.addEventListener('wheel', onWheel, {
+    canvas.addEventListener('pointerdown', down);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('pointercancel', up);
+    canvas.addEventListener('wheel', wheel, {
       passive: false,
     });
-    canvas.addEventListener('contextmenu', onContextMenu);
+    canvas.addEventListener('contextmenu', context);
 
-    window.addEventListener('keydown', onKeyDown);
-    window.addEventListener('keyup', onKeyUp);
-    window.addEventListener('blur', onBlur);
+    window.addEventListener('keydown', keyDown);
+    window.addEventListener('keyup', keyUp);
+    window.addEventListener('blur', blur);
 
     return () => {
-      endDragging();
+      release();
 
-      canvas.removeEventListener(
-        'pointerdown',
-        onPointerDown
-      );
-      canvas.removeEventListener(
-        'pointermove',
-        onPointerMove
-      );
-      canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointerdown', down);
+      canvas.removeEventListener('pointermove', move);
+      canvas.removeEventListener('pointerup', up);
       canvas.removeEventListener(
         'pointercancel',
-        onPointerUp
+        up
       );
-      canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener('wheel', wheel);
       canvas.removeEventListener(
         'contextmenu',
-        onContextMenu
+        context
       );
 
-      window.removeEventListener('keydown', onKeyDown);
-      window.removeEventListener('keyup', onKeyUp);
-      window.removeEventListener('blur', onBlur);
+      window.removeEventListener(
+        'keydown',
+        keyDown
+      );
+      window.removeEventListener('keyup', keyUp);
+      window.removeEventListener('blur', blur);
     };
   }, [gl, inputLocked]);
 
-  useFrame(({ clock }, frameDelta) => {
-    const delta = Math.min(frameDelta, 0.05);
-    const keys = pressedKeys.current;
+  useFrame(({ clock }, rawDelta) => {
+    const dt = Math.min(rawDelta, 0.05);
+    const pressed = keys.current;
 
-    const sideways = inputLocked
+    const side = inputLocked
       ? 0
       : Number(
-          keys.has('KeyD') || keys.has('ArrowRight')
+          pressed.has('KeyD') ||
+            pressed.has('ArrowRight')
         ) -
         Number(
-          keys.has('KeyA') || keys.has('ArrowLeft')
+          pressed.has('KeyA') ||
+            pressed.has('ArrowLeft')
         );
 
-    const forwards = inputLocked
+    const forward = inputLocked
       ? 0
       : Number(
-          keys.has('KeyW') || keys.has('ArrowUp')
+          pressed.has('KeyW') ||
+            pressed.has('ArrowUp')
         ) -
         Number(
-          keys.has('KeyS') || keys.has('ArrowDown')
+          pressed.has('KeyS') ||
+            pressed.has('ArrowDown')
         );
 
     const running =
       !inputLocked &&
-      (keys.has('ShiftLeft') || keys.has('ShiftRight'));
+      (pressed.has('ShiftLeft') ||
+        pressed.has('ShiftRight'));
 
+    const speed = running ? 9.2 : 5.6;
+    const length = Math.hypot(side, forward);
     const yaw = orbit.current.yaw;
-    const length = Math.hypot(sideways, forwards);
-    const speed = running ? RUN_SPEED : WALK_SPEED;
 
-    // W moves away from the camera.
     const targetX = length
       ? (
-          (Math.cos(yaw) * sideways -
-            Math.sin(yaw) * forwards) /
-          length
-        ) * speed
+          Math.cos(yaw) * side -
+          Math.sin(yaw) * forward
+        ) /
+        length *
+        speed
       : 0;
 
     const targetZ = length
       ? (
-          (-Math.sin(yaw) * sideways -
-            Math.cos(yaw) * forwards) /
-          length
-        ) * speed
+          -Math.sin(yaw) * side -
+          Math.cos(yaw) * forward
+        ) /
+        length *
+        speed
       : 0;
 
-    // Smoothly approach the desired velocity.
-    const velocity = movementVelocity.current;
-    const response = length
-      ? MOVEMENT_RESPONSE
-      : STOP_RESPONSE;
+    const response =
+      1 -
+      Math.exp(
+        -(length ? 11 : 15) * dt
+      );
 
-    const velocityBlend =
-      1 - Math.exp(-response * delta);
+    const v = velocity.current;
 
-    velocity.x +=
-      (targetX - velocity.x) * velocityBlend;
-
-    velocity.y +=
-      (targetZ - velocity.y) * velocityBlend;
+    v.x += (targetX - v.x) * response;
+    v.y += (targetZ - v.y) * response;
 
     if (
       inputLocked ||
-      (!length && velocity.lengthSq() < 0.0009)
+      (!length && v.lengthSq() < 0.0009)
     ) {
-      velocity.set(0, 0);
+      v.set(0, 0);
     }
-
-    // Axis-by-axis collision allows wall sliding.
-    const stepX = velocity.x * delta;
-    const stepZ = velocity.y * delta;
 
     if (
       !blocked(
-        position.current.x + stepX,
+        position.current.x + v.x * dt,
         position.current.z
       )
     ) {
-      position.current.x += stepX;
+      position.current.x += v.x * dt;
     } else {
-      velocity.x = 0;
+      v.x = 0;
     }
 
     if (
       !blocked(
         position.current.x,
-        position.current.z + stepZ
+        position.current.z + v.y * dt
       )
     ) {
-      position.current.z += stepZ;
+      position.current.z += v.y * dt;
     } else {
-      velocity.y = 0;
+      v.y = 0;
     }
 
-    const actualSpeed = velocity.length();
+    const actualSpeed = v.length();
 
-    // Smooth shortest-path character rotation.
-    if (actualSpeed > 0.15 && actor.current) {
-      const targetHeading = Math.atan2(
-        velocity.x,
-        velocity.y
-      );
+    if (
+      actualSpeed > 0.15 &&
+      actor.current
+    ) {
+      const target = Math.atan2(v.x, v.y);
 
-      const error = Math.atan2(
+      const diff = Math.atan2(
         Math.sin(
-          targetHeading - actor.current.rotation.y
+          target - actor.current.rotation.y
         ),
         Math.cos(
-          targetHeading - actor.current.rotation.y
+          target - actor.current.rotation.y
         )
       );
 
       actor.current.rotation.y +=
-        error *
-        (1 - Math.exp(-TURN_RESPONSE * delta));
+        diff *
+        (1 - Math.exp(-12 * dt));
     }
 
-    // Buffered jumping and forgiving ground timing.
     jumpBuffer.current = Math.max(
       0,
-      jumpBuffer.current - delta
+      jumpBuffer.current - dt
     );
 
-    coyoteTimer.current = isGrounded.current
-      ? COYOTE_SECONDS
-      : Math.max(
-          0,
-          coyoteTimer.current - delta
-        );
+    coyote.current = grounded.current
+      ? 0.1
+      : Math.max(0, coyote.current - dt);
 
     if (
       !inputLocked &&
       jumpBuffer.current > 0 &&
-      coyoteTimer.current > 0
+      coyote.current > 0
     ) {
-      verticalVelocity.current =
+      upwardSpeed.current =
         cityEvent === 'low-gravity'
-          ? LOW_GRAVITY_JUMP_SPEED
-          : JUMP_SPEED;
+          ? 9
+          : 7.8;
 
-      isGrounded.current = false;
-      coyoteTimer.current = 0;
+      grounded.current = false;
+      coyote.current = 0;
       jumpBuffer.current = 0;
     }
 
-    const gravity =
-      cityEvent === 'low-gravity'
-        ? LOW_GRAVITY
-        : GROUND_GRAVITY;
-
-    if (!isGrounded.current) {
-      verticalVelocity.current -= gravity * delta;
+    if (!grounded.current) {
+      upwardSpeed.current -=
+        (cityEvent === 'low-gravity'
+          ? 6
+          : 19) * dt;
 
       position.current.y +=
-        verticalVelocity.current * delta;
+        upwardSpeed.current * dt;
 
       if (position.current.y <= 0) {
         position.current.y = 0;
-        verticalVelocity.current = 0;
-        isGrounded.current = true;
+        upwardSpeed.current = 0;
+        grounded.current = true;
       }
     }
 
-    // Frame-rate-independent animation blending.
-    const blendTarget = THREE.MathUtils.clamp(
-      actualSpeed / WALK_SPEED,
-      0,
-      1
-    );
-
     walkBlend.current = THREE.MathUtils.damp(
       walkBlend.current,
-      blendTarget,
+      THREE.MathUtils.clamp(
+        actualSpeed / 5.6,
+        0,
+        1
+      ),
       11,
-      delta
+      dt
     );
 
     walkCycle.current +=
-      actualSpeed * delta * 1.65;
+      actualSpeed * dt * 1.65;
 
-    const gait = Math.sin(walkCycle.current);
-
-    const legSwing =
-      gait *
+    const stride =
+      Math.sin(walkCycle.current) *
       walkBlend.current *
       (running ? 0.72 : 0.55);
 
-    const armSwing =
-      gait * walkBlend.current * 0.38;
-
-    const legLeftTarget = isGrounded.current
-      ? legSwing
-      : -0.25;
-
-    const legRightTarget = isGrounded.current
-      ? -legSwing
-      : 0.25;
+    const swing =
+      Math.sin(walkCycle.current) *
+      walkBlend.current *
+      0.38;
 
     if (leftLeg.current) {
       leftLeg.current.rotation.x =
         THREE.MathUtils.damp(
           leftLeg.current.rotation.x,
-          legLeftTarget,
+          grounded.current ? stride : -0.25,
           14,
-          delta
+          dt
         );
     }
 
@@ -437,9 +415,9 @@ export function Player({
       rightLeg.current.rotation.x =
         THREE.MathUtils.damp(
           rightLeg.current.rotation.x,
-          legRightTarget,
+          grounded.current ? -stride : 0.25,
           14,
-          delta
+          dt
         );
     }
 
@@ -447,9 +425,9 @@ export function Player({
       leftArm.current.rotation.x =
         THREE.MathUtils.damp(
           leftArm.current.rotation.x,
-          -armSwing,
+          -swing,
           12,
-          delta
+          dt
         );
     }
 
@@ -457,9 +435,9 @@ export function Player({
       rightArm.current.rotation.x =
         THREE.MathUtils.damp(
           rightArm.current.rotation.x,
-          emote ? -0.35 : armSwing,
+          emote ? -0.35 : swing,
           12,
-          delta
+          dt
         );
 
       rightArm.current.rotation.z =
@@ -467,96 +445,90 @@ export function Player({
           rightArm.current.rotation.z,
           emote
             ? 2.2 +
-                Math.sin(clock.elapsedTime * 12) * 0.18
+              Math.sin(
+                clock.elapsedTime * 12
+              ) *
+                0.18
             : 0,
           15,
-          delta
+          dt
         );
     }
 
-    if (visual.current) {
-      const bob = isGrounded.current
-        ? Math.abs(Math.sin(walkCycle.current)) *
-          0.045 *
-          walkBlend.current
-        : 0;
-
-      visual.current.position.y =
+    if (model.current) {
+      model.current.position.y =
         THREE.MathUtils.damp(
-          visual.current.position.y,
-          bob,
+          model.current.position.y,
+          grounded.current
+            ? Math.abs(
+                Math.sin(walkCycle.current)
+              ) *
+              0.045 *
+              walkBlend.current
+            : 0,
           12,
-          delta
+          dt
         );
     }
 
     if (actor.current) {
-      actor.current.position.copy(position.current);
+      actor.current.position.copy(
+        position.current
+      );
     }
 
-    // Smooth both the camera focus and camera position.
     desiredFocus.current.set(
       position.current.x,
       position.current.y + 1.7,
       position.current.z
     );
 
-    cameraFocus.current.lerp(
+    focus.current.lerp(
       desiredFocus.current,
-      1 -
-        Math.exp(
-          -CAMERA_FOLLOW_RESPONSE * delta
-        )
+      1 - Math.exp(-9 * dt)
     );
 
     const { pitch, zoom } = orbit.current;
 
     desiredCamera.current.set(
-      cameraFocus.current.x +
-        Math.sin(yaw) * Math.cos(pitch) * zoom,
-      cameraFocus.current.y +
+      focus.current.x +
+        Math.sin(yaw) *
+          Math.cos(pitch) *
+          zoom,
+      focus.current.y +
         Math.sin(pitch) * zoom,
-      cameraFocus.current.z +
-        Math.cos(yaw) * Math.cos(pitch) * zoom
+      focus.current.z +
+        Math.cos(yaw) *
+          Math.cos(pitch) *
+          zoom
     );
 
     camera.position.lerp(
       desiredCamera.current,
-      1 -
-        Math.exp(
-          -CAMERA_POSITION_RESPONSE * delta
-        )
+      1 - Math.exp(-8 * dt)
     );
 
-    camera.lookAt(cameraFocus.current);
+    camera.lookAt(focus.current);
 
-    // Report player position to the HUD/minimap.
-    reportTimer.current += delta;
+    reporting.current += dt;
 
-    if (reportTimer.current >= 0.12) {
+    if (reporting.current >= 0.12) {
       onMove({
         x: position.current.x,
         z: position.current.z,
       });
 
-      reportTimer.current = 0;
+      reporting.current = 0;
     }
   });
 
-  const accessoryColor =
-    equipped === 'cone'
-      ? '#ff9d39'
-      : equipped === 'crown'
-        ? '#ffd55a'
-        : '#76e8dd';
-
   return (
     <group ref={actor}>
-      <group ref={visual}>
-        {/* Body */}
+      <group ref={model}>
+        {/* Shirt */}
         <mesh position={[0, 1.13, 0]} castShadow>
           <boxGeometry args={[0.95, 1.32, 0.6]} />
-          <meshStandardMaterial color="#4967ee" />
+          <meshStandardMaterial color={shirtColor} />
         </mesh>
 
         {/* Head */}
@@ -569,13 +541,9 @@ export function Player({
         <mesh position={[0, 2.58, 0]} castShadow>
           <sphereGeometry
             args={[
-              0.57,
-              10,
-              7,
-              0,
-              Math.PI * 2,
-              0,
-              Math.PI / 2,
+              0.57, 10, 7,
+              0, Math.PI * 2,
+              0, Math.PI / 2,
             ]}
           />
           <meshStandardMaterial color="#463c43" />
@@ -592,96 +560,111 @@ export function Player({
           </mesh>
         ))}
 
-        {/* Left arm - shoulder pivot */}
-        <group
-          ref={leftArm}
-          position={[-0.65, 1.65, 0]}
-        >
-          <mesh
-            position={[0, -0.55, 0]}
-            castShadow
+        {/* Arms */}
+        {[-1, 1].map((side) => (
+          <group
+            key={`arm-${side}`}
+            ref={
+              side === -1
+                ? leftArm
+                : rightArm
+            }
+            position={[side * 0.65, 1.65, 0]}
           >
-            <boxGeometry args={[0.28, 1.16, 0.37]} />
-            <meshStandardMaterial color="#f5c68f" />
-          </mesh>
-        </group>
+            <mesh
+              position={[0, -0.55, 0]}
+              castShadow
+            >
+              <boxGeometry
+                args={[0.28, 1.16, 0.37]}
+              />
+              <meshStandardMaterial
+                color="#f5c68f"
+              />
+            </mesh>
+          </group>
+        ))}
 
-        {/* Right arm - shoulder pivot */}
-        <group
-          ref={rightArm}
-          position={[0.65, 1.65, 0]}
-        >
-          <mesh
-            position={[0, -0.55, 0]}
-            castShadow
+        {/* Legs */}
+        {[-1, 1].map((side) => (
+          <group
+            key={`leg-${side}`}
+            ref={
+              side === -1
+                ? leftLeg
+                : rightLeg
+            }
+            position={[side * 0.26, 0.73, 0]}
           >
-            <boxGeometry args={[0.28, 1.16, 0.37]} />
-            <meshStandardMaterial color="#f5c68f" />
-          </mesh>
-        </group>
+            <mesh
+              position={[0, -0.38, 0]}
+              castShadow
+            >
+              <boxGeometry
+                args={[0.35, 0.73, 0.47]}
+              />
+              <meshStandardMaterial
+                color="#243353"
+              />
+            </mesh>
+          </group>
+        ))}
 
-        {/* Left leg - hip pivot */}
-        <group
-          ref={leftLeg}
-          position={[-0.26, 0.73, 0]}
-        >
-          <mesh
-            position={[0, -0.38, 0]}
-            castShadow
-          >
-            <boxGeometry args={[0.35, 0.73, 0.47]} />
-            <meshStandardMaterial color="#243353" />
-          </mesh>
-        </group>
-
-        {/* Right leg - hip pivot */}
-        <group
-          ref={rightLeg}
-          position={[0.26, 0.73, 0]}
-        >
-          <mesh
-            position={[0, -0.38, 0]}
-            castShadow
-          >
-            <boxGeometry args={[0.35, 0.73, 0.47]} />
-            <meshStandardMaterial color="#243353" />
-          </mesh>
-        </group>
-
-        {/* Alpha 0.2 cosmetics */}
+        {/* Cosmetic accessories */}
         {equipped !== 'none' && (
           <group position={[0, 2.95, 0]}>
-            {equipped === 'cone' ? (
+            {equipped === 'cone' && (
               <mesh castShadow>
-                <coneGeometry args={[0.5, 1.25, 5]} />
+                <coneGeometry
+                  args={[0.5, 1.25, 5]}
+                />
                 <meshStandardMaterial
-                  color={accessoryColor}
+                  color="#ff9d39"
                 />
               </mesh>
-            ) : equipped === 'crown' ? (
-              <>
+            )}
+
+            {equipped === 'halo' && (
+              <mesh
+                rotation={[Math.PI / 2, 0, 0]}
+                position={[0, 0.24, 0]}
+                castShadow
+              >
+                <torusGeometry
+                  args={[0.49, 0.10, 8, 22]}
+                />
+                <meshStandardMaterial
+                  color="#76e8dd"
+                  emissive="#0c6560"
+                  emissiveIntensity={0.25}
+                />
+              </mesh>
+            )}
+
+            {equipped === 'crown' && (
+              <group>
                 <mesh castShadow>
                   <cylinderGeometry
                     args={[0.46, 0.49, 0.26, 8]}
                   />
                   <meshStandardMaterial
-                    color={accessoryColor}
+                    color="#ffd55a"
                     metalness={0.4}
                   />
                 </mesh>
 
                 {Array.from(
                   { length: 6 },
-                  (_, index) => (
+                  (_, i) => (
                     <mesh
-                      key={index}
+                      key={i}
                       position={[
                         Math.sin(
-                          index * Math.PI / 3
+                          i * Math.PI / 3
                         ) * 0.35,
                         0.26,
                         Math.cos(
-                          index * Math.PI / 3
+                          i * Math.PI / 3
                         ) * 0.35,
                       ]}
                     >
@@ -689,21 +672,113 @@ export function Player({
                         args={[0.13, 0.4, 4]}
                       />
                       <meshStandardMaterial
-                        color={accessoryColor}
+                        color="#ffd55a"
                       />
                     </mesh>
                   )
                 )}
-              </>
-            ) : (
-              <mesh castShadow>
-                <torusGeometry
-                  args={[0.48, 0.12, 7, 18]}
-                />
-                <meshStandardMaterial
-                  color={accessoryColor}
-                />
-              </mesh>
+              </group>
+            )}
+
+            {equipped === 'bucket' && (
+              <group>
+                <mesh
+                  castShadow
+                  position={[0, 0.12, 0]}
+                >
+                  <cylinderGeometry
+                    args={[0.48, 0.38, 0.76, 12]}
+                  />
+                  <meshStandardMaterial
+                    color="#a4b5c0"
+                    metalness={0.3}
+                    roughness={0.65}
+                  />
+                </mesh>
+
+                <mesh position={[0, 0.52, 0]}>
+                  <torusGeometry
+                    args={[0.46, 0.045, 6, 20]}
+                  />
+                  <meshStandardMaterial
+                    color="#e3e7e6"
+                  />
+                </mesh>
+              </group>
+            )}
+
+            {equipped === 'headphones' && (
+              <group>
+                <mesh position={[0, -0.25, 0]}>
+                  <torusGeometry
+                    args={[
+                      0.55,
+                      0.085,
+                      8,
+                      24,
+                      Math.PI,
+                    ]}
+                  />
+                  <meshStandardMaterial
+                    color="#292e43"
+                  />
+                </mesh>
+
+                {[-1, 1].map((side) => (
+                  <mesh
+                    key={side}
+                    position={[
+                      side * 0.56,
+                      -0.03,
+                      0,
+                    ]}
+                    castShadow
+                  >
+                    <boxGeometry
+                      args={[0.2, 0.45, 0.32]}
+                    />
+                    <meshStandardMaterial
+                      color="#e987a7"
+                    />
+                  </mesh>
+                ))}
+              </group>
+            )}
+
+            {equipped === 'antenna' && (
+              <group>
+                <mesh
+                  position={[0, 0.2, 0]}
+                  castShadow
+                >
+                  <cylinderGeometry
+                    args={[0.35, 0.43, 0.25, 10]}
+                  />
+                  <meshStandardMaterial
+                    color="#505c83"
+                  />
+                </mesh>
+
+                <mesh position={[0, 0.7, 0]}>
+                  <cylinderGeometry
+                    args={[0.04, 0.05, 0.9, 8]}
+                  />
+                  <meshStandardMaterial
+                    color="#8fa8b9"
+                  />
+                </mesh>
+
+                <mesh position={[0, 1.18, 0]}>
+                  <sphereGeometry
+                    args={[0.16, 10, 8]}
+                  />
+                  <meshStandardMaterial
+                    color="#72d9a6"
+                    emissive="#278a58"
+                    emissiveIntensity={0.65}
+                  />
+                </mesh>
+              </group>
             )}
           </group>
         )}

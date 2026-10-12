@@ -7,6 +7,7 @@ import { AmbientSound } from './game/AmbientSound';
 import './styles.css';
 import './phase2.css';
 import './phase4c.css';
+import './phase5.css';
 
 ReactDOM.createRoot(
   document.getElementById('root')!

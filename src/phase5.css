@@ -1,0 +1,335 @@
+
+/* NPC LIFE — Alpha 0.5 */
+
+.progress-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a111bd1;
+  padding: 16px;
+  backdrop-filter: blur(5px);
+}
+
+.progress-panel {
+  width: min(730px, 100%);
+  max-height: 90dvh;
+  overflow: auto;
+  background: #182436;
+  color: #f7f9ff;
+  border: 1px solid #ffffff30;
+  border-radius: 22px;
+  box-shadow: 0 24px 80px #0009;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.progress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: flex-start;
+  padding: 24px 25px 18px;
+  border-bottom: 1px solid #ffffff1d;
+}
+
+.progress-eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #f5d482;
+}
+
+.progress-head h2 {
+  font: 800 30px/1.2 'Space Grotesk', sans-serif;
+  margin: 7px 0;
+}
+
+.progress-head p {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #b2c7d9;
+  margin: 0;
+}
+
+.progress-close {
+  border: 0;
+  border-radius: 10px;
+  color: white;
+  background: #34435b;
+  width: 36px;
+  height: 36px;
+  font-size: 24px;
+}
+
+.progress-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 25px 0;
+}
+
+.progress-tabs button {
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: 1px solid #ffffff1b;
+  background: #28364c;
+  color: #b8c7da;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.progress-tabs button.selected {
+  background: #f4d986;
+  color: #202c3f;
+}
+
+.progress-tabs small {
+  opacity: 0.65;
+  margin-left: 5px;
+}
+
+.progress-content {
+  padding: 22px 25px 25px;
+}
+
+.progress-content h3 {
+  font-size: 13px;
+  margin: 0 0 14px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-content h3:not(:first-child) {
+  margin-top: 23px;
+}
+
+.progress-content h3 span {
+  font-size: 10px;
+  color: #f3d585;
+}
+
+/* Shirt color options */
+
+.shirt-options {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.shirt-options button {
+  min-width: 0;
+  padding: 10px 5px;
+  border-radius: 11px;
+  background: #27364b;
+  color: #e5edf8;
+  border: 2px solid transparent;
+}
+
+.shirt-options button.selected {
+  border-color: #f5dd90;
+}
+
+.shirt-options button span {
+  display: block;
+  margin: 0 auto 8px;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #fff6;
+  border-radius: 50%;
+}
+
+.shirt-options button small {
+  font-size: 9px;
+  display: block;
+  line-height: 1.2;
+}
+
+/* Head accessory inventory */
+
+.wardrobe-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.wardrobe-grid button {
+  background: #26364b;
+  border: 2px solid transparent;
+  border-radius: 13px;
+  padding: 14px 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.wardrobe-grid button.selected {
+  border-color: #efd38b;
+  background: #38485f;
+}
+
+.wardrobe-grid button:disabled {
+  opacity: 0.43;
+  cursor: not-allowed;
+}
+
+.wardrobe-emoji {
+  font-size: 27px;
+}
+
+.wardrobe-grid strong {
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.wardrobe-grid small {
+  font-size: 9px;
+  color: #c6d3e0;
+  text-align: center;
+}
+
+.progress-footnote {
+  font-size: 11px;
+  line-height: 1.55;
+  color: #abbdd1;
+  margin: 20px 0 0;
+}
+
+/* Achievement journal */
+
+.achievement-summary {
+  padding: 12px;
+  background: #26364b;
+  border-radius: 11px;
+  font-size: 12px;
+  color: #bcccdd;
+  margin-bottom: 13px;
+}
+
+.achievement-summary strong {
+  color: #f8dc8b;
+}
+
+.achievement-summary span {
+  padding: 0 9px;
+}
+
+.achievement-list {
+  display: grid;
+  gap: 9px;
+}
+
+.achievement-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #243247;
+  border: 1px solid #ffffff16;
+  padding: 13px;
+  border-radius: 12px;
+  opacity: 0.66;
+}
+
+.achievement-item.unlocked {
+  opacity: 1;
+  border-color: #efce754c;
+}
+
+.achievement-icon {
+  font-size: 27px;
+  flex: 0 0 36px;
+}
+
+.achievement-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.achievement-info strong {
+  font-size: 12px;
+}
+
+.achievement-info p {
+  font-size: 10px;
+  color: #aabed2;
+  margin: 5px 0 9px;
+}
+
+.achievement-track {
+  height: 5px;
+  border-radius: 10px;
+  background: #42536a;
+  overflow: hidden;
+}
+
+.achievement-track span {
+  display: block;
+  background: #e5c76f;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.achievement-item > small {
+  font-size: 10px;
+  white-space: nowrap;
+  color: #f4dc93;
+  font-weight: 800;
+}
+
+/* Bottom HUD buttons */
+
+.profile-button {
+  background: #25364c;
+  color: #f9df91;
+  border: 1px solid #ffffff35;
+  border-radius: 11px;
+  padding: 11px 14px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.profile-button span {
+  font-size: 10px;
+  opacity: 0.65;
+  margin-left: 4px;
+}
+
+@media (max-width: 650px) {
+  .progress-head {
+    padding: 18px;
+  }
+
+  .progress-head h2 {
+    font-size: 23px;
+  }
+
+  .progress-tabs {
+    padding: 12px 16px 0;
+  }
+
+  .progress-content {
+    padding: 17px;
+  }
+
+  .shirt-options {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .wardrobe-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .progress-tabs button {
+    padding: 10px;
+    font-size: 11px;
+  }
+
+  .profile-button {
+    padding: 9px;
+  }
+}
