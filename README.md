@@ -2,6 +2,14 @@
 
 A retro multiplayer browser comedy sandbox. The festival is cancelled, four districts are broken, and the city has hired the least qualified person available: you.
 
+## Grove & Motors update
+
+- Larger bounds (±136), connected Grove Street neighborhood, bungalows and palms.
+- Fountain traffic island and circulating roundabout, marked crossings, sidewalk arrival point.
+- Defined faces, hair, male and female residents, articulated limbs, improved street-facing assets.
+- Six drivable cars: turning wheels, brake lights, acceleration, braking, reverse, off-road speed limits and collision hulls.
+- Shared server-simulated vehicles: one driver per car, safe stopped exits, ownership released on disconnect.
+
 ## City Revival update
 
 - **Five districts, over four times the original map area:** Civic Square, Switchyard, Market Mile, Willow Park, and Saltwater Dock.
@@ -12,7 +20,7 @@ A retro multiplayer browser comedy sandbox. The festival is cancelled, four dist
 - **Navigation:** full city journal, tracked objectives, distance and compass directions, minimap waypoints, and current district indicator.
 - Existing jobs, NPC conversations, discoveries, shop, wardrobe, dailies, minigames, City Permit objective, procedural audio, and save import/export remain available.
 
-**Multiplayer scope:** this is a working guest-room presence slice. Movement and waves are shared. Campaign, district restoration, minigames, cosmetics and economy remain local to each browser. The room server is not an authoritative game simulation and does not accept or trust local save balances. Shared objectives/economy, accounts, moderation and public-host hardening are later milestones.
+**Multiplayer scope:** this is a working guest-room presence slice. Movement, waves, cars and vehicle ownership are shared. Campaign, district restoration, minigames, cosmetics and economy remain local to each browser. The room server authoritatively simulates cars and ownership; pedestrian movement remains a presence relay and does not accept or trust local save balances. Shared objectives/economy, accounts, moderation and public-host hardening are later milestones.
 
 ## Run it
 
@@ -41,7 +49,9 @@ Open `http://localhost:3001`. `PORT` changes the production port. Rooms are held
 | Control | Action |
 | --- | --- |
 | WASD / arrows | Move relative to camera |
-| Shift / Space | Sprint / jump |
+| Shift / Space | Sprint / jump on foot |
+| R | Enter a nearby parked car / exit when stopped |
+| W/S, A/D, Space in car | Accelerate/reverse, steer, brake |
 | Mouse drag / scroll | Orbit / zoom |
 | C | City journal and full map |
 | Hold Q | Work on the nearby tracked objective |

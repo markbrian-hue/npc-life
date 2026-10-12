@@ -1,3 +1,5 @@
+import { useVehicles, VehiclesWorld, VehicleHUD } from './game/Vehicles';
+import { SPAWN } from './game/world';
 import { MultiplayerMenu, RemoteResidents, useMultiplayer } from './game/Multiplayer';
 import { WorldMinimap } from './game/WorldMinimap';
 import { DistrictWorld } from './game/DistrictWorld';
@@ -401,10 +403,9 @@ export default function App() {
   const [dailyOpen, setDailyOpen] = useMenuState('daily');
   const [arcadeOpen, setArcadeOpen] = useMenuState('pigeon-panic');
 
-  const [player, setPlayer] = useState<PlayerLocation>({
-    x: 0,
-    z: 0,
-  });
+  const [player, setPlayer] = useState<PlayerLocation>(SPAWN);
+
+  const vehicles = useVehicles(multiplayer, player);
 
   const [showHelp, setShowHelp] = useMenuState('controls');
   const [shopOpen, setShopOpen] = useMenuState('shop');
@@ -1028,7 +1029,9 @@ export default function App() {
           reputation={reputation}
         />
 
+        <VehiclesWorld vehicles={vehicles} />
         <Player
+          vehicles={vehicles}
           onMove={onMove}
           equipped={equipped}
           shirtColor={shirtHex(shirt)}
@@ -1037,6 +1040,7 @@ export default function App() {
           inputLocked={locked}
         />
       </Canvas>
+      <VehicleHUD vehicles={vehicles} />
 
       {/* New Alpha 0.7 interaction layer */}
       <CityEncounters
@@ -1318,8 +1322,10 @@ export default function App() {
             <kbd>SHIFT</kbd> Run from responsibilities
           </p>
           <p>
-            <kbd>SPACE</kbd> Jump
+            <kbd>SPACE</kbd> Jump on foot / brake in a car
           </p>
+          <p><kbd>R</kbd> Enter a parked car / exit when stopped</p>
+          <p><kbd>W/S</kbd> Accelerate/reverse · <kbd>A/D</kbd> Steer</p>
           <p>
             <kbd>C</kbd> City journal and map
           </p>

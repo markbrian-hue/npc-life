@@ -1,9 +1,12 @@
+import type { Vehicles } from './Vehicles';
+import { pedestrianBlocked } from '../../shared/vehicles.mjs';
 
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
-import { blocked } from './world';
+import { Character } from './Character';
+import { blocked, SPAWN } from './world';
 import { safeCameraDistance } from './cameraCollision';
 
 export type PlayerLocation = {
@@ -17,6 +20,7 @@ export type CityEvent =
   | 'duck-invasion';
 
 type Props = {
+  vehicles: Vehicles;
   onMove: (position: PlayerLocation) => void;
   equipped: string;
   shirtColor: string;
@@ -27,6 +31,7 @@ type Props = {
 
 export function Player({
   onMove,
+  vehicles,
   equipped,
   shirtColor,
   emote,
@@ -41,7 +46,7 @@ export function Player({
   const rightArm = useRef<THREE.Group>(null);
 
   const keys = useRef(new Set<string>());
-  const position = useRef(new THREE.Vector3());
+  const position = useRef(new THREE.Vector3(SPAWN.x, 0, SPAWN.z));
   const velocity = useRef(new THREE.Vector2());
 
   const upwardSpeed = useRef(0);
@@ -62,7 +67,7 @@ export function Player({
   const dragging = useRef<number | null>(null);
 
   const focus = useRef(
-    new THREE.Vector3(0, 1.7, 0)
+    new THREE.Vector3(SPAWN.x, 1.7, SPAWN.z)
   );
 
   const desiredFocus = useRef(new THREE.Vector3());
@@ -74,6 +79,10 @@ export function Player({
 
   const { camera, gl } = useThree();
 
+  useEffect(() => {
+    const relocate=(event:Event)=>{const p=(event as CustomEvent).detail;position.current.set(p.x,0,p.z);velocity.current.set(0,0);upwardSpeed.current=0;grounded.current=true;keys.current.clear();};
+    window.addEventListener('npc-life:relocate',relocate);return()=>window.removeEventListener('npc-life:relocate',relocate);
+  },[]);
   // Mouse camera and keyboard input.
   useEffect(() => {
     const canvas = gl.domElement;
@@ -226,8 +235,12 @@ export function Player({
   useFrame(({ clock }, rawDelta) => {
     const dt = Math.min(rawDelta, 0.05);
     const pressed = keys.current;
+    const fleet=vehicles.runtime.current;
+    const car=fleet.cars.find(c=>c.id===fleet.ownedId);
+    if (model.current) model.current.visible=!car;
+    const movementBlocked=(x:number,z:number)=>blocked(x,z)||pedestrianBlocked(x,z,fleet.cars);
 
-    const side = inputLocked
+    const side = inputLocked || car
       ? 0
       : Number(
           pressed.has('KeyD') ||
@@ -238,7 +251,7 @@ export function Player({
           pressed.has('ArrowLeft')
         );
 
-    const forward = inputLocked
+    const forward = inputLocked || car
       ? 0
       : Number(
           pressed.has('KeyW') ||
@@ -284,7 +297,7 @@ export function Player({
     v.y += (targetZ - v.y) * response;
 
     if (
-      inputLocked ||
+      inputLocked || car ||
       (!length && v.lengthSq() < 0.0009)
     ) {
       v.set(0, 0);
@@ -292,7 +305,7 @@ export function Player({
 
     // Maintain the existing wall and prop collisions.
     if (
-      !blocked(
+      !movementBlocked(
         position.current.x + v.x * dt,
         position.current.z
       )
@@ -303,7 +316,7 @@ export function Player({
     }
 
     if (
-      !blocked(
+      !movementBlocked(
         position.current.x,
         position.current.z + v.y * dt
       )
@@ -339,14 +352,14 @@ export function Player({
       : Math.max(0, coyote.current - dt);
 
     if (
-      !inputLocked &&
+      !inputLocked && !car &&
       jumpBuffer.current > 0 &&
       coyote.current > 0
     ) {
       upwardSpeed.current =
         cityEvent === 'low-gravity'
           ? 9
-          : 7.8;
+          : 4.8;
 
       grounded.current = false;
       coyote.current = 0;
@@ -358,7 +371,7 @@ export function Player({
         (
           cityEvent === 'low-gravity'
             ? 6
-            : 19
+            : 9.81
         ) * dt;
 
       position.current.y +=
@@ -455,6 +468,7 @@ export function Player({
       );
     }
 
+    if(car){position.current.set(car.x,0,car.z);velocity.current.set(0,0);jumpBuffer.current=0;upwardSpeed.current=0;grounded.current=true;if(actor.current)actor.current.rotation.y=car.heading+Math.PI/2;orbit.current.yaw=car.heading-Math.PI/2;}
     if (actor.current) {
       actor.current.position.copy(position.current);
     }
@@ -549,6 +563,8 @@ export function Player({
             ...location,
             heading: actor.current?.rotation.y ?? 0,
             y: position.current.y,
+            driving: !!car,
+            cameraYaw: orbit.current.yaw,
           },
         })
       );
@@ -560,77 +576,7 @@ export function Player({
   return (
     <group ref={actor}>
       <group ref={model}>
-        {/* Shirt */}
-        <mesh position={[0, 1.13, 0]} castShadow>
-          <boxGeometry args={[0.95, 1.32, 0.6]} />
-          <meshStandardMaterial color={shirtColor} />
-        </mesh>
-
-        {/* Head */}
-        <mesh position={[0, 2.15, 0]} castShadow>
-          <sphereGeometry args={[0.58, 12, 9]} />
-          <meshStandardMaterial color="#f5c68f" />
-        </mesh>
-
-        {/* Hair */}
-        <mesh position={[0, 2.58, 0]} castShadow>
-          <sphereGeometry
-            args={[
-              0.57,
-              10,
-              7,
-              0,
-              Math.PI * 2,
-              0,
-              Math.PI / 2,
-            ]}
-          />
-          <meshStandardMaterial color="#463c43" />
-        </mesh>
-
-        {/* Eyes */}
-        {[-0.23, 0.23].map((x) => (
-          <mesh key={x} position={[x, 2.24, 0.51]}>
-            <sphereGeometry args={[0.065, 8, 8]} />
-            <meshBasicMaterial color="#1c2633" />
-          </mesh>
-        ))}
-
-        {/* Arms */}
-        {[-1, 1].map((side) => (
-          <group
-            key={`arm-${side}`}
-            ref={
-              side === -1
-                ? leftArm
-                : rightArm
-            }
-            position={[side * 0.65, 1.65, 0]}
-          >
-            <mesh position={[0, -0.55, 0]} castShadow>
-              <boxGeometry args={[0.28, 1.16, 0.37]} />
-              <meshStandardMaterial color="#f5c68f" />
-            </mesh>
-          </group>
-        ))}
-
-        {/* Legs */}
-        {[-1, 1].map((side) => (
-          <group
-            key={`leg-${side}`}
-            ref={
-              side === -1
-                ? leftLeg
-                : rightLeg
-            }
-            position={[side * 0.26, 0.73, 0]}
-          >
-            <mesh position={[0, -0.38, 0]} castShadow>
-              <boxGeometry args={[0.35, 0.73, 0.47]} />
-              <meshStandardMaterial color="#243353" />
-            </mesh>
-          </group>
-        ))}
+        <Character shirt={shirtColor} leftArmRef={leftArm} rightArmRef={rightArm} leftLegRef={leftLeg} rightLegRef={rightLeg} />
 
         {/* Cosmetic accessories */}
         {equipped !== 'none' && (

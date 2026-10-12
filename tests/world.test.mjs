@@ -7,10 +7,12 @@ async function source(entry) {
   const [{ output }] = Array.isArray(result) ? result : [result];
   return import(`data:text/javascript;base64,${Buffer.from(output.find(p => p.type === 'chunk').code).toString('base64')}`);
 }
-const { WORLD_RADIUS, blocked } = await source('src/game/world.ts');
+const { WORLD_RADIUS, SPAWN, GROVE, blocked } = await source('src/game/world.ts');
 const { MISSIONS, CONTRACTS, currentTask, validateCampaign, loadCampaign } = await source('src/game/campaign.ts');
 test('all campaign and courier targets are reachable from spawn through collision geometry', () => {
-  const seen = new Set(['0,0']), queue = [[0, 0]];
+  const start = [Math.round(SPAWN.x), Math.round(SPAWN.z)];
+  assert.equal(blocked(...start), false);
+  const seen = new Set([start.join(',')]), queue = [start];
   for (let i = 0; i < queue.length; i++) {
     const [x, z] = queue[i];
     for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -19,10 +21,12 @@ test('all campaign and courier targets are reachable from spawn through collisio
     }
   }
   for (const p of [...MISSIONS, ...CONTRACTS.flatMap(c => [c.from, c.to])]) assert.ok(seen.has(`${p.x},${p.z}`), `unreachable: ${JSON.stringify(p)}`);
+  assert.ok(seen.has(`${GROVE.x},${GROVE.z}`), 'Grove connects to the city');
   assert.ok(seen.size > 18000);
   assert.equal(blocked(WORLD_RADIUS + 1, 0), true);
   assert.equal(blocked(40, 80), true, 'cannot walk into harbor water');
   assert.equal(blocked(0, 82), false, 'pier is accessible');
+  assert.equal(blocked(0, 94), true, 'cannot walk off the end of the pier');
 });
 test('campaign persists valid progress and rejects corrupt imported values', () => {
   assert.deepEqual(validateCampaign({ step: 9, deliveries: 2, extra: true }), { step: 9, deliveries: 2 });

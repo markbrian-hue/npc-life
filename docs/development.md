@@ -130,3 +130,25 @@ Focused browser reruns can use `NPC_CITY_START_AT=9` for the courier/persistence
 ![City journal and five-district map](city-journal.png)
 
 ![Two residents in a multiplayer room](multiplayer-world.png)
+
+## Grove & Motors — 12 October 2026
+
+Current world bounds are ±136 (previous City Revival bounds: ±88). Grove Street is an original cul-de-sac neighborhood inspired by the requested early-3D California street aesthetic, connected to both north and west roads. Both navigation maps now include its roads and rotated building footprints.
+
+- `shared/world.mjs` is the common source for spawn, buildings, rotated collision footprints, streets and props. `src/game/world.ts` re-exports it for existing imports.
+- `Character.tsx` shares defined facial features, hair, male/female variants, hands, shoes and animated limbs across local players, peers and citizens. Citizens pause before facing nearby players rather than walking backwards.
+- `GroveNeighborhood.tsx` adds homes, palms, lane markings, signage and the fountain roundabout island. The arrival spawn is on the sidewalk. Cars cannot enter the island.
+- `shared/vehicles.mjs` supplies six cars, a three-circle body hull, small collision substeps, bicycle-model steering, speed-sensitive steering range, drag, reverse braking, road/off-road speed limits and safe door exits.
+- `Vehicles.tsx` handles local controls, solo simulation, replicated interpolation and the speed HUD. R enters/exits; W/S accelerates/reverses; A/D steers; Space brakes. Opening a dialog clears the local driving input. Changing sessions while driving returns the player to the safe arrival point.
+- The room server owns vehicle positions and occupancy, accepts controls instead of client car transforms, rejects contested/distant entry and moving/blocked exits, and releases cars when a driver leaves or times out. Pedestrian movement remains client-relayed; progression remains personal.
+- Cars are an arcade driving simulation, not a full rigid-body engine: no suspension, crash deformation, passenger seats or vehicle/pedestrian knockback. Vehicle state is transient and resets with the solo page/room lifecycle. No new dependency or persistent save key.
+
+### Verification for this update
+
+- 20 Node tests pass, including existing saves/menu tests, campaign and courier reachability from the new spawn, Grove access, car parking/exits, braking/reverse, frame-rate consistency, anti-tunnelling hull collision, and a real HTTP multiplayer ownership/driving/disconnect test.
+- TypeScript and production build pass; the existing large-bundle warning remains.
+- `git diff --check` passes.
+- Browser regression launch was attempted with the installed Chromium but stopped by the environment (`socket() failed: Operation not permitted`). No fresh browser gameplay, two-browser driving, screenshots, mobile visual review, audible audio or hardware performance claims are made for this update. Earlier verification sections and screenshots describe earlier commits.
+- The city browser test driver now plans collision-aware routes around the fountain and parked cars. Run `npm run test:browser` and `npm run test:city` on a machine with Playwright/Chromium available.
+
+Manual follow-up: walk from arrivals to the sedan east of Gary, enter with R, accelerate/steer/brake, stop and exit; repeat in a shared room with a second browser, verify exclusive ownership and remote car motion, open a menu while driving, leave while seated, tour Grove and check character/prop appearance.

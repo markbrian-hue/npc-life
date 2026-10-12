@@ -67,3 +67,5 @@
 @media (max-width: 500px) {
   .game-shell .alpha8-minimap { bottom: auto !important; height: auto !important; }
 }
+
+.vehicle-hud{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:15;display:grid;gap:6px;min-width:240px;max-width:90vw;padding:12px 18px;background:#26372eee;color:#f0dfb7;border:2px solid #b5a173;box-shadow:4px 4px 0 #14231d;font:12px monospace;pointer-events:none}.vehicle-hud strong{font-size:26px;color:#c9dba5}.vehicle-hud small{font-size:12px}.vehicle-hud b{letter-spacing:2px;text-transform:uppercase}

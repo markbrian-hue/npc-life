@@ -1,18 +1,20 @@
+import { Character } from './Character';
+import { GroveNeighborhood } from './GroveNeighborhood';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { DirectionalLight, Object3D } from 'three';
 
 import {
-  BENCHES, BUILDINGS, GARY, LAMP_POSTS, PARKED_CARS,
+  BENCHES, BUILDINGS, GARY, LAMP_POSTS,
   PIGEONS, PLANTERS, TREES, WORLD_RADIUS, type BuildingDef,
 } from './world';
 
 import {
-  CarModel, Bench, StreetLamp, Planter, BusStop, Fountain,
+  Bench, StreetLamp, Planter, BusStop, Fountain,
   Bin, Hydrant,
 } from './CityProps';
 
-import { CityTraffic } from './CityTraffic';
+
 
 function Building({
   data,
@@ -25,11 +27,11 @@ function Building({
 
   const floorHeights = Array.from(
     { length: Math.ceil(h / 2.7) },
-    (_, i) => 3.45 + i * 2.48
+    (_, i) => (data.kind === 'bungalow' ? 1.9 : 3.45) + i * 2.48
   ).filter((y) => y + 0.8 < h);
 
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} rotation={[0, data.rotation || 0, 0]}>
       <mesh castShadow receiveShadow position={[0, h / 2, 0]}>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color={color} roughness={0.91} />
@@ -41,6 +43,10 @@ function Building({
         <meshStandardMaterial color="#a8a49c" roughness={1} />
       </mesh>
 
+      {data.kind === 'bungalow' && <>
+        {[-1, 1].map(side => <mesh key={side} castShadow position={[0, h + .8, side * d / 4]} rotation={[side * -.32, 0, 0]}><boxGeometry args={[w + .9, .22, d / 2 + .8]} /><meshStandardMaterial color={roof} /></mesh>)}
+        <mesh receiveShadow position={[0, .09, d / 2 + 2]}><boxGeometry args={[2.2, .18, 4]} /><meshStandardMaterial color="#c8bdaa" /></mesh>
+      </>}
       {/* Roof and rooftop equipment */}
       <mesh castShadow position={[0, h + 0.26, 0]}>
         <boxGeometry args={[w + 0.38, 0.53, d + 0.38]} />
@@ -158,8 +164,9 @@ function Tree({
         <meshStandardMaterial color="#795a41" roughness={1} />
       </mesh>
 
+      {[-1, 1].map(side => <mesh key={side} castShadow position={[side * .38, 2.55, 0]} rotation={[0, 0, side * -.65]}><cylinderGeometry args={[.09, .17, 1.5, 7]} /><meshStandardMaterial color="#76573f" /></mesh>)}
       <mesh castShadow position={[0, 3.33, 0]}>
-        <dodecahedronGeometry args={[1.56, 0]} />
+        <icosahedronGeometry args={[1.56, 1]} />
         <meshStandardMaterial
           color={dark}
           flatShading
@@ -233,28 +240,7 @@ function Pigeon({
 function GaryNPC() {
   return (
     <group position={[GARY.x, 0, GARY.z]}>
-      <mesh castShadow position={[0, 1.2, 0]}>
-        <boxGeometry args={[1, 1.45, 0.6]} />
-        <meshStandardMaterial color="#df8c5a" />
-      </mesh>
-
-      <mesh castShadow position={[0, 2.28, 0]}>
-        <sphereGeometry args={[0.65, 10, 8]} />
-        <meshStandardMaterial color="#f4c69a" />
-      </mesh>
-
-      <mesh castShadow position={[0, 2.75, 0]}>
-        <cylinderGeometry args={[0.6, 0.6, 0.28, 10]} />
-        <meshStandardMaterial color="#473c52" />
-      </mesh>
-
-      {[-0.25, 0.25].map((offset) => (
-        <mesh key={offset} position={[offset, 2.35, 0.56]}>
-          <sphereGeometry args={[0.07, 8, 8]} />
-          <meshBasicMaterial color="#24262a" />
-        </mesh>
-      ))}
-
+      <Character shirt="#df8c5a" hair="#62534d" style={2} />
       <mesh position={[0, 3.52, 0]} rotation={[0, 0, Math.PI]}>
         <coneGeometry args={[0.35, 0.8, 6]} />
         <meshStandardMaterial
@@ -264,16 +250,6 @@ function GaryNPC() {
         />
       </mesh>
 
-      {[-0.25, 0.25].map((offset) => (
-        <mesh
-          key={offset}
-          castShadow
-          position={[offset, 0.38, 0]}
-        >
-          <boxGeometry args={[0.34, 0.77, 0.5]} />
-          <meshStandardMaterial color="#344c75" />
-        </mesh>
-      ))}
     </group>
   );
 }
@@ -314,9 +290,9 @@ function GroundAndRoads() {
           <group key={`${side}-${half}`}>
             <mesh
               receiveShadow
-              position={[side * 5.85, -0.064, half * 48]}
+              position={[side * 5.85, -0.064, half > 0 ? 44 : -75]}
             >
-              <boxGeometry args={[2.65, 0.12, 77]} />
+              <boxGeometry args={[2.65, 0.12, half > 0 ? 60 : 122]} />
               <meshStandardMaterial
                 color="#c9c5b9"
                 roughness={1}
@@ -325,9 +301,9 @@ function GroundAndRoads() {
 
             <mesh
               receiveShadow
-              position={[half * 48, -0.064, side * 5.85]}
+              position={[half * 75, -0.064, side * 5.85]}
             >
-              <boxGeometry args={[77, 0.12, 2.65]} />
+              <boxGeometry args={[122, 0.12, 2.65]} />
               <meshStandardMaterial
                 color="#c9c5b9"
                 roughness={1}
@@ -343,7 +319,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.025, 0]}
       >
-        <circleGeometry args={[8.3, 48]} />
+        <circleGeometry args={[14, 64]} />
         <meshStandardMaterial color="#e2cfac" roughness={1} />
       </mesh>
 
@@ -351,8 +327,8 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.017, 0]}
       >
-        <ringGeometry args={[7.65, 8.15, 48]} />
-        <meshStandardMaterial color="#c7a981" side={2} />
+        <ringGeometry args={[5.5, 12, 64]} />
+        <meshStandardMaterial color="#586166" side={2} />
       </mesh>
     </>
   );
@@ -361,7 +337,7 @@ function GroundAndRoads() {
 function LaneMarkings() {
   return (
     <>
-      {Array.from({ length: 35 }, (_, i) => -85 + i * 5).map((v) => (
+      {Array.from({ length: 53 }, (_, i) => -130 + i * 5).filter(v => Math.abs(v) > 15).map((v) => (
         <group key={v}>
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
@@ -373,6 +349,7 @@ function LaneMarkings() {
 
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
+            visible={v < 74}
             position={[0, -0.027, v]}
           >
             <planeGeometry args={[0.13, 2.3]} />
@@ -382,7 +359,7 @@ function LaneMarkings() {
       ))}
 
       {/* Crossings */}
-      {[-11, 11].flatMap((v) =>
+      {[-18, 18].flatMap((v) =>
         Array.from({ length: 7 }, (_, i) => (
           <group key={`${v}-${i}`}>
             <mesh position={[v + (i - 3) * 0.54, -0.021, 0]}>
@@ -456,16 +433,6 @@ export const City = memo(function City({ caught }: { caught: number[] }) {
         />
       ))}
 
-      {PARKED_CARS.map((car) => (
-        <group
-          key={`${car.x}-${car.z}`}
-          position={[car.x, 0, car.z]}
-          rotation={[0, car.rotation, 0]}
-        >
-          <CarModel color={car.color} />
-        </group>
-      ))}
-
       {BENCHES.map((bench) => (
         <Bench
           key={`${bench.x}-${bench.z}`}
@@ -496,7 +463,7 @@ export const City = memo(function City({ caught }: { caught: number[] }) {
       <Hydrant x={-10} z={8.5} />
       <Hydrant x={11} z={-8.5} />
 
-      <CityTraffic />
+      <GroveNeighborhood />
 
       <GaryNPC />
 

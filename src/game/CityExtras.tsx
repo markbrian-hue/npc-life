@@ -1,3 +1,4 @@
+import { Character } from './Character';
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
@@ -7,13 +8,13 @@ import type {
 } from './Player';
 
 export const SHOP_POSITION = {
-  x: -6,
-  z: -3,
+  x: -8,
+  z: -16,
 };
 
 export const CITIZEN_POSITION = {
-  x: 6,
-  z: -4,
+  x: 8,
+  z: -16,
 };
 
 type RoutePoint = readonly [
@@ -110,150 +111,7 @@ function CitizenBody({
   leftLegRef?: React.RefObject<THREE.Group | null>;
   rightLegRef?: React.RefObject<THREE.Group | null>;
 }) {
-  return (
-    <group ref={bodyRef}>
-      <mesh
-        castShadow
-        position={[0, 1.1, 0]}
-      >
-        <boxGeometry
-          args={[0.9, 1.28, 0.55]}
-        />
-        <meshStandardMaterial
-          color={shirt}
-          roughness={0.94}
-        />
-      </mesh>
-
-      <mesh
-        castShadow
-        position={[0, 2.1, 0]}
-      >
-        <sphereGeometry
-          args={[0.53, 12, 10]}
-        />
-        <meshStandardMaterial
-          color="#f4c49d"
-        />
-      </mesh>
-
-      <mesh
-        castShadow
-        position={[0, 2.53, 0]}
-      >
-        <sphereGeometry
-          args={[
-            0.53,
-            12,
-            8,
-            0,
-            Math.PI * 2,
-            0,
-            Math.PI / 2,
-          ]}
-        />
-        <meshStandardMaterial color={hair} />
-      </mesh>
-
-      {[-0.19, 0.19].map((offset) => (
-        <mesh
-          key={offset}
-          position={[
-            offset,
-            2.18,
-            0.5,
-          ]}
-        >
-          <sphereGeometry
-            args={[0.055, 8, 8]}
-          />
-          <meshBasicMaterial
-            color="#1b2531"
-          />
-        </mesh>
-      ))}
-
-      <group
-        ref={leftArmRef}
-        position={[-0.56, 1.58, 0]}
-      >
-        <mesh
-          castShadow
-          position={[0, -0.48, 0]}
-        >
-          <boxGeometry
-            args={[0.23, 0.95, 0.3]}
-          />
-          <meshStandardMaterial
-            color="#f4c49d"
-          />
-        </mesh>
-      </group>
-
-      <group
-        ref={rightArmRef}
-        position={[0.56, 1.58, 0]}
-      >
-        <mesh
-          castShadow
-          position={[0, -0.48, 0]}
-        >
-          <boxGeometry
-            args={[0.23, 0.95, 0.3]}
-          />
-          <meshStandardMaterial
-            color="#f4c49d"
-          />
-        </mesh>
-      </group>
-
-      <group
-        ref={leftLegRef}
-        position={[-0.22, 0.72, 0]}
-      >
-        <mesh
-          castShadow
-          position={[0, -0.32, 0]}
-        >
-          <boxGeometry
-            args={[0.31, 0.66, 0.4]}
-          />
-          <meshStandardMaterial
-            color={pants}
-          />
-        </mesh>
-      </group>
-
-      <group
-        ref={rightLegRef}
-        position={[0.22, 0.72, 0]}
-      >
-        <mesh
-          castShadow
-          position={[0, -0.32, 0]}
-        >
-          <boxGeometry
-            args={[0.31, 0.66, 0.4]}
-          />
-          <meshStandardMaterial
-            color={pants}
-          />
-        </mesh>
-      </group>
-
-      <mesh
-        position={[0, 2.98, 0]}
-        rotation={[0, 0, Math.PI]}
-      >
-        <coneGeometry args={[0.18, 0.42, 6]} />
-        <meshStandardMaterial
-          color="#ffe27c"
-          emissive="#b78710"
-          emissiveIntensity={0.22}
-        />
-      </mesh>
-    </group>
-  );
+  return <Character shirt={shirt} hair={hair} pants={pants} gender={shirt === '#ab88bf' || shirt === '#dc9b8b' ? 'woman' : 'man'} bodyRef={bodyRef} leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />;
 }
 
 function StaticCitizen({
@@ -438,12 +296,7 @@ function WalkingCitizen({
         actor.position.x += moveX;
         actor.position.z += moveZ;
 
-        const heading = reactingToPlayer
-          ? Math.atan2(dxPlayer, dzPlayer)
-          : Math.atan2(
-              moveX,
-              moveZ
-            );
+        const heading = Math.atan2(moveX, moveZ);
 
         actor.rotation.y = rotateToward(
           actor.rotation.y,
@@ -547,7 +400,7 @@ function WalkingCitizen({
 
 function ShopStand() {
   return (
-    <group position={[-6, 0, -6]}>
+    <group position={[-8, 0, -18]}>
       <mesh
         position={[0, 0.75, 0]}
         castShadow

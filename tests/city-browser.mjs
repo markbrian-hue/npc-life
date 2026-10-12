@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { walkingRoute } from './pathing.mjs';
 import { mkdir } from 'node:fs/promises';
 import { createServer } from 'vite';
 import { createGameServer } from '../server/multiplayer.mjs';
@@ -47,15 +48,14 @@ try {
   }
   async function walkTo(x, z) {
     const start = await page.evaluate(() => window.__position);
-    const count = Math.max(1, Math.ceil(Math.hypot(x - start.x, z - start.z) / 5));
-    for (let i = 1; i <= count; i++) await walkSegment(start.x + (x - start.x) * i / count, start.z + (z - start.z) * i / count);
+    for (const [px,pz] of walkingRoute(start, {x,z})) await walkSegment(px,pz);
   }
   const progress = () => page.evaluate(() => JSON.parse(localStorage.getItem('npc-life:city-revival-v1') || '{"step":0,"deliveries":0}'));
   // Real keyboard movement through all five districts; no teleport debug hooks.
   const routes = [
     [[0,-11],[6,-11]], [[0,-11],[0,-46],[-7,-46]], [[0,-46],[0,-60],[6,-60]],
-    [[0,-60],[0,61],[-6,61]], [[0,61],[0,0],[60,0],[60,6]], [[60,0],[70,0],[70,-6]],
-    [[70,0],[-60,0],[-60,-6]], [[-60,0],[0,0],[0,70],[6,70]], [[0,70],[0,-11],[6,-11]],
+    [[0,-60],[0,61],[-6,61]], [[0,61],[0,9],[60,0],[60,6]], [[60,0],[70,0],[70,-6]],
+    [[70,0],[-60,0],[-60,-6]], [[-60,0],[0,9],[0,70],[6,70]], [[0,70],[0,-11],[6,-11]],
   ];
   if (!process.env.NPC_CITY_ONLY_NETWORK) {
   for (let i = Number(process.env.NPC_CITY_START_AT || 0); i < routes.length; i++) {
@@ -73,11 +73,11 @@ try {
   }
   assert.equal(await page.evaluate(() => localStorage.getItem('npc-life:coins-v1')), '515');
   // Complete a repeatable courier delivery.
-  for (const [x,z] of [[0,-11],[0,0],[60,0],[60,6]]) await walkTo(x,z);
+  for (const [x,z] of [[0,-11],[0,9],[60,0],[60,6]]) await walkTo(x,z);
   await page.keyboard.down('q'); await page.waitForTimeout(2300); await page.keyboard.up('q');
   assert.equal((await progress()).deliveries, 0);
   assert.equal(await page.evaluate(() => localStorage.getItem('npc-life:coins-v1')), '515');
-  for (const [x,z] of [[60,0],[0,0],[0,-60],[6,-60]]) await walkTo(x,z);
+  for (const [x,z] of [[60,0],[0,9],[0,-60],[6,-60]]) await walkTo(x,z);
   await page.keyboard.down('q'); await page.waitForFunction(() => JSON.parse(localStorage.getItem('npc-life:city-revival-v1')).deliveries === 1); await page.keyboard.up('q');
   assert.equal(await page.evaluate(() => localStorage.getItem('npc-life:coins-v1')), '560');
   await page.reload(); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape');
@@ -97,7 +97,8 @@ try {
   await guest.getByRole('button', { name: 'Return to city' }).click();
   const positionBefore = await page.evaluate(() => window.__position);
   await guest.waitForTimeout(300);
-  await guest.keyboard.down('w'); await guest.waitForFunction(() => Math.hypot(window.__position.x, window.__position.z) > 2); await guest.keyboard.up('w'); await guest.keyboard.press('b');
+  const guestStart = await guest.evaluate(() => window.__position);
+  await guest.keyboard.down('w'); await guest.waitForFunction(p => Math.hypot(window.__position.x-p.x, window.__position.z-p.z) > 1, guestStart); await guest.keyboard.up('w'); await guest.keyboard.press('b');
   await page.getByText('WAVING', { exact: true }).waitFor();
   const positionAfter = await page.evaluate(() => window.__position);
   assert.ok(Math.hypot(positionAfter.x-positionBefore.x, positionAfter.z-positionBefore.z) < .05, 'host dialog locks only host');

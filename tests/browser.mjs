@@ -186,6 +186,7 @@ try {
       await page.waitForTimeout(180);
     }
   }
+  await walkTo(-6, 16);
   await walkTo(-6, -3);
   await page.getByRole('button', { name: 'E Browse the Stupid Shop', exact: true }).click();
   await page.getByRole('dialog', { name: 'Stupid Shop' }).waitFor();

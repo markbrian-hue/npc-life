@@ -1,3 +1,4 @@
+import { Character } from './Character';
 
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -235,93 +236,7 @@ function Citizen({
   return (
     <group ref={root} position={[npc.x, 0, npc.z]}>
       <group ref={body}>
-        {/* Shirt */}
-        <mesh castShadow position={[0, 1.15, 0]}>
-          <boxGeometry args={[0.9, 1.28, 0.52]} />
-          <meshStandardMaterial
-            color={npc.shirt}
-            roughness={0.92}
-          />
-        </mesh>
-
-        {/* Head */}
-        <mesh castShadow position={[0, 2.1, 0]}>
-          <sphereGeometry args={[0.49, 12, 9]} />
-          <meshStandardMaterial color="#eec49b" />
-        </mesh>
-
-        {/* Hair */}
-        <mesh castShadow position={[0, 2.47, -0.04]}>
-          <sphereGeometry
-            args={[
-              0.49,
-              12,
-              8,
-              0,
-              Math.PI * 2,
-              0,
-              Math.PI / 2,
-            ]}
-          />
-          <meshStandardMaterial
-            color={npc.hair}
-            roughness={1}
-          />
-        </mesh>
-
-        {/* Eyes */}
-        {[-0.19, 0.19].map((x) => (
-          <mesh
-            key={x}
-            position={[x, 2.15, 0.45]}
-          >
-            <sphereGeometry args={[0.055, 8, 7]} />
-            <meshBasicMaterial color="#242b36" />
-          </mesh>
-        ))}
-
-        {/* Arms */}
-        {[-1, 1].map((side) => (
-          <group
-            key={`arm${side}`}
-            ref={
-              side === -1
-                ? leftArm
-                : rightArm
-            }
-            position={[side * 0.56, 1.55, 0]}
-          >
-            <mesh
-              castShadow
-              position={[0, -0.47, 0]}
-            >
-              <boxGeometry args={[0.23, 0.94, 0.31]} />
-              <meshStandardMaterial color="#eec49b" />
-            </mesh>
-          </group>
-        ))}
-
-        {/* Legs */}
-        {[-1, 1].map((side) => (
-          <group
-            key={`leg${side}`}
-            ref={
-              side === -1
-                ? leftLeg
-                : rightLeg
-            }
-            position={[side * 0.23, 0.72, 0]}
-          >
-            <mesh
-              castShadow
-              position={[0, -0.34, 0]}
-            >
-              <boxGeometry args={[0.32, 0.68, 0.42]} />
-              <meshStandardMaterial color={npc.pants} />
-            </mesh>
-          </group>
-        ))}
-
+        <Character shirt={npc.shirt} hair={npc.hair} pants={npc.pants} gender={npc.id === 'gus' ? 'man' : 'woman'} skin={npc.id === 'nia' ? '#ae7959' : '#dbad88'} style={npc.id === 'dot' ? 2 : 1} leftArmRef={leftArm} rightArmRef={rightArm} leftLegRef={leftLeg} rightLegRef={rightLeg} />
         {/* Interaction marker */}
         <mesh
           position={[0, 3.1, 0]}

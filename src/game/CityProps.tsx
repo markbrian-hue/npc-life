@@ -1,10 +1,13 @@
 
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { BUS_STOP, FOUNTAIN } from './world';
 
-export function CarModel({ color = '#ba6660' }: { color?: string }) {
+export function CarModel({ color = '#ba6660', runtime }: { color?: string; runtime?: () => { speed:number;steer:number;braking:boolean } }) {
+  const wheels=useRef<(THREE.Group|null)[]>([]), lamps=useRef<(THREE.MeshStandardMaterial|null)[]>([]);
+  const cabin=useMemo(()=>{const shape=new THREE.Shape();shape.moveTo(-1.35,.91);shape.lineTo(-.87,1.58);shape.lineTo(.53,1.58);shape.lineTo(1.16,.91);shape.closePath();const geometry=new THREE.ExtrudeGeometry(shape,{depth:1.52,bevelEnabled:false});geometry.translate(0,0,-.76);return geometry;},[]);
+  useFrame((_,dt)=>{const c=runtime?.();if(!c)return;wheels.current.forEach((wheel,i)=>{if(wheel){wheel.rotation.y=i%2===1?c.steer:0;wheel.children.forEach(child=>{child.rotation.z-=c.speed*dt/.4;});}});lamps.current.forEach(lamp=>{if(lamp)lamp.emissiveIntensity=c.braking?2:.2;});});
   return (
     <group>
       <mesh castShadow position={[0, 0.67, 0]}>
@@ -16,17 +19,16 @@ export function CarModel({ color = '#ba6660' }: { color?: string }) {
         />
       </mesh>
 
-      <mesh castShadow position={[-0.2, 1.15, 0]}>
-        <boxGeometry args={[2.25, 0.7, 1.67]} />
+      <mesh castShadow geometry={cabin}>
         <meshStandardMaterial
-          color="#85a7b0"
+          color="#415f67"
           metalness={0.12}
           roughness={0.2}
         />
       </mesh>
 
-      <mesh castShadow position={[-0.2, 1.54, 0]}>
-        <boxGeometry args={[2.38, 0.12, 1.74]} />
+      <mesh castShadow position={[-0.17, 1.6, 0]}>
+        <boxGeometry args={[1.48, 0.1, 1.61]} />
         <meshStandardMaterial
           color={color}
           metalness={0.25}
@@ -49,7 +51,7 @@ export function CarModel({ color = '#ba6660' }: { color?: string }) {
         </group>
       ))}
 
-      {[-1, 1].map((side) => (
+      {[-1, 1].map((side, sideIndex) => (
         <group key={side}>
           {/* Side mirrors */}
           <mesh position={[0.55, 1.13, side * 1.02]}>
@@ -61,11 +63,13 @@ export function CarModel({ color = '#ba6660' }: { color?: string }) {
           </mesh>
 
           {/* Tires and rims */}
-          {[-1.38, 1.4].map((x) => (
+          {[-1.38, 1.4].map((x, axle) => (
             <group
               key={x}
-              position={[x, 0.36, side * 0.94]}
+              ref={node => { wheels.current[sideIndex*2+axle]=node; }}
+              position={[x, 0.4, side * 0.94]}
             >
+              <group>
               <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
                 <cylinderGeometry args={[0.4, 0.4, 0.23, 12]} />
                 <meshStandardMaterial
@@ -85,6 +89,7 @@ export function CarModel({ color = '#ba6660' }: { color?: string }) {
                   roughness={0.3}
                 />
               </mesh>
+              </group>
             </group>
           ))}
 
@@ -102,6 +107,7 @@ export function CarModel({ color = '#ba6660' }: { color?: string }) {
           <mesh position={[-2.105, 0.73, side * 0.6]}>
             <boxGeometry args={[0.035, 0.2, 0.43]} />
             <meshStandardMaterial
+              ref={node=>{lamps.current[sideIndex]=node;}}
               color="#b64745"
               emissive="#5f0c0c"
               emissiveIntensity={0.2}
@@ -110,6 +116,13 @@ export function CarModel({ color = '#ba6660' }: { color?: string }) {
         </group>
       ))}
 
+      {[-1,1].map(side=><group key={`trim-${side}`}>
+        <mesh position={[0,.56,side*.938]}><boxGeometry args={[3.95,.075,.025]}/><meshStandardMaterial color="#c6c3ac" metalness={.7}/></mesh>
+        {[-.55,.55].map(x=><mesh key={x} position={[x,.83,side*.94]}><boxGeometry args={[.22,.055,.04]}/><meshStandardMaterial color="#d1cfb9" metalness={.7}/></mesh>)}
+        <mesh position={[side*2.09,.43,0]}><boxGeometry args={[.12,.14,1.84]}/><meshStandardMaterial color="#aaa997" metalness={.65}/></mesh>
+        <mesh position={[side*2.157,.64,0]}><boxGeometry args={[.018,.22,.52]}/><meshStandardMaterial color="#e2d8bc"/></mesh>
+      </group>)}
+      <mesh position={[2.13,.81,0]}><boxGeometry args={[.025,.15,.48]}/><meshStandardMaterial color="#303a39"/></mesh>
       <mesh position={[0, 0.39, 0.934]}>
         <boxGeometry args={[0.85, 0.07, 0.025]} />
         <meshStandardMaterial color="#46535e" />
@@ -142,15 +155,10 @@ export function Bench({
         </group>
       ))}
 
-      <mesh castShadow position={[0, 0.56, 0]}>
-        <boxGeometry args={[2.3, 0.12, 0.68]} />
-        <meshStandardMaterial color="#986945" />
-      </mesh>
 
-      <mesh castShadow position={[0, 1.03, -0.32]}>
-        <boxGeometry args={[2.3, 0.8, 0.11]} />
-        <meshStandardMaterial color="#986945" />
-      </mesh>
+
+      {[.83,1.05,1.27].map(y=><mesh key={y} castShadow position={[0,y,-.32]}><boxGeometry args={[2.3,.16,.1]}/><meshStandardMaterial color="#986945"/></mesh>)}
+      {[-1,1].map(side=><mesh key={side} position={[side*1.04,.82,0]}><boxGeometry args={[.09,.09,.68]}/><meshStandardMaterial color="#434a4d" metalness={.35}/></mesh>)}
 
       {[-0.92, 0.92].map((offset) => (
         <mesh key={offset} position={[offset, 0.28, 0]}>
@@ -235,7 +243,7 @@ export function Planter({
 
 export function BusStop() {
   return (
-    <group position={[BUS_STOP.x, 0, BUS_STOP.z]}>
+    <group position={[BUS_STOP.x, 0, BUS_STOP.z]} rotation={[0, BUS_STOP.rotation, 0]}>
       <mesh castShadow position={[0, 2, 0]}>
         <boxGeometry args={[3.7, 0.13, 1.7]} />
         <meshStandardMaterial
@@ -286,7 +294,7 @@ export function Fountain() {
   });
 
   return (
-    <group position={[FOUNTAIN.x, 0, FOUNTAIN.z]}>
+    <group position={[FOUNTAIN.x, 0, FOUNTAIN.z]} scale={1.3}>
       <mesh receiveShadow position={[0, 0.08, 0]}>
         <cylinderGeometry args={[2.2, 2.35, 0.16, 24]} />
         <meshStandardMaterial

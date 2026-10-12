@@ -70,9 +70,9 @@ export const DistrictWorld = memo(function DistrictWorld({ campaign, carrying }:
       </group>))}
     </group>))}
     {/* Harbor: actual shore, timber pier, moored boats and beacon. */}
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.04, 98]}><planeGeometry args={[260, 46]} /><meshStandardMaterial color="#578f9b" roughness={.3} metalness={.25} /></mesh>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.04, 111.5]}><planeGeometry args={[296, 73]} /><meshStandardMaterial color="#578f9b" roughness={.3} metalness={.25} /></mesh>
     <Block at={[0, -.02, 83]} size={[20, .24, 20]} color="#a89676" />
-    {[-1, 1].flatMap(side => Array.from({ length: 8 }, (_, i) => <Block key={`${side}${i}`} at={[side * (16 + i * 10), .3, 75]} size={[9.8, .7, .8]} color="#b5b7a0" />))}
+    {[-1, 1].flatMap(side => Array.from({ length: 13 }, (_, i) => <Block key={`${side}${i}`} at={[side * (16 + i * 10), .3, 75]} size={[9.8, .7, .8]} color="#b5b7a0" />))}
     {Array.from({ length: 12 }, (_, i) => <Block key={i} at={[0, .12, 75 + i * 1.1]} size={[20, .05, .06]} color="#7b725e" />)}
     {[-24, 27].map((x, i) => <group key={x} position={[x, 0, 84]} rotation={[0, i ? -.4 : .2, 0]}>
       <mesh position={[0, .5, 0]} scale={[1, .6, 2.3]}><cylinderGeometry args={[2, 1.2, 1.8, 6]} /><meshStandardMaterial color={i ? '#c38b72' : '#ddd6bb'} /></mesh>

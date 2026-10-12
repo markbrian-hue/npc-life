@@ -1,5 +1,5 @@
 import { DISTRICTS } from './campaign';
-import { WORLD_RADIUS } from './world';
+import { WORLD_RADIUS, GROVE } from './world';
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -140,10 +140,16 @@ export function WorldMinimap({ target }: { target: { x: number; z: number } }) {
               strokeDasharray="7 7"
             />
 
-            {/* Actual building footprints */}
+            <path d={`M ${scale(GROVE.x)} 168 V ${scale(GROVE.z)} H 168`} fill="none" stroke="#566c69" strokeWidth={8.5 * unit} />
+          <circle cx={scale(GROVE.x)} cy={scale(GROVE.z)} r={12 * unit} fill="#566c69" />
+          <text x={scale(GROVE.x)} y={scale(GROVE.z)-17} textAnchor="middle" fontSize="10" fill="#fff4d6">GROVE ST.</text>
+          <circle cx="168" cy="168" r={12 * unit} fill="#566c69" />
+          <circle cx="168" cy="168" r={5.5 * unit} fill="#84997a" />
+          {/* Actual building footprints */}
             {BUILDINGS.map((building, index) => (
               <rect
                 key={index}
+                transform={`rotate(${-(building.rotation || 0)*180/Math.PI} ${scale(building.x)} ${scale(building.z)})`}
                 x={scale(
                   building.x - building.w / 2
                 )}
