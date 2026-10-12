@@ -1,6 +1,8 @@
+
 import { Canvas } from '@react-three/fiber';
 import { useCallback, useEffect, useState } from 'react';
 import { City } from './game/City';
+import { CityActivities } from './game/CityActivities';
 import {
   CityExtras,
   CITIZEN_POSITION,
@@ -11,12 +13,23 @@ import {
   type CityEvent,
   type PlayerLocation,
 } from './game/Player';
+import {
+  DISCOVERIES,
+  DISCOVERY_REWARD,
+  GRASS_REWARD,
+  GRASS_SPOTS,
+  CITIZEN_LINES,
+  randomLine,
+  type Job,
+} from './game/interactions';
+import { playGameSound } from './game/gameAudio';
 import { distance2D, GARY, PIGEONS } from './game/world';
 
 const COIN_KEY = 'npc-life:coins-v1';
 const INVENTORY_KEY = 'npc-life:inventory-v1';
 const EQUIPPED_KEY = 'npc-life:equipped-v1';
 const JOBS_KEY = 'npc-life:jobs-v1';
+const DISCOVERIES_KEY = 'npc-life:discoveries-v1';
 
 const SHOP_ITEMS = [
   {
@@ -45,10 +58,7 @@ const SHOP_ITEMS = [
 function loadNumber(key: string): number {
   try {
     const raw = localStorage.getItem(key);
-
-    if (raw === null) return 0;
-
-    const value = Number(raw);
+    const value = raw === null ? 0 : Number(raw);
 
     return Number.isFinite(value) && value >= 0
       ? Math.floor(value)
@@ -69,19 +79,16 @@ function loadText(
   }
 }
 
-function loadInventory(): string[] {
+function loadList(key: string): string[] {
   try {
-    const value: unknown = JSON.parse(
-      localStorage.getItem(INVENTORY_KEY) || '[]'
+    const raw: unknown = JSON.parse(
+      localStorage.getItem(key) || '[]'
     );
 
-    return Array.isArray(value)
-      ? value.filter(
+    return Array.isArray(raw)
+      ? raw.filter(
           (item): item is string =>
-            typeof item === 'string' &&
-            SHOP_ITEMS.some(
-              (shopItem) => shopItem.id === item
-            )
+            typeof item === 'string'
         )
       : [];
   } catch {
@@ -89,20 +96,132 @@ function loadInventory(): string[] {
   }
 }
 
-type Nearby =
-  | { kind: 'gary' }
-  | { kind: 'pigeon'; index: number }
-  | { kind: 'shop' }
-  | { kind: 'citizen' }
-  | null;
+function loadInventory(): string[] {
+  return loadList(INVENTORY_KEY).filter((id) =>
+    SHOP_ITEMS.some((item) => item.id === id)
+  );
+}
 
-const NPC_QUOTES = [
-  'I have been standing here since the developers spawned me.',
-  'Do you think the sky is just a giant blue texture?',
-  'My financial advisor is a pigeon. He is unavailable.',
-  'I once worked for five minutes. Never again.',
-  'This city has six stores and zero functioning hospitals.',
-];
+type Nearby =
+  | { kind: 'gary'; label: string }
+  | { kind: 'shop'; label: string }
+  | { kind: 'citizen'; label: string }
+  | { kind: 'pigeon'; index: number; label: string }
+  | { kind: 'grass'; id: string; label: string }
+  | { kind: 'discovery'; id: string; label: string };
+
+function getNearby(
+  player: PlayerLocation,
+  job: Job,
+  caught: number[],
+  touched: string[]
+): Nearby | null {
+  const candidates: {
+    x: number;
+    z: number;
+    range: number;
+    target: Nearby;
+    priority: number;
+  }[] = [
+    {
+      ...GARY,
+      range: 3,
+      target: {
+        kind: 'gary',
+        label: 'Talk to Gary',
+      },
+      priority: 0,
+    },
+    {
+      ...SHOP_POSITION,
+      range: 3,
+      target: {
+        kind: 'shop',
+        label: 'Browse the Stupid Shop',
+      },
+      priority: 0,
+    },
+    {
+      ...CITIZEN_POSITION,
+      range: 3,
+      target: {
+        kind: 'citizen',
+        label: 'Talk to Marty',
+      },
+      priority: 0,
+    },
+  ];
+
+  if (job === 'pigeon') {
+    PIGEONS.forEach((point, index) => {
+      if (!caught.includes(index)) {
+        candidates.push({
+          ...point,
+          range: 2.5,
+          target: {
+            kind: 'pigeon',
+            index,
+            label: 'Catch suspicious pigeon',
+          },
+          priority: 0,
+        });
+      }
+    });
+  }
+
+  if (job === 'grass') {
+    GRASS_SPOTS.forEach((spot) => {
+      if (!touched.includes(spot.id)) {
+        candidates.push({
+          ...spot,
+          range: 2.25,
+          target: {
+            kind: 'grass',
+            id: spot.id,
+            label: 'Touch suspicious grass',
+          },
+          priority: 0,
+        });
+      }
+    });
+  }
+
+  DISCOVERIES.forEach((place) =>
+    candidates.push({
+      x: place.x,
+      z: place.z,
+      range: place.range,
+      target: {
+        kind: 'discovery',
+        id: place.id,
+        label: place.label,
+      },
+      priority: 1,
+    })
+  );
+
+  const valid = candidates
+    .map((candidate) => ({
+      ...candidate,
+      distance: distance2D(
+        player.x,
+        player.z,
+        candidate.x,
+        candidate.z
+      ),
+    }))
+    .filter(
+      (candidate) =>
+        candidate.distance < candidate.range
+    )
+    .sort(
+      (a, b) =>
+        a.priority - b.priority ||
+        a.distance - b.distance
+    );
+
+  return valid[0]?.target || null;
+}
 
 export default function App() {
   const [coins, setCoins] = useState(() =>
@@ -120,15 +239,33 @@ export default function App() {
     loadNumber(JOBS_KEY)
   );
 
-  const [player, setPlayer] = useState<PlayerLocation>({
-    x: 0,
-    z: 0,
-  });
+  const [discovered, setDiscovered] =
+    useState<string[]>(() =>
+      loadList(DISCOVERIES_KEY).filter((id) =>
+        DISCOVERIES.some(
+          (place) => place.id === id
+        )
+      )
+    );
 
-  const [working, setWorking] = useState(false);
+  const [player, setPlayer] =
+    useState<PlayerLocation>({
+      x: 0,
+      z: 0,
+    });
+
+  const [job, setJob] = useState<Job>('none');
   const [caught, setCaught] = useState<number[]>([]);
+  const [touched, setTouched] = useState<string[]>([]);
+
   const [showHelp, setShowHelp] = useState(true);
   const [shopOpen, setShopOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const [dialogText, setDialogText] = useState(
+    randomLine(CITIZEN_LINES)
+  );
+
   const [emote, setEmote] = useState(false);
 
   const [cityEvent, setCityEvent] =
@@ -138,11 +275,13 @@ export default function App() {
     'Find Gary (orange shirt) and press E to get a job.'
   );
 
+  // Existing save-data keys are preserved.
+
   useEffect(() => {
     try {
       localStorage.setItem(COIN_KEY, String(coins));
     } catch {
-      // Storage can be disabled.
+      // Storage may be disabled.
     }
   }, [coins]);
 
@@ -153,7 +292,7 @@ export default function App() {
         JSON.stringify(inventory)
       );
     } catch {
-      // Storage can be disabled.
+      // Storage may be disabled.
     }
   }, [inventory]);
 
@@ -161,7 +300,7 @@ export default function App() {
     try {
       localStorage.setItem(EQUIPPED_KEY, equipped);
     } catch {
-      // Storage can be disabled.
+      // Storage may be disabled.
     }
   }, [equipped]);
 
@@ -172,14 +311,27 @@ export default function App() {
         String(jobsDone)
       );
     } catch {
-      // Storage can be disabled.
+      // Storage may be disabled.
     }
   }, [jobsDone]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(
+        DISCOVERIES_KEY,
+        JSON.stringify(discovered)
+      );
+    } catch {
+      // Storage may be disabled.
+    }
+  }, [discovered]);
+
+  // Existing city events, now with sounds.
+
+  useEffect(() => {
     let count = 0;
 
-    let end:
+    let ending:
       | ReturnType<typeof setTimeout>
       | undefined;
 
@@ -199,11 +351,14 @@ export default function App() {
           : 'CITY ALERT: A very large duck has entered the city.'
       );
 
-      if (end) clearTimeout(end);
+      playGameSound('event');
 
-      end = setTimeout(() => {
-        setCityEvent('none');
-      }, 18000);
+      if (ending) clearTimeout(ending);
+
+      ending = setTimeout(
+        () => setCityEvent('none'),
+        18000
+      );
     };
 
     const first = setTimeout(startEvent, 35000);
@@ -213,139 +368,204 @@ export default function App() {
       clearTimeout(first);
       clearInterval(cycle);
 
-      if (end) clearTimeout(end);
+      if (ending) clearTimeout(ending);
     };
   }, []);
 
   const onMove = useCallback(
-    (location: PlayerLocation) => {
-      setPlayer(location);
+    (position: PlayerLocation) => {
+      setPlayer(position);
     },
     []
   );
 
-  let nearby: Nearby = null;
+  const nearby = getNearby(
+    player,
+    job,
+    caught,
+    touched
+  );
 
-  if (
-    distance2D(
-      player.x,
-      player.z,
-      GARY.x,
-      GARY.z
-    ) < 3
-  ) {
-    nearby = { kind: 'gary' };
-  } else if (
-    distance2D(
-      player.x,
-      player.z,
-      SHOP_POSITION.x,
-      SHOP_POSITION.z
-    ) < 3
-  ) {
-    nearby = { kind: 'shop' };
-  } else if (
-    distance2D(
-      player.x,
-      player.z,
-      CITIZEN_POSITION.x,
-      CITIZEN_POSITION.z
-    ) < 3
-  ) {
-    nearby = { kind: 'citizen' };
-  } else if (working) {
-    for (
-      let index = 0;
-      index < PIGEONS.length;
-      index++
-    ) {
-      if (
-        !caught.includes(index) &&
-        distance2D(
-          player.x,
-          player.z,
-          PIGEONS[index].x,
-          PIGEONS[index].z
-        ) < 2.5
-      ) {
-        nearby = {
-          kind: 'pigeon',
-          index,
-        };
-        break;
-      }
-    }
-  }
+  // Central interaction handler.
 
   const interact = useCallback(() => {
-    if (!nearby || shopOpen) return;
+    if (!nearby || shopOpen || dialogOpen) return;
 
     if (nearby.kind === 'shop') {
+      playGameSound('interact');
       setShopOpen(true);
       return;
     }
 
     if (nearby.kind === 'citizen') {
-      const quote =
-        NPC_QUOTES[
-          Math.floor(
-            Math.random() * NPC_QUOTES.length
-          )
-        ];
-
-      setToast(`Random Citizen: ${quote}`);
+      playGameSound('talk');
+      setDialogText(randomLine(CITIZEN_LINES));
+      setDialogOpen(true);
       return;
     }
 
     if (nearby.kind === 'gary') {
-      if (working) {
-        setToast(
-          'Gary: Stop standing here. The pigeons are literally right there.'
-        );
-      } else {
-        setCaught([]);
-        setWorking(true);
+      if (job !== 'none') {
+        playGameSound('talk');
 
         setToast(
-          'Gary: These three pigeons owe me money. Catch them. Reward: 75 coins.'
+          job === 'pigeon'
+            ? 'Gary: Stop standing here. The pigeons are literally right there.'
+            : 'Gary: You are touching grass instead of earning a salary? Respect.'
+        );
+      } else {
+        playGameSound('interact');
+        setCaught([]);
+        setJob('pigeon');
+
+        setToast(
+          'Gary: These three pigeons owe me money. Catch them. Reward: 75 Coins.'
         );
       }
 
       return;
     }
 
-    const next = [...caught, nearby.index];
-    setCaught(next);
+    // Pigeon Debt collection.
 
-    if (next.length === PIGEONS.length) {
-      setCoins((old) => old + 75);
-      setJobsDone((old) => old + 1);
-      setWorking(false);
+    if (nearby.kind === 'pigeon') {
+      const next = [...caught, nearby.index];
+      setCaught(next);
 
-      setToast(
-        'JOB COMPLETE: +75 coins! Gary still refuses to explain pigeon debt.'
-      );
-    } else {
-      setToast(
-        `Pigeon secured! (${next.length}/${PIGEONS.length}). It seems offended.`
-      );
+      if (next.length === PIGEONS.length) {
+        setCoins((value) => value + 75);
+        setJobsDone((value) => value + 1);
+        setJob('none');
+
+        playGameSound('job');
+
+        setToast(
+          'JOB COMPLETE: +75 Coins! Gary refuses to explain pigeon debt.'
+        );
+      } else {
+        playGameSound('coin');
+
+        setToast(
+          `Pigeon secured (${next.length}/${PIGEONS.length}). It seems offended.`
+        );
+      }
+
+      return;
     }
-  }, [nearby, working, caught, shopOpen]);
 
-  const buyOrEquip = (
+    // New Grass Toucher job.
+
+    if (nearby.kind === 'grass') {
+      const next = [...touched, nearby.id];
+      setTouched(next);
+
+      if (next.length === GRASS_SPOTS.length) {
+        setCoins(
+          (value) => value + GRASS_REWARD
+        );
+
+        setJobsDone((value) => value + 1);
+        setJob('none');
+
+        playGameSound('job');
+
+        setToast(
+          `CERTIFIED GRASS TOUCHER! +${GRASS_REWARD} Coins. You have officially gone outside.`
+        );
+      } else {
+        playGameSound('coin');
+
+        setToast(
+          `Grass thoroughly touched (${next.length}/${GRASS_SPOTS.length}). Strange career choice.`
+        );
+      }
+
+      return;
+    }
+
+    // Street discoveries: one-time coin rewards.
+
+    const place = DISCOVERIES.find(
+      (entry) => entry.id === nearby.id
+    );
+
+    if (!place) return;
+
+    const firstTime =
+      !discovered.includes(place.id);
+
+    if (firstTime) {
+      setDiscovered((items) => [
+        ...items,
+        place.id,
+      ]);
+
+      setCoins(
+        (value) => value + DISCOVERY_REWARD
+      );
+
+      playGameSound('coin');
+    } else {
+      playGameSound('interact');
+    }
+
+    setToast(
+      `${randomLine(place.lines)}${
+        firstTime
+          ? ` DISCOVERED! +${DISCOVERY_REWARD} Coins.`
+          : ''
+      }`
+    );
+  }, [
+    nearby,
+    shopOpen,
+    dialogOpen,
+    job,
+    caught,
+    touched,
+    discovered,
+  ]);
+
+  function beginGrassJob() {
+    if (job !== 'none') {
+      playGameSound('error');
+
+      setDialogText(
+        'Finish your current job first. We only allow one useless career at a time.'
+      );
+
+      return;
+    }
+
+    setTouched([]);
+    setJob('grass');
+    setDialogOpen(false);
+
+    setToast(
+      'Marty: Find and touch three suspicious grass patches. Reward: 45 Coins.'
+    );
+
+    playGameSound('interact');
+  }
+
+  // Existing cosmetic shop.
+
+  function buyOrEquip(
     item: (typeof SHOP_ITEMS)[number]
-  ) => {
+  ) {
     if (inventory.includes(item.id)) {
-      setEquipped((old) =>
-        old === item.id ? 'none' : item.id
+      setEquipped(
+        (old) =>
+          old === item.id ? 'none' : item.id
       );
 
       setToast(
         equipped === item.id
           ? `${item.name} unequipped.`
-          : `${item.name} equipped. Looking ridiculous!`
+          : `${item.name} equipped!`
       );
 
+      playGameSound('interact');
       return;
     }
 
@@ -353,75 +573,101 @@ export default function App() {
       setToast(
         `You need ${
           item.price - coins
-        } more coins. Return to your terrible job.`
+        } more Coins. Return to your terrible job.`
       );
 
+      playGameSound('error');
       return;
     }
 
-    setCoins((old) => old - item.price);
-    setInventory((old) => [...old, item.id]);
+    setCoins(
+      (old) => old - item.price
+    );
+
+    setInventory((old) => [
+      ...old,
+      item.id,
+    ]);
+
     setEquipped(item.id);
 
     setToast(
       `Purchased ${item.name}! Your financial decisions are questionable.`
     );
-  };
+
+    playGameSound('coin');
+  }
+
+  const wave = useCallback(() => {
+    setEmote(true);
+    playGameSound('wave');
+
+    window.setTimeout(
+      () => setEmote(false),
+      1600
+    );
+  }, []);
+
+  // Keyboard interaction.
 
   useEffect(() => {
-    const onKeyDown = (
-      event: KeyboardEvent
-    ) => {
+    const key = (event: KeyboardEvent) => {
       if (event.repeat) return;
 
       if (event.code === 'Escape') {
         setShopOpen(false);
+        setDialogOpen(false);
         return;
       }
 
-      if (shopOpen) return;
+      if (shopOpen || dialogOpen) return;
 
-      if (event.code === 'KeyE') {
-        interact();
-      }
+      if (event.code === 'KeyE') interact();
 
       if (event.code === 'KeyH') {
-        setShowHelp((old) => !old);
+        setShowHelp(
+          (value) => !value
+        );
       }
 
-      if (event.code === 'KeyB') {
-        setEmote(true);
-
-        setTimeout(() => {
-          setEmote(false);
-        }, 1600);
-      }
+      if (event.code === 'KeyB') wave();
     };
 
-    window.addEventListener(
-      'keydown',
-      onKeyDown
-    );
+    window.addEventListener('keydown', key);
 
     return () => {
-      window.removeEventListener(
-        'keydown',
-        onKeyDown
-      );
+      window.removeEventListener('keydown', key);
     };
-  }, [interact, shopOpen]);
+  }, [
+    interact,
+    shopOpen,
+    dialogOpen,
+    wave,
+  ]);
 
-  const objective = working
-    ? `Catch the pigeons: ${caught.length} / ${PIGEONS.length}`
-    : 'Talk to Gary to get a ridiculous job';
+  const objective =
+    job === 'pigeon'
+      ? `Catch the pigeons: ${caught.length} / ${PIGEONS.length}`
+      : job === 'grass'
+        ? `Touch the grass patches: ${touched.length} / ${GRASS_SPOTS.length}`
+        : 'Talk to Gary or Marty to get a ridiculous job';
 
-  const eventTitle =
-    cityEvent === 'low-gravity'
-      ? 'LOW GRAVITY'
-      : 'GIANT DUCK INVASION';
+  const progress =
+    job === 'pigeon'
+      ? caught.length / PIGEONS.length
+      : job === 'grass'
+        ? touched.length / GRASS_SPOTS.length
+        : 0;
+
+  const reward =
+    job === 'grass'
+      ? GRASS_REWARD
+      : 75;
 
   return (
     <div className="game-shell">
+      {/* Existing 3D city plus new activity locations */}
+
       <Canvas
         shadows
         dpr={[1, 1.5]}
@@ -435,6 +681,8 @@ export default function App() {
       >
         <City caught={caught} />
 
+        <CityActivities touched={touched} />
+
         <CityExtras
           cityEvent={cityEvent}
           player={player}
@@ -445,9 +693,11 @@ export default function App() {
           equipped={equipped}
           emote={emote}
           cityEvent={cityEvent}
-          inputLocked={shopOpen}
+          inputLocked={shopOpen || dialogOpen}
         />
       </Canvas>
+
+      {/* Header */}
 
       <header className="game-header">
         <div className="branding">
@@ -457,10 +707,9 @@ export default function App() {
 
           <div>
             <h1>NPC LIFE</h1>
-
             <p>
               THE CITY OF IDIOTS{' '}
-              <span>•</span> ALPHA 0.3C
+              <span>•</span> ALPHA 0.4C
             </p>
           </div>
         </div>
@@ -481,6 +730,8 @@ export default function App() {
         </div>
       </header>
 
+      {/* Quest panel */}
+
       <section
         className="quest-panel"
         aria-live="polite"
@@ -490,9 +741,11 @@ export default function App() {
         </span>
 
         <h2>
-          {working
+          {job === 'pigeon'
             ? 'Operation: Pigeon Debt'
-            : 'Certified Unemployed'}
+            : job === 'grass'
+              ? 'Certified Grass Toucher'
+              : 'Certified Unemployed'}
         </h2>
 
         <p>{objective}</p>
@@ -500,32 +753,37 @@ export default function App() {
         <div className="quest-progress">
           <span
             style={{
-              width: `${
-                working
-                  ? (
-                      caught.length /
-                      PIGEONS.length
-                    ) * 100
-                  : 0
-              }%`,
+              width: `${progress * 100}%`,
             }}
           />
         </div>
 
         <div className="quest-footer">
           <span>JOB REWARD</span>
-          <strong>+75 ◆</strong>
+          <strong>+{reward} ◆</strong>
+        </div>
+
+        <div className="npc-discovery">
+          CITY FINDS: {discovered.length}/
+          {DISCOVERIES.length}
         </div>
       </section>
+
+      {/* Existing events */}
 
       {cityEvent !== 'none' && (
         <div
           className="event-banner"
           role="status"
         >
-          ⚠ CITY EVENT: {eventTitle}
+          ⚠ CITY EVENT:{' '}
+          {cityEvent === 'low-gravity'
+            ? 'LOW GRAVITY'
+            : 'GIANT DUCK INVASION'}
         </div>
       )}
+
+      {/* Minimap */}
 
       <div
         className="minimap"
@@ -554,7 +812,7 @@ export default function App() {
 
           <div
             className="mini-pin citizen-pin"
-            title="Citizen"
+            title="Marty"
           >
             ?
           </div>
@@ -567,10 +825,7 @@ export default function App() {
                   2,
                   Math.min(
                     98,
-                    (
-                      (player.x + 42) /
-                      84
-                    ) * 100
+                    ((player.x + 42) / 84) * 100
                   )
                 )
               }%`,
@@ -579,10 +834,7 @@ export default function App() {
                   2,
                   Math.min(
                     98,
-                    (
-                      (player.z + 42) /
-                      84
-                    ) * 100
+                    ((player.z + 42) / 84) * 100
                   )
                 )
               }%`,
@@ -596,6 +848,8 @@ export default function App() {
         </span>
       </div>
 
+      {/* Messages and interaction prompts */}
+
       <div
         className="center-message"
         aria-live="polite"
@@ -603,30 +857,25 @@ export default function App() {
         {toast}
       </div>
 
-      {nearby && !shopOpen && (
+      {nearby && !shopOpen && !dialogOpen && (
         <button
           className="interaction"
           onClick={interact}
         >
-          <span className="keycap">
-            E
-          </span>
-
-          {nearby.kind === 'gary'
-            ? 'Talk to Gary'
-            : nearby.kind === 'shop'
-              ? 'Browse the Stupid Shop'
-              : nearby.kind === 'citizen'
-                ? 'Talk to Citizen'
-                : 'Catch suspicious pigeon'}
+          <span className="keycap">E</span>
+          {nearby.label}
         </button>
       )}
+
+      {/* Bottom controls */}
 
       <div className="bottom-bar">
         <button
           className="help-toggle"
           onClick={() =>
-            setShowHelp((old) => !old)
+            setShowHelp(
+              (value) => !value
+            )
           }
         >
           ⓘ Controls <span>H</span>
@@ -639,24 +888,18 @@ export default function App() {
 
         <button
           className="emote-button"
-          onClick={() => {
-            setEmote(true);
-
-            setTimeout(() => {
-              setEmote(false);
-            }, 1600);
-          }}
+          onClick={wave}
         >
           👋 Wave <span>B</span>
         </button>
       </div>
 
+      {/* Help panel */}
+
       {showHelp && (
         <section className="controls-panel">
           <div className="controls-heading">
-            <strong>
-              HOW TO BE AN NPC
-            </strong>
+            <strong>HOW TO BE AN NPC</strong>
 
             <button
               aria-label="Close help"
@@ -672,13 +915,11 @@ export default function App() {
             <kbd>W</kbd>
             <kbd>A</kbd>
             <kbd>S</kbd>
-            <kbd>D</kbd>{' '}
-            Move relative to camera
+            <kbd>D</kbd> Move relative to camera
           </p>
 
           <p>
-            <kbd>SHIFT</kbd>{' '}
-            Run from responsibilities
+            <kbd>SHIFT</kbd> Run from responsibilities
           </p>
 
           <p>
@@ -706,13 +947,72 @@ export default function App() {
           </p>
 
           <p className="muted">
-            Earn coins with Gary, then visit
-            the blue-shirt shopkeeper near
-            the plaza. Coins and purchased
-            cosmetics save locally.
+            Talk to Gary for pigeon debt.
+            Marty (purple shirt) has another
+            questionable job. Visit street
+            props to earn one-time discovery coins.
           </p>
         </section>
       )}
+
+      {/* New Marty dialogue */}
+
+      {dialogOpen && (
+        <div
+          className="npc-dialog-backdrop"
+          onClick={() =>
+            setDialogOpen(false)
+          }
+        >
+          <section
+            className="npc-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Talk to Marty"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <span className="npc-dialog-label">
+              LOCAL CITIZEN • VERY EMPLOYED
+            </span>
+
+            <h2>Marty, Grass Inspector</h2>
+
+            <p>{dialogText}</p>
+
+            <div className="npc-dialog-actions">
+              <button onClick={beginGrassJob}>
+                Give me a job (+45 ◆)
+              </button>
+
+              <button
+                className="secondary"
+                onClick={() => {
+                  setDialogText(
+                    randomLine(CITIZEN_LINES)
+                  );
+
+                  playGameSound('talk');
+                }}
+              >
+                Say something stupid
+              </button>
+
+              <button
+                className="secondary"
+                onClick={() =>
+                  setDialogOpen(false)
+                }
+              >
+                Leave
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* Existing cosmetic shop */}
 
       {shopOpen && (
         <div
@@ -736,9 +1036,7 @@ export default function App() {
                   QUESTIONABLE PURCHASES
                 </span>
 
-                <h2>
-                  THE STUPID SHOP
-                </h2>
+                <h2>THE STUPID SHOP</h2>
 
                 <p>
                   Everything is overpriced.
@@ -818,9 +1116,8 @@ export default function App() {
             </div>
 
             <p className="shop-note">
-              Complete Gary&apos;s pigeon job
-              repeatedly to earn money.
-              Press ESC to leave.
+              Complete funny jobs to earn
+              money. Press ESC to leave.
             </p>
           </section>
         </div>

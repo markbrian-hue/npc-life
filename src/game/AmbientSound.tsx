@@ -1,102 +1,91 @@
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  playGameSound,
+  setGameAudioVolume,
+  startGameAudio,
+  stopGameAudio,
+} from './gameAudio';
 
 export function AmbientSound() {
-  const [enabled, setEnabled] = useState(false);
+  const [on, setOn] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [volume, setVolume] = useState(75);
+  const [message, setMessage] = useState('Sound is off');
 
-  const audio = useRef<{
-    context: AudioContext;
-    source: AudioBufferSourceNode;
-  } | null>(null);
-
-  useEffect(() => {
-    return () => {
-      const active = audio.current;
-
-      if (active) {
-        active.source.stop();
-        void active.context.close();
-        audio.current = null;
-      }
-    };
+  useEffect(() => () => {
+    void stopGameAudio();
   }, []);
 
   async function toggle() {
-    if (audio.current) {
-      audio.current.source.stop();
-      await audio.current.context.close();
-      audio.current = null;
-      setEnabled(false);
-      return;
-    }
+    if (busy) return;
+
+    setBusy(true);
 
     try {
-      const context = new AudioContext();
-
-      const buffer = context.createBuffer(
-        1,
-        context.sampleRate * 2,
-        context.sampleRate
-      );
-
-      const samples = buffer.getChannelData(0);
-
-      for (let i = 0; i < samples.length; i++) {
-        samples[i] = (Math.random() * 2 - 1) * 0.23;
+      if (on) {
+        await stopGameAudio();
+        setOn(false);
+        setMessage('Sound is off');
+      } else {
+        setGameAudioVolume(volume / 100);
+        await startGameAudio();
+        setOn(true);
+        setMessage('Sound on — did you hear the chime?');
       }
-
-      const source = context.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-
-      const filter = context.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = 220;
-
-      const gain = context.createGain();
-      gain.gain.value = 0.045;
-
-      source.connect(filter);
-      filter.connect(gain);
-      gain.connect(context.destination);
-
-      source.start();
-
-      audio.current = { context, source };
-
-      await context.resume();
-      setEnabled(true);
     } catch (error) {
-      console.warn('Ambient audio unavailable', error);
-      setEnabled(false);
+      console.warn('Audio could not start:', error);
+      setOn(false);
+      setMessage('Audio blocked; check browser/device sound');
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => {
-        void toggle();
-      }}
-      aria-pressed={enabled}
-      title="Toggle subtle city ambience"
-      style={{
-        position: 'fixed',
-        right: 235,
-        bottom: 24,
-        zIndex: 20,
-        padding: '10px 12px',
-        borderRadius: 12,
-        border: '1px solid #39495e',
-        background: '#192434ee',
-        color: '#fff',
-        fontWeight: 700,
-        cursor: 'pointer',
-        fontSize: 12,
-        boxShadow: '0 6px 18px #0004',
-      }}
+    <div
+      className="npc-sound-panel"
+      role="group"
+      aria-label="Game audio controls"
     >
-      {enabled ? '🔊 Ambience' : '🔇 Ambience'}
-    </button>
+      <div className="npc-sound-actions">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            void toggle();
+          }}
+        >
+          {on ? '🔊 Sound ON' : '🔇 Enable sound'}
+        </button>
+
+        <button
+          type="button"
+          disabled={!on || busy}
+          title="Play a test sound"
+          onClick={() => playGameSound('start')}
+        >
+          Test ♪
+        </button>
+      </div>
+
+      <label className="npc-volume">
+        Volume: {volume}%
+        <input
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          value={volume}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            setVolume(next);
+            setGameAudioVolume(next / 100);
+          }}
+        />
+      </label>
+
+      <small aria-live="polite">{message}</small>
+    </div>
   );
 }
