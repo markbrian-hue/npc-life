@@ -1,4 +1,3 @@
-
 import {
   BENCHES,
   BUILDINGS,
@@ -6,16 +5,25 @@ import {
   LAMP_POSTS,
   PARKED_CARS,
   PIGEONS,
+  PLANTERS,
   type BuildingDef,
 } from './world';
 
 const TREES: [number, number, number][] = [
-  [-24, 0, -31], [-10, 0, -31],
-  [9, 0, -31], [24, 0, -31],
-  [-24, 0, 31], [-9, 0, 31],
-  [10, 0, 31], [24, 0, 31],
-  [-9, 0, 11], [9, 0, 14],
-  [-9, 0, -11], [10, 0, -13],
+  [-24, 0, -31],
+  [-10, 0, -31],
+  [9, 0, -31],
+  [24, 0, -31],
+  [-24, 0, 31],
+  [-9, 0, 31],
+  [10, 0, 31],
+  [24, 0, 31],
+  [-9, 0, 11],
+  [9, 0, 14],
+  [-9, 0, -11],
+  [10, 0, -13],
+  [-30, 0, -2],
+  [30, 0, 2],
 ];
 
 function Building({
@@ -30,163 +38,134 @@ function Building({
   const floors = Array.from(
     {
       length: Math.max(
-        0,
-        Math.floor((h - 2.5) / 2.8)
+        1,
+        Math.floor((h - 2.6) / 2.6)
       ),
     },
-    (_, i) => 3.8 + i * 2.8
-  ).filter((y) => y + 1 < h);
+    (_, i) => 3.4 + i * 2.45
+  ).filter((y) => y + 0.8 < h);
 
   return (
     <group position={[x, 0, z]}>
       <mesh
+        position={[0, h / 2, 0]}
         castShadow
         receiveShadow
-        position={[0, h / 2, 0]}
       >
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial
           color={color}
-          roughness={0.92}
+          roughness={0.94}
         />
       </mesh>
 
-      {/* Foundation */}
-      <mesh position={[0, 0.22, d / 2 + 0.035]}>
-        <boxGeometry args={[w, 0.44, 0.12]} />
+      <mesh position={[0, 0.22, 0]} receiveShadow>
+        <boxGeometry
+          args={[w + 0.25, 0.44, d + 0.25]}
+        />
         <meshStandardMaterial
-          color="#777f88"
+          color="#91877d"
           roughness={1}
         />
       </mesh>
 
-      {/* Roof */}
       <mesh
-        castShadow
         position={[0, h + 0.28, 0]}
+        castShadow
       >
         <boxGeometry
-          args={[w + 0.35, 0.55, d + 0.35]}
+          args={[w + 0.45, 0.55, d + 0.45]}
         />
         <meshStandardMaterial
           color={roof}
-          roughness={0.85}
+          roughness={0.82}
         />
       </mesh>
 
-      {/* Rooftop equipment */}
       <mesh
-        castShadow
-        position={[w / 3, h + 0.78, -d / 4]}
+        position={[0, 1.3, d / 2 + 0.08]}
       >
-        <boxGeometry args={[1.3, 0.55, 1.1]} />
+        <boxGeometry args={[1.95, 2.8, 0.12]} />
         <meshStandardMaterial
-          color="#9aa7ab"
-          metalness={0.3}
-          roughness={0.7}
+          color="#4d4b4c"
+          roughness={0.8}
         />
       </mesh>
 
-      {/* Door frame */}
       <mesh
-        position={[0, 1.36, d / 2 + 0.09]}
-      >
-        <boxGeometry args={[1.8, 2.72, 0.12]} />
-        <meshStandardMaterial
-          color="#494e56"
-          roughness={0.85}
-        />
-      </mesh>
-
-      {/* Door glass */}
-      <mesh
-        position={[0, 1.55, d / 2 + 0.17]}
+        position={[0, 1.38, d / 2 + 0.16]}
       >
         <boxGeometry
-          args={[1.35, 1.62, 0.035]}
+          args={[1.35, 1.7, 0.04]}
         />
         <meshStandardMaterial
-          color="#73959b"
-          metalness={0.12}
-          roughness={0.28}
-        />
-      </mesh>
-
-      {/* Door handle */}
-      <mesh
-        position={[0.56, 1.02, d / 2 + 0.21]}
-      >
-        <sphereGeometry args={[0.09, 8, 6]} />
-        <meshStandardMaterial
-          color="#f4c776"
-          metalness={0.75}
+          color="#88a6b1"
+          metalness={0.15}
           roughness={0.25}
         />
       </mesh>
 
-      {/* Entrance canopy */}
       <mesh
+        position={[0, 2.84, d / 2 + 0.62]}
         castShadow
-        position={[0, 2.92, d / 2 + 0.65]}
       >
         <boxGeometry args={[2.8, 0.18, 1.2]} />
         <meshStandardMaterial
           color={roof}
-          roughness={0.75}
+          roughness={0.72}
         />
       </mesh>
 
-      {/* Window bays */}
-      {floors.flatMap((height, floor) =>
-        [-w / 3, w / 3].map((offset, side) => (
+      {floors.flatMap((height, floorIndex) =>
+        [-w / 3, w / 3].map((offset, sideIndex) => (
           <group
-            key={`${floor}-${side}`}
+            key={`${floorIndex}-${sideIndex}`}
             position={[
               offset,
               height,
-              d / 2 + 0.07,
+              d / 2 + 0.06,
             ]}
           >
             <mesh>
               <boxGeometry
-                args={[1.9, 1.82, 0.12]}
+                args={[1.9, 1.6, 0.12]}
               />
               <meshStandardMaterial
-                color="#e6e6df"
-                roughness={0.98}
+                color="#ebe6dc"
+                roughness={1}
               />
             </mesh>
 
-            <mesh position={[0, 0, 0.075]}>
+            <mesh position={[0, 0, 0.08]}>
               <boxGeometry
-                args={[1.57, 1.5, 0.04]}
+                args={[1.56, 1.28, 0.04]}
               />
               <meshStandardMaterial
                 color={
-                  index % 2
-                    ? '#79a0ac'
-                    : '#a6c4cf'
+                  index % 2 === 0
+                    ? '#8cadb8'
+                    : '#a0bcc5'
                 }
-                metalness={0.18}
-                roughness={0.28}
+                metalness={0.12}
+                roughness={0.25}
               />
             </mesh>
 
             <mesh position={[0, 0, 0.11]}>
               <boxGeometry
-                args={[0.08, 1.5, 0.05]}
+                args={[0.08, 1.28, 0.05]}
               />
               <meshStandardMaterial
-                color="#d6dee0"
+                color="#d8dee0"
               />
             </mesh>
 
-            <mesh position={[0, -0.79, 0.14]}>
+            <mesh position={[0, -0.68, 0.14]}>
               <boxGeometry
-                args={[2, 0.14, 0.32]}
+                args={[2, 0.12, 0.28]}
               />
               <meshStandardMaterial
-                color="#d4d4c9"
+                color="#cfc7ba"
               />
             </mesh>
           </group>
@@ -195,13 +174,13 @@ function Building({
 
       {h > 9 && (
         <mesh
-          position={[w / 2 + 0.045, 5.3, 0]}
+          position={[w / 2 + 0.05, 5.2, 0]}
         >
           <boxGeometry
-            args={[0.09, 1.65, 1.9]}
+            args={[0.1, 1.8, 1.8]}
           />
           <meshStandardMaterial
-            color="#8eabb2"
+            color="#91a9b0"
             roughness={0.3}
           />
         </mesh>
@@ -217,50 +196,64 @@ function Tree({
   position: [number, number, number];
   index: number;
 }) {
+  const colors = [
+    '#5e8f62',
+    '#6e9f6f',
+    '#4f7f57',
+  ];
+
   return (
     <group position={position}>
       <mesh
+        position={[0, 1.4, 0]}
         castShadow
-        position={[0, 1.35, 0]}
       >
         <cylinderGeometry
-          args={[0.22, 0.39, 2.7, 7]}
+          args={[0.22, 0.37, 2.8, 8]}
         />
         <meshStandardMaterial
-          color="#72543c"
+          color="#725640"
           roughness={1}
         />
       </mesh>
 
       <mesh
+        position={[0, 3.15, 0]}
         castShadow
-        position={[0, 3.1, 0]}
       >
         <dodecahedronGeometry
-          args={[1.72, 0]}
+          args={[1.7, 0]}
         />
         <meshStandardMaterial
-          color={
-            index % 3 === 0
-              ? '#478566'
-              : index % 3 === 1
-                ? '#55996e'
-                : '#70a778'
-          }
+          color={colors[index % colors.length]}
           flatShading
           roughness={1}
         />
       </mesh>
 
       <mesh
+        position={[0.82, 2.78, 0.22]}
         castShadow
-        position={[0.75, 2.62, 0.35]}
       >
         <dodecahedronGeometry
-          args={[0.93, 0]}
+          args={[0.95, 0]}
         />
         <meshStandardMaterial
-          color="#6aab78"
+          color={colors[(index + 1) % colors.length]}
+          flatShading
+          roughness={1}
+        />
+      </mesh>
+
+      <mesh
+        position={[-0.76, 2.88, -0.3]}
+        castShadow
+      >
+        <dodecahedronGeometry
+          args={[0.9, 0]}
+        />
+        <meshStandardMaterial
+          color={colors[(index + 2) % colors.length]}
           flatShading
           roughness={1}
         />
@@ -279,9 +272,7 @@ function Pigeon({
   return (
     <group position={[x, 0.42, z]}>
       <mesh castShadow>
-        <sphereGeometry
-          args={[0.4, 9, 7]}
-        />
+        <sphereGeometry args={[0.4, 9, 7]} />
         <meshStandardMaterial
           color="#9eb4c2"
           flatShading
@@ -289,8 +280,8 @@ function Pigeon({
       </mesh>
 
       <mesh
-        castShadow
         position={[0, 0.25, 0.2]}
+        castShadow
       >
         <sphereGeometry
           args={[0.23, 8, 6]}
@@ -304,9 +295,7 @@ function Pigeon({
         position={[0, 0.22, 0.46]}
         rotation={[0.35, 0, 0]}
       >
-        <coneGeometry
-          args={[0.12, 0.26, 4]}
-        />
+        <coneGeometry args={[0.12, 0.26, 4]} />
         <meshStandardMaterial
           color="#ffbb56"
         />
@@ -335,25 +324,21 @@ function Pigeon({
 
 function Gary() {
   return (
-    <group
-      position={[GARY.x, 0, GARY.z]}
-    >
+    <group position={[GARY.x, 0, GARY.z]}>
       <mesh
-        castShadow
         position={[0, 1.2, 0]}
+        castShadow
       >
-        <boxGeometry
-          args={[1, 1.45, 0.6]}
-        />
+        <boxGeometry args={[1, 1.45, 0.6]} />
         <meshStandardMaterial
-          color="#e48c55"
+          color="#df8c5a"
           roughness={0.95}
         />
       </mesh>
 
       <mesh
-        castShadow
         position={[0, 2.28, 0]}
+        castShadow
       >
         <sphereGeometry
           args={[0.65, 10, 8]}
@@ -364,8 +349,8 @@ function Gary() {
       </mesh>
 
       <mesh
-        castShadow
         position={[0, 2.75, 0]}
+        castShadow
       >
         <cylinderGeometry
           args={[0.6, 0.6, 0.28, 10]}
@@ -397,9 +382,7 @@ function Gary() {
         position={[0, 3.52, 0]}
         rotation={[0, 0, Math.PI]}
       >
-        <coneGeometry
-          args={[0.35, 0.8, 6]}
-        />
+        <coneGeometry args={[0.35, 0.8, 6]} />
         <meshStandardMaterial
           color="#ffe16d"
           emissive="#c37b10"
@@ -410,16 +393,14 @@ function Gary() {
       {[-0.25, 0.25].map((offset) => (
         <mesh
           key={offset}
-          castShadow
           position={[
             offset,
             0.38,
             0,
           ]}
+          castShadow
         >
-          <boxGeometry
-            args={[0.34, 0.77, 0.5]}
-          />
+          <boxGeometry args={[0.34, 0.77, 0.5]} />
           <meshStandardMaterial
             color="#344c75"
           />
@@ -432,87 +413,77 @@ function Gary() {
 function StreetSurfaces() {
   return (
     <>
-      {/* Grass */}
       <mesh
-        receiveShadow
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.085, 0]}
+        receiveShadow
       >
-        <planeGeometry
-          args={[95, 95]}
-        />
+        <planeGeometry args={[95, 95]} />
         <meshStandardMaterial
-          color="#87b27d"
+          color="#84ab7f"
           roughness={1}
         />
       </mesh>
 
-      {/* Horizontal road */}
       <mesh
-        receiveShadow
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.057, 0]}
+        receiveShadow
       >
-        <planeGeometry
-          args={[95, 8.5]}
-        />
+        <planeGeometry args={[95, 8.5]} />
         <meshStandardMaterial
-          color="#69747d"
+          color="#6c737a"
           roughness={1}
         />
       </mesh>
 
-      {/* Vertical road */}
       <mesh
-        receiveShadow
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.049, 0]}
+        receiveShadow
       >
-        <planeGeometry
-          args={[8.5, 95]}
-        />
+        <planeGeometry args={[8.5, 95]} />
         <meshStandardMaterial
-          color="#69747d"
+          color="#6c737a"
           roughness={1}
         />
       </mesh>
 
-      {/* Sidewalks */}
       {[-1, 1].flatMap((side) =>
         [-1, 1].map((half) => (
           <group
-            key={`sidewalk-${side}-${half}`}
+            key={`walk-${side}-${half}`}
           >
             <mesh
-              receiveShadow
               position={[
                 side * 5.85,
                 -0.065,
                 half * 25,
               ]}
+              receiveShadow
             >
               <boxGeometry
                 args={[2.65, 0.12, 31]}
               />
               <meshStandardMaterial
-                color="#c4c1b5"
+                color="#c7c2b7"
                 roughness={1}
               />
             </mesh>
 
             <mesh
-              receiveShadow
               position={[
                 half * 25,
                 -0.065,
                 side * 5.85,
               ]}
+              receiveShadow
             >
               <boxGeometry
                 args={[31, 0.12, 2.65]}
               />
               <meshStandardMaterial
-                color="#c4c1b5"
+                color="#c7c2b7"
                 roughness={1}
               />
             </mesh>
@@ -520,17 +491,14 @@ function StreetSurfaces() {
         ))
       )}
 
-      {/* Plaza */}
       <mesh
-        receiveShadow
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.025, 0]}
+        receiveShadow
       >
-        <circleGeometry
-          args={[8.3, 48]}
-        />
+        <circleGeometry args={[8.3, 48]} />
         <meshStandardMaterial
-          color="#e0cda8"
+          color="#e3d0ac"
           roughness={1}
         />
       </mesh>
@@ -539,12 +507,23 @@ function StreetSurfaces() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.017, 0]}
       >
-        <ringGeometry
-          args={[7.65, 8.15, 48]}
+        <ringGeometry args={[7.65, 8.15, 48]} />
+        <meshStandardMaterial
+          color="#c9ab82"
+          side={2}
+          roughness={1}
+        />
+      </mesh>
+
+      <mesh
+        position={[0, 0.02, 0]}
+        receiveShadow
+      >
+        <cylinderGeometry
+          args={[1.9, 2.2, 0.24, 24]}
         />
         <meshStandardMaterial
-          color="#c4a67e"
-          side={2}
+          color="#b9b7b0"
           roughness={1}
         />
       </mesh>
@@ -555,57 +534,44 @@ function StreetSurfaces() {
 function StreetMarkings() {
   return (
     <>
-      {/* Lane markings */}
-      {Array.from(
-        { length: 17 },
-        (_, index) => {
-          const p = -40 + index * 5;
+      {Array.from({ length: 17 }, (_, index) => {
+        const p = -40 + index * 5;
 
-          return (
-            <group key={p}>
-              <mesh
-                position={[p, -0.032, 0]}
-                rotation={[
-                  -Math.PI / 2,
-                  0,
-                  0,
-                ]}
-              >
-                <planeGeometry
-                  args={[2.3, 0.13]}
-                />
-                <meshBasicMaterial
-                  color="#e8dfb8"
-                />
-              </mesh>
+        return (
+          <group key={p}>
+            <mesh
+              position={[p, -0.032, 0]}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <planeGeometry
+                args={[2.3, 0.13]}
+              />
+              <meshBasicMaterial
+                color="#ede2b7"
+              />
+            </mesh>
 
-              <mesh
-                position={[0, -0.026, p]}
-                rotation={[
-                  -Math.PI / 2,
-                  0,
-                  0,
-                ]}
-              >
-                <planeGeometry
-                  args={[0.13, 2.3]}
-                />
-                <meshBasicMaterial
-                  color="#e8dfb8"
-                />
-              </mesh>
-            </group>
-          );
-        }
-      )}
+            <mesh
+              position={[0, -0.026, p]}
+              rotation={[-Math.PI / 2, 0, 0]}
+            >
+              <planeGeometry
+                args={[0.13, 2.3]}
+              />
+              <meshBasicMaterial
+                color="#ede2b7"
+              />
+            </mesh>
+          </group>
+        );
+      })}
 
-      {/* Horizontal-road crossings */}
       {[-11, 11].map((x) =>
         Array.from(
           { length: 7 },
           (_, index) => (
             <mesh
-              key={`h-${x}-${index}`}
+              key={`cross-h-${x}-${index}`}
               position={[
                 x + (index - 3) * 0.52,
                 -0.022,
@@ -616,20 +582,19 @@ function StreetMarkings() {
                 args={[0.32, 0.012, 7.15]}
               />
               <meshBasicMaterial
-                color="#edeae0"
+                color="#efece2"
               />
             </mesh>
           )
         )
       )}
 
-      {/* Vertical-road crossings */}
       {[-11, 11].map((z) =>
         Array.from(
           { length: 7 },
           (_, index) => (
             <mesh
-              key={`v-${z}-${index}`}
+              key={`cross-v-${z}-${index}`}
               position={[
                 0,
                 -0.022,
@@ -640,7 +605,7 @@ function StreetMarkings() {
                 args={[7.15, 0.012, 0.32]}
               />
               <meshBasicMaterial
-                color="#edeae0"
+                color="#efece2"
               />
             </mesh>
           )
@@ -659,46 +624,47 @@ function StreetLamp({
 }) {
   return (
     <group position={[x, 0, z]}>
-      <mesh position={[0, 0.17, 0]}>
+      <mesh position={[0, 0.16, 0]}>
         <cylinderGeometry
-          args={[0.27, 0.34, 0.34, 8]}
+          args={[0.28, 0.34, 0.32, 8]}
         />
         <meshStandardMaterial
-          color="#454d52"
-          metalness={0.4}
+          color="#464f55"
+          metalness={0.3}
+          roughness={0.7}
         />
       </mesh>
 
       <mesh
+        position={[0, 2.7, 0]}
         castShadow
-        position={[0, 2.65, 0]}
       >
         <cylinderGeometry
-          args={[0.105, 0.17, 5.05, 8]}
+          args={[0.11, 0.16, 5.15, 8]}
         />
         <meshStandardMaterial
-          color="#4b555c"
+          color="#4b565d"
           metalness={0.55}
-          roughness={0.5}
+          roughness={0.45}
         />
       </mesh>
 
-      <mesh position={[0.45, 5.08, 0]}>
+      <mesh position={[0.5, 5.1, 0]}>
         <boxGeometry
-          args={[0.95, 0.13, 0.14]}
+          args={[1, 0.13, 0.14]}
         />
         <meshStandardMaterial
-          color="#4b555c"
+          color="#4b565d"
         />
       </mesh>
 
-      <mesh position={[0.87, 4.93, 0]}>
+      <mesh position={[0.9, 4.94, 0]}>
         <boxGeometry
-          args={[0.42, 0.1, 0.38]}
+          args={[0.42, 0.11, 0.4]}
         />
         <meshStandardMaterial
-          color="#fff2c9"
-          emissive="#c9ad67"
+          color="#fff1c9"
+          emissive="#ccb16e"
           emissiveIntensity={0.45}
         />
       </mesh>
@@ -721,42 +687,42 @@ function Bench({
       rotation={[0, rotation, 0]}
     >
       <mesh
+        position={[0, 0.55, 0]}
         castShadow
-        position={[0, 0.52, 0]}
       >
         <boxGeometry
-          args={[2.4, 0.16, 0.68]}
+          args={[2.35, 0.14, 0.68]}
         />
         <meshStandardMaterial
-          color="#966849"
+          color="#926848"
           roughness={0.92}
         />
       </mesh>
 
       <mesh
+        position={[0, 1.02, -0.3]}
         castShadow
-        position={[0, 1.01, -0.31]}
       >
         <boxGeometry
-          args={[2.4, 0.83, 0.14]}
+          args={[2.35, 0.82, 0.12]}
         />
         <meshStandardMaterial
-          color="#966849"
+          color="#926848"
           roughness={0.92}
         />
       </mesh>
 
-      {[-0.95, 0.95].map((offset) => (
+      {[-0.96, 0.96].map((offset) => (
         <mesh
           key={offset}
-          position={[offset, 0.25, 0]}
+          position={[offset, 0.24, 0]}
         >
           <boxGeometry
-            args={[0.15, 0.5, 0.56]}
+            args={[0.14, 0.48, 0.58]}
           />
           <meshStandardMaterial
-            color="#42494a"
-            metalness={0.35}
+            color="#434a4d"
+            metalness={0.3}
           />
         </mesh>
       ))}
@@ -768,159 +734,128 @@ function ParkedCar({
   x,
   z,
   color,
+  rotation,
 }: {
   x: number;
   z: number;
   color: string;
+  rotation: number;
 }) {
   return (
-    <group position={[x, 0, z]}>
-      {/* Body */}
+    <group
+      position={[x, 0, z]}
+      rotation={[0, rotation, 0]}
+    >
       <mesh
+        position={[0, 0.63, 0]}
         castShadow
-        position={[0, 0.64, 0]}
       >
         <boxGeometry
-          args={[4.25, 0.87, 1.95]}
+          args={[4.2, 0.9, 1.95]}
         />
         <meshStandardMaterial
           color={color}
-          metalness={0.2}
+          metalness={0.15}
           roughness={0.58}
         />
       </mesh>
 
-      {/* Cabin */}
       <mesh
+        position={[-0.12, 1.2, 0]}
         castShadow
-        position={[-0.15, 1.23, 0]}
       >
         <boxGeometry
-          args={[2.3, 0.65, 1.68]}
+          args={[2.25, 0.68, 1.65]}
         />
         <meshStandardMaterial
-          color="#537481"
-          metalness={0.22}
-          roughness={0.24}
+          color="#76939c"
+          metalness={0.2}
+          roughness={0.23}
         />
       </mesh>
 
       <mesh
-        position={[-0.15, 1.59, 0]}
+        position={[-0.12, 1.55, 0]}
       >
         <boxGeometry
-          args={[2.4, 0.12, 1.73]}
+          args={[2.35, 0.11, 1.72]}
         />
         <meshStandardMaterial
           color={color}
-          roughness={0.55}
+          roughness={0.52}
         />
       </mesh>
 
-      {/* Wheels */}
-      {[-1.38, 1.38].flatMap(
-        (offsetX) =>
-          [-0.99, 0.99].map(
-            (offsetZ) => (
-              <group
-                key={`${offsetX}-${offsetZ}`}
-                position={[
-                  offsetX,
-                  0.39,
-                  offsetZ,
-                ]}
-              >
-                <mesh
-                  rotation={[
-                    Math.PI / 2,
-                    0,
-                    0,
-                  ]}
-                >
-                  <cylinderGeometry
-                    args={[
-                      0.4,
-                      0.4,
-                      0.22,
-                      12,
-                    ]}
-                  />
-                  <meshStandardMaterial
-                    color="#282b30"
-                    roughness={1}
-                  />
-                </mesh>
-
-                <mesh
-                  position={[
-                    0,
-                    0,
-                    Math.sign(offsetZ) *
-                      0.12,
-                  ]}
-                  rotation={[
-                    Math.PI / 2,
-                    0,
-                    0,
-                  ]}
-                >
-                  <cylinderGeometry
-                    args={[
-                      0.19,
-                      0.19,
-                      0.02,
-                      10,
-                    ]}
-                  />
-                  <meshStandardMaterial
-                    color="#bbc1c5"
-                    metalness={0.7}
-                    roughness={0.25}
-                  />
-                </mesh>
-              </group>
-            )
-          )
-      )}
-
-      {/* Headlights and taillights */}
-      {[-0.62, 0.62].map(
-        (offset) => (
-          <group key={offset}>
+      {[-1.35, 1.35].flatMap((offsetX) =>
+        [-0.98, 0.98].map((offsetZ) => (
+          <group
+            key={`${offsetX}-${offsetZ}`}
+            position={[
+              offsetX,
+              0.38,
+              offsetZ,
+            ]}
+          >
             <mesh
-              position={[
-                2.14,
-                0.67,
-                offset,
-              ]}
+              rotation={[Math.PI / 2, 0, 0]}
             >
-              <boxGeometry
-                args={[0.05, 0.2, 0.39]}
+              <cylinderGeometry
+                args={[0.39, 0.39, 0.22, 12]}
               />
               <meshStandardMaterial
-                color="#fff3d3"
-                emissive="#d8bd76"
-                emissiveIntensity={0.3}
+                color="#2a2d31"
+                roughness={1}
               />
             </mesh>
 
             <mesh
               position={[
-                -2.14,
-                0.67,
-                offset,
+                0,
+                0,
+                Math.sign(offsetZ) * 0.12,
               ]}
+              rotation={[Math.PI / 2, 0, 0]}
             >
-              <boxGeometry
-                args={[0.05, 0.2, 0.39]}
+              <cylinderGeometry
+                args={[0.18, 0.18, 0.02, 10]}
               />
               <meshStandardMaterial
-                color="#af3b45"
+                color="#c3c7cb"
+                metalness={0.7}
+                roughness={0.28}
               />
             </mesh>
           </group>
-        )
+        ))
       )}
+
+      {[-0.6, 0.6].map((offset) => (
+        <group key={offset}>
+          <mesh
+            position={[2.12, 0.68, offset]}
+          >
+            <boxGeometry
+              args={[0.06, 0.22, 0.35]}
+            />
+            <meshStandardMaterial
+              color="#fff0c9"
+              emissive="#d8bf75"
+              emissiveIntensity={0.25}
+            />
+          </mesh>
+
+          <mesh
+            position={[-2.12, 0.68, offset]}
+          >
+            <boxGeometry
+              args={[0.06, 0.22, 0.35]}
+            />
+            <meshStandardMaterial
+              color="#ac4046"
+            />
+          </mesh>
+        </group>
+      ))}
     </group>
   );
 }
@@ -935,11 +870,11 @@ function Planter({
   return (
     <group position={[x, 0, z]}>
       <mesh
-        castShadow
         position={[0, 0.3, 0]}
+        castShadow
       >
         <cylinderGeometry
-          args={[0.7, 0.58, 0.65, 9]}
+          args={[0.72, 0.58, 0.65, 10]}
         />
         <meshStandardMaterial
           color="#b7a393"
@@ -948,8 +883,8 @@ function Planter({
       </mesh>
 
       <mesh
+        position={[0, 0.7, 0]}
         castShadow
-        position={[0, 0.65, 0]}
       >
         <dodecahedronGeometry
           args={[0.82, 0]}
@@ -962,8 +897,8 @@ function Planter({
       </mesh>
 
       <mesh
+        position={[0.28, 0.96, -0.16]}
         castShadow
-        position={[0.26, 0.92, -0.15]}
       >
         <dodecahedronGeometry
           args={[0.45, 0]}
@@ -978,6 +913,99 @@ function Planter({
   );
 }
 
+function BusStop() {
+  return (
+    <group position={[19, 0, 6.2]}>
+      <mesh
+        position={[0, 1.8, 0]}
+        castShadow
+      >
+        <boxGeometry args={[3.6, 0.16, 1.55]} />
+        <meshStandardMaterial
+          color="#6c7c85"
+          metalness={0.35}
+          roughness={0.5}
+        />
+      </mesh>
+
+      {[-1.55, 1.55].map((offset) => (
+        <mesh
+          key={offset}
+          position={[offset, 0.9, 0]}
+        >
+          <boxGeometry
+            args={[0.11, 1.8, 0.11]}
+          />
+          <meshStandardMaterial
+            color="#6c7c85"
+            metalness={0.45}
+            roughness={0.45}
+          />
+        </mesh>
+      ))}
+
+      <mesh position={[0, 0.95, -0.63]}>
+        <boxGeometry
+          args={[3.35, 1.55, 0.06]}
+        />
+        <meshStandardMaterial
+          color="#96b3bc"
+          metalness={0.15}
+          roughness={0.28}
+        />
+      </mesh>
+
+      <mesh position={[0, 0.56, 0.38]}>
+        <boxGeometry
+          args={[2.4, 0.12, 0.35]}
+        />
+        <meshStandardMaterial
+          color="#8a6a55"
+          roughness={0.9}
+        />
+      </mesh>
+
+      <mesh position={[0, 2.45, 0.78]}>
+        <boxGeometry args={[1.5, 0.44, 0.08]} />
+        <meshStandardMaterial
+          color="#fff1c8"
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function ShrubStrip({
+  positions,
+}: {
+  positions: [number, number, number][];
+}) {
+  return (
+    <>
+      {positions.map((position, index) => (
+        <mesh
+          key={index}
+          position={position}
+          castShadow
+        >
+          <dodecahedronGeometry
+            args={[0.6, 0]}
+          />
+          <meshStandardMaterial
+            color={
+              index % 2 === 0
+                ? '#4e8658'
+                : '#6b9d63'
+            }
+            flatShading
+            roughness={1}
+          />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
 export function City({
   caught,
 }: {
@@ -985,27 +1013,21 @@ export function City({
 }) {
   return (
     <>
-      {/* Atmospheric sky and fog */}
       <color
         attach="background"
-        args={['#b6d7e8']}
+        args={['#bad8e4']}
       />
 
       <fog
         attach="fog"
-        args={['#b6d7e8', 65, 135]}
+        args={['#bad8e4', 68, 138]}
       />
 
-      {/* Soft natural daylight */}
       <hemisphereLight
-        args={[
-          '#e8f5ff',
-          '#758b71',
-          1.15,
-        ]}
+        args={['#ecf7ff', '#73886f', 1.15]}
       />
 
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={0.36} />
 
       <directionalLight
         position={[25, 42, 20]}
@@ -1022,74 +1044,81 @@ export function City({
       <StreetSurfaces />
       <StreetMarkings />
 
-      {BUILDINGS.map(
-        (building, index) => (
-          <Building
-            key={index}
-            data={building}
-            index={index}
-          />
-        )
-      )}
+      {BUILDINGS.map((building, index) => (
+        <Building
+          key={index}
+          data={building}
+          index={index}
+        />
+      ))}
 
-      {TREES.map(
-        (position, index) => (
-          <Tree
-            key={index}
-            index={index}
-            position={position}
-          />
-        )
-      )}
+      {TREES.map((position, index) => (
+        <Tree
+          key={index}
+          index={index}
+          position={position}
+        />
+      ))}
 
-      {LAMP_POSTS.map(
-        ({ x, z }) => (
-          <StreetLamp
-            key={`${x}-${z}`}
-            x={x}
-            z={z}
-          />
-        )
-      )}
+      {LAMP_POSTS.map(({ x, z }) => (
+        <StreetLamp
+          key={`${x}-${z}`}
+          x={x}
+          z={z}
+        />
+      ))}
 
-      {BENCHES.map(
-        ({ x, z, rotation }) => (
-          <Bench
-            key={`${x}-${z}`}
-            x={x}
-            z={z}
-            rotation={rotation}
-          />
-        )
-      )}
+      {BENCHES.map(({ x, z, rotation }) => (
+        <Bench
+          key={`${x}-${z}`}
+          x={x}
+          z={z}
+          rotation={rotation}
+        />
+      ))}
 
       {PARKED_CARS.map(
-        ({ x, z, color }) => (
+        ({ x, z, color, rotation }) => (
           <ParkedCar
             key={`${x}-${z}`}
             x={x}
             z={z}
             color={color}
+            rotation={rotation}
           />
         )
       )}
 
-      <Planter x={-37} z={29} />
-      <Planter x={37} z={29} />
-      <Planter x={-37} z={-29} />
-      <Planter x={37} z={-29} />
+      {PLANTERS.map(({ x, z }) => (
+        <Planter
+          key={`${x}-${z}`}
+          x={x}
+          z={z}
+        />
+      ))}
 
-      {/* Original job NPC and pigeons */}
+      <BusStop />
+
+      <ShrubStrip
+        positions={[
+          [-14, 0.55, 4.5],
+          [-12.8, 0.55, 4.8],
+          [-11.7, 0.55, 5.1],
+          [14, 0.55, -4.5],
+          [12.8, 0.55, -4.8],
+          [11.7, 0.55, -5.1],
+        ]}
+      />
+
       <Gary />
 
-      {PIGEONS.map(
-        (pigeon, index) =>
-          !caught.includes(index) ? (
-            <Pigeon
-              key={index}
-              {...pigeon}
-            />
-          ) : null
+      {PIGEONS.map((pigeon, index) =>
+        !caught.includes(index) ? (
+          <Pigeon
+            key={index}
+            {...pigeon}
+          />
+        ) : null
       )}
     </>
   );

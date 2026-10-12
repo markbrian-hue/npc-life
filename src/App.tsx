@@ -138,8 +138,6 @@ export default function App() {
     'Find Gary (orange shirt) and press E to get a job.'
   );
 
-  // Preserve Alpha 0.2 saved game data.
-
   useEffect(() => {
     try {
       localStorage.setItem(COIN_KEY, String(coins));
@@ -177,8 +175,6 @@ export default function App() {
       // Storage can be disabled.
     }
   }, [jobsDone]);
-
-  // Existing Alpha 0.2 random events.
 
   useEffect(() => {
     let count = 0;
@@ -228,8 +224,6 @@ export default function App() {
     []
   );
 
-  // Find the nearest interaction.
-
   let nearby: Nearby = null;
 
   if (
@@ -278,7 +272,6 @@ export default function App() {
           kind: 'pigeon',
           index,
         };
-
         break;
       }
     }
@@ -339,8 +332,6 @@ export default function App() {
     }
   }, [nearby, working, caught, shopOpen]);
 
-  // Buying and equipping existing cosmetics.
-
   const buyOrEquip = (
     item: (typeof SHOP_ITEMS)[number]
   ) => {
@@ -369,20 +360,13 @@ export default function App() {
     }
 
     setCoins((old) => old - item.price);
-
-    setInventory((old) => [
-      ...old,
-      item.id,
-    ]);
-
+    setInventory((old) => [...old, item.id]);
     setEquipped(item.id);
 
     setToast(
       `Purchased ${item.name}! Your financial decisions are questionable.`
     );
   };
-
-  // Existing interaction keyboard shortcuts.
 
   useEffect(() => {
     const onKeyDown = (
@@ -438,8 +422,6 @@ export default function App() {
 
   return (
     <div className="game-shell">
-      {/* 3D WORLD */}
-
       <Canvas
         shadows
         dpr={[1, 1.5]}
@@ -453,7 +435,10 @@ export default function App() {
       >
         <City caught={caught} />
 
-        <CityExtras cityEvent={cityEvent} />
+        <CityExtras
+          cityEvent={cityEvent}
+          player={player}
+        />
 
         <Player
           onMove={onMove}
@@ -463,8 +448,6 @@ export default function App() {
           inputLocked={shopOpen}
         />
       </Canvas>
-
-      {/* HEADER */}
 
       <header className="game-header">
         <div className="branding">
@@ -477,7 +460,7 @@ export default function App() {
 
             <p>
               THE CITY OF IDIOTS{' '}
-              <span>•</span> ALPHA 0.3A
+              <span>•</span> ALPHA 0.3C
             </p>
           </div>
         </div>
@@ -497,8 +480,6 @@ export default function App() {
           </div>
         </div>
       </header>
-
-      {/* QUEST TRACKER */}
 
       <section
         className="quest-panel"
@@ -537,8 +518,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* RANDOM EVENTS */}
-
       {cityEvent !== 'none' && (
         <div
           className="event-banner"
@@ -547,8 +526,6 @@ export default function App() {
           ⚠ CITY EVENT: {eventTitle}
         </div>
       )}
-
-      {/* MINIMAP */}
 
       <div
         className="minimap"
@@ -619,16 +596,12 @@ export default function App() {
         </span>
       </div>
 
-      {/* GAME MESSAGES */}
-
       <div
         className="center-message"
         aria-live="polite"
       >
         {toast}
       </div>
-
-      {/* INTERACTION PROMPT */}
 
       {nearby && !shopOpen && (
         <button
@@ -648,8 +621,6 @@ export default function App() {
                 : 'Catch suspicious pigeon'}
         </button>
       )}
-
-      {/* BOTTOM BUTTONS */}
 
       <div className="bottom-bar">
         <button
@@ -679,8 +650,6 @@ export default function App() {
           👋 Wave <span>B</span>
         </button>
       </div>
-
-      {/* CONTROLS PANEL */}
 
       {showHelp && (
         <section className="controls-panel">
@@ -744,8 +713,6 @@ export default function App() {
           </p>
         </section>
       )}
-
-      {/* STUPID SHOP */}
 
       {shopOpen && (
         <div
@@ -851,7 +818,7 @@ export default function App() {
             </div>
 
             <p className="shop-note">
-              Complete Gary's pigeon job
+              Complete Gary&apos;s pigeon job
               repeatedly to earn money.
               Press ESC to leave.
             </p>
