@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { City } from './game/City';
 import { CityActivities } from './game/CityActivities';
-
 import {
   CityExtras,
   CITIZEN_POSITION,
@@ -20,6 +19,9 @@ import {
 import { ProgressionPanel } from './game/ProgressionPanel';
 import { ArcadeKiosk, PigeonPanic } from './game/PigeonPanic';
 import { DailyBoard } from './game/DailyBoard';
+
+import { ReactiveCitizens } from './game/ReactiveCitizens';
+import { CityEncounters } from './game/CityEncounters';
 
 import {
   ARCADE_POSITION,
@@ -56,7 +58,7 @@ import {
 import { playGameSound } from './game/gameAudio';
 import { distance2D, GARY, PIGEONS } from './game/world';
 
-// Preserve all previous save keys.
+// Preserve all previous localStorage keys.
 const COIN_KEY = 'npc-life:coins-v1';
 const INVENTORY_KEY = 'npc-life:inventory-v1';
 const EQUIPPED_KEY = 'npc-life:equipped-v1';
@@ -65,7 +67,6 @@ const DISCOVERIES_KEY = 'npc-life:discoveries-v1';
 const SHIRT_KEY = 'npc-life:shirt-v1';
 const QUEST_KEY = 'npc-life:active-quest-v1';
 
-// Alpha 0.6 keys.
 const DAILY_KEY = 'npc-life:daily-v1';
 const REPUTATION_KEY = 'npc-life:reputation-v1';
 
@@ -83,9 +84,7 @@ const emptyQuest = (): QuestState => ({
 
 function readNumber(key: string) {
   try {
-    const n = Number(
-      localStorage.getItem(key) ?? '0'
-    );
+    const n = Number(localStorage.getItem(key) ?? '0');
 
     return Number.isFinite(n) && n >= 0
       ? Math.floor(n)
@@ -95,10 +94,7 @@ function readNumber(key: string) {
   }
 }
 
-function readString(
-  key: string,
-  fallback: string
-) {
+function readString(key: string, fallback: string) {
   try {
     return localStorage.getItem(key) || fallback;
   } catch {
@@ -127,10 +123,7 @@ function readList(key: string): string[] {
   }
 }
 
-function save(
-  key: string,
-  value: string
-) {
+function save(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
   } catch {
@@ -310,7 +303,7 @@ function getNearby(
     });
   }
 
-  DISCOVERIES.forEach((p) =>
+  DISCOVERIES.forEach((p) => {
     targets.push({
       x: p.x,
       z: p.z,
@@ -321,8 +314,8 @@ function getNearby(
         id: p.id,
         label: p.label,
       },
-    })
-  );
+    });
+  });
 
   const possible = targets
     .map((t) => ({
@@ -349,10 +342,9 @@ export default function App() {
     () => readNumber(COIN_KEY)
   );
 
-  const [inventory, setInventory] =
-    useState<string[]>(() =>
-      readList(INVENTORY_KEY).filter(isCosmetic)
-    );
+  const [inventory, setInventory] = useState<string[]>(
+    () => readList(INVENTORY_KEY).filter(isCosmetic)
+  );
 
   const [equipped, setEquipped] = useState(() => {
     const id = readString(EQUIPPED_KEY, 'none');
@@ -378,42 +370,39 @@ export default function App() {
     () => readNumber(JOBS_KEY)
   );
 
-  const [discovered, setDiscovered] =
-    useState<string[]>(() =>
+  const [discovered, setDiscovered] = useState<string[]>(
+    () =>
       readList(DISCOVERIES_KEY).filter(
         (id) =>
           DISCOVERIES.some(
             (p) => p.id === id
           )
       )
-    );
+  );
 
   const [quest, setQuest] =
     useState<QuestState>(readQuest);
 
-  // Alpha 0.6 progression.
   const [daily, setDaily] = useState(loadDaily);
 
   const [reputation, setReputation] = useState(
     () => loadReputation(readNumber(JOBS_KEY))
   );
 
-  const [dailyOpen, setDailyOpen] =
-    useState(false);
+  const [dailyOpen, setDailyOpen] = useState(false);
+  const [arcadeOpen, setArcadeOpen] = useState(false);
 
-  const [arcadeOpen, setArcadeOpen] =
-    useState(false);
+  // New Alpha 0.7 dialog lock.
+  const [encounterOpen, setEncounterOpen] = useState(false);
 
-  const [player, setPlayer] =
-    useState<PlayerLocation>({
-      x: 0,
-      z: 0,
-    });
+  const [player, setPlayer] = useState<PlayerLocation>({
+    x: 0,
+    z: 0,
+  });
 
   const [showHelp, setShowHelp] = useState(true);
   const [shopOpen, setShopOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] =
-    useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const [profile, setProfile] = useState<
     'wardrobe' | 'achievements' | null
@@ -424,7 +413,6 @@ export default function App() {
   );
 
   const [emote, setEmote] = useState(false);
-
   const [cityEvent, setCityEvent] =
     useState<CityEvent>('none');
 
@@ -432,7 +420,7 @@ export default function App() {
     'Find Gary (orange shirt) or Marty (purple shirt) to get a ridiculous job.'
   );
 
-  // Save all player data.
+  // Save existing progression without migrating or resetting it.
 
   useEffect(
     () => save(COIN_KEY, String(coins)),
@@ -491,15 +479,12 @@ export default function App() {
   );
 
   useEffect(
-    () =>
-      save(
-        REPUTATION_KEY,
-        String(reputation)
-      ),
+    () => save(REPUTATION_KEY, String(reputation)),
     [reputation]
   );
 
-  // Daily challenges reset when the local date changes.
+  // Daily reset while the tab remains open.
+
   useEffect(() => {
     const timer = window.setInterval(() => {
       setDaily((state) => currentDaily(state));
@@ -512,10 +497,7 @@ export default function App() {
 
   useEffect(() => {
     let count = 0;
-
-    let end:
-      | ReturnType<typeof setTimeout>
-      | undefined;
+    let end: ReturnType<typeof setTimeout> | undefined;
 
     const start = () => {
       count++;
@@ -537,9 +519,10 @@ export default function App() {
 
       if (end) clearTimeout(end);
 
-      end = setTimeout(() => {
-        setCityEvent('none');
-      }, 18000);
+      end = setTimeout(
+        () => setCityEvent('none'),
+        18000
+      );
     };
 
     const first = setTimeout(start, 35000);
@@ -548,13 +531,12 @@ export default function App() {
     return () => {
       clearTimeout(first);
       clearInterval(cycle);
-
       if (end) clearTimeout(end);
     };
   }, []);
 
   const onMove = useCallback(
-    (pos: PlayerLocation) => setPlayer(pos),
+    (position: PlayerLocation) => setPlayer(position),
     []
   );
 
@@ -565,12 +547,15 @@ export default function App() {
     dialogOpen ||
     profile !== null ||
     dailyOpen ||
-    arcadeOpen;
+    arcadeOpen ||
+    encounterOpen;
 
   const reputationTier = reputationInfo(reputation);
 
   function recordJob() {
-    setReputation((value) => value + 12);
+    setReputation(
+      (value) => value + 12
+    );
 
     setDaily((state) => {
       const today = currentDaily(state);
@@ -612,7 +597,6 @@ export default function App() {
 
   function claimChallenge(id: ChallengeId) {
     const today = currentDaily(daily);
-
     const challenge = DAILY_CHALLENGES.find(
       (entry) => entry.id === id
     );
@@ -653,18 +637,16 @@ export default function App() {
     totalDiscoveries: DISCOVERIES.length,
   };
 
-  const unlockedCount = ACHIEVEMENTS.filter(
-    (a) => {
-      const goal =
-        a.goal < 0
-          ? stats.totalDiscoveries
-          : a.goal;
+  const unlockedCount = ACHIEVEMENTS.filter((a) => {
+    const goal =
+      a.goal < 0
+        ? stats.totalDiscoveries
+        : a.goal;
 
-      return stats[a.stat] >= goal;
-    }
-  ).length;
+    return stats[a.stat] >= goal;
+  }).length;
 
-  // Main world interaction logic.
+  // Existing E interactions.
 
   const interact = useCallback(() => {
     if (!nearby || locked) return;
@@ -724,9 +706,7 @@ export default function App() {
       nearby.kind === 'pigeon' &&
       quest.job === 'pigeon'
     ) {
-      if (
-        quest.caught.includes(nearby.index)
-      ) {
+      if (quest.caught.includes(nearby.index)) {
         return;
       }
 
@@ -739,7 +719,6 @@ export default function App() {
         setQuest(emptyQuest());
         setCoins((n) => n + 75);
         setJobsDone((n) => n + 1);
-
         recordJob();
 
         setToast(
@@ -767,11 +746,7 @@ export default function App() {
       nearby.kind === 'grass' &&
       quest.job === 'grass'
     ) {
-      if (
-        quest.touched.includes(nearby.id)
-      ) {
-        return;
-      }
+      if (quest.touched.includes(nearby.id)) return;
 
       const next = [
         ...quest.touched,
@@ -785,10 +760,7 @@ export default function App() {
           (n) => n + GRASS_REWARD
         );
 
-        setJobsDone(
-          (n) => n + 1
-        );
-
+        setJobsDone((n) => n + 1);
         recordJob();
 
         setToast(
@@ -812,7 +784,6 @@ export default function App() {
       return;
     }
 
-    // City object discoveries.
     if (nearby.kind === 'discovery') {
       const place = DISCOVERIES.find(
         (p) => p.id === nearby.id
@@ -823,8 +794,6 @@ export default function App() {
       const first =
         !discovered.includes(place.id);
 
-      // Daily inspections count unique props,
-      // including ones found on previous days.
       setDaily((state) => {
         const today = currentDaily(state);
 
@@ -840,10 +809,9 @@ export default function App() {
       });
 
       if (first) {
-        setDiscovered((old) => [
-          ...old,
-          place.id,
-        ]);
+        setDiscovered(
+          (old) => [...old, place.id]
+        );
 
         setCoins(
           (n) => n + DISCOVERY_REWARD
@@ -881,7 +849,6 @@ export default function App() {
       setDialogText(
         'Finish your current job first. We only allow one useless career at a time.'
       );
-
       return;
     }
 
@@ -900,14 +867,15 @@ export default function App() {
     playGameSound('interact');
   }
 
-  // Existing cosmetic shop and wardrobe.
+  // Existing shop and wardrobe.
 
   function buyOrEquip(
     item: (typeof COSMETICS)[number]
   ) {
     if (inventory.includes(item.id)) {
-      setEquipped((old) =>
-        old === item.id ? 'none' : item.id
+      setEquipped(
+        (old) =>
+          old === item.id ? 'none' : item.id
       );
 
       setToast(
@@ -922,11 +890,9 @@ export default function App() {
 
     if (coins < item.price) {
       playGameSound('error');
-
       setToast(
         `You need ${item.price - coins} more Coins.`
       );
-
       return;
     }
 
@@ -992,12 +958,12 @@ export default function App() {
   // Keyboard controls.
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent) => {
       if (
-        e.repeat ||
+        event.repeat ||
         (
-          e.target instanceof HTMLElement &&
-          e.target.closest(
+          event.target instanceof HTMLElement &&
+          event.target.closest(
             'input, textarea, select, [contenteditable="true"]'
           )
         )
@@ -1005,7 +971,7 @@ export default function App() {
         return;
       }
 
-      if (e.code === 'Escape') {
+      if (event.code === 'Escape') {
         setShopOpen(false);
         setDialogOpen(false);
         setProfile(null);
@@ -1017,45 +983,48 @@ export default function App() {
       if (
         shopOpen ||
         dialogOpen ||
-        arcadeOpen
+        arcadeOpen ||
+        encounterOpen
       ) {
         return;
       }
 
       if (
         dailyOpen &&
-        e.code !== 'KeyK'
+        event.code !== 'KeyK'
       ) {
         return;
       }
 
       if (
         profile &&
-        e.code !== 'KeyI' &&
-        e.code !== 'KeyJ'
+        event.code !== 'KeyI' &&
+        event.code !== 'KeyJ'
       ) {
         return;
       }
 
-      if (e.code === 'KeyI') {
-        setProfile((p) =>
-          p === 'wardrobe'
-            ? null
-            : 'wardrobe'
+      if (event.code === 'KeyI') {
+        setProfile(
+          (p) =>
+            p === 'wardrobe'
+              ? null
+              : 'wardrobe'
         );
         return;
       }
 
-      if (e.code === 'KeyJ') {
-        setProfile((p) =>
-          p === 'achievements'
-            ? null
-            : 'achievements'
+      if (event.code === 'KeyJ') {
+        setProfile(
+          (p) =>
+            p === 'achievements'
+              ? null
+              : 'achievements'
         );
         return;
       }
 
-      if (e.code === 'KeyK') {
+      if (event.code === 'KeyK') {
         setDailyOpen(
           (value) => !value
         );
@@ -1064,22 +1033,19 @@ export default function App() {
 
       if (profile || dailyOpen) return;
 
-      if (e.code === 'KeyE') interact();
+      if (event.code === 'KeyE') interact();
 
-      if (e.code === 'KeyH') {
+      if (event.code === 'KeyH') {
         setShowHelp((old) => !old);
       }
 
-      if (e.code === 'KeyB') wave();
+      if (event.code === 'KeyB') wave();
     };
 
     window.addEventListener('keydown', onKey);
 
     return () =>
-      window.removeEventListener(
-        'keydown',
-        onKey
-      );
+      window.removeEventListener('keydown', onKey);
   }, [
     interact,
     shopOpen,
@@ -1087,6 +1053,7 @@ export default function App() {
     profile,
     dailyOpen,
     arcadeOpen,
+    encounterOpen,
     wave,
   ]);
 
@@ -1094,8 +1061,7 @@ export default function App() {
     quest.job === 'pigeon'
       ? quest.caught.length / PIGEONS.length
       : quest.job === 'grass'
-        ? quest.touched.length /
-          GRASS_SPOTS.length
+        ? quest.touched.length / GRASS_SPOTS.length
         : 0;
 
   const objective =
@@ -1107,8 +1073,7 @@ export default function App() {
 
   return (
     <div className="game-shell">
-      {/* Existing city and new arcade */}
-
+      {/* Existing city + reactive citizens */}
       <Canvas
         shadows
         dpr={[1, 1.5]}
@@ -1121,16 +1086,17 @@ export default function App() {
         gl={{ antialias: true }}
       >
         <City caught={quest.caught} />
-
-        <CityActivities
-          touched={quest.touched}
-        />
-
+        <CityActivities touched={quest.touched} />
         <ArcadeKiosk />
 
         <CityExtras
           cityEvent={cityEvent}
           player={player}
+        />
+
+        <ReactiveCitizens
+          player={player}
+          reputation={reputation}
         />
 
         <Player
@@ -1143,33 +1109,55 @@ export default function App() {
         />
       </Canvas>
 
-      {/* Header */}
+      {/* New Alpha 0.7 interaction layer */}
+      <CityEncounters
+        player={player}
+        reputation={reputation}
+        disabled={
+          shopOpen ||
+          dialogOpen ||
+          profile !== null ||
+          dailyOpen ||
+          arcadeOpen
+        }
+        onModalChange={setEncounterOpen}
+        onReward={(
+          earnedCoins,
+          earnedReputation
+        ) => {
+          setCoins(
+            (value) => value + earnedCoins
+          );
 
+          setReputation(
+            (value) => value + earnedReputation
+          );
+
+          setToast(
+            `STREET ENCOUNTER: +${earnedCoins} Coins, +${earnedReputation} REP.`
+          );
+        }}
+      />
+
+      {/* Header */}
       <header className="game-header">
         <div className="branding">
           <div className="brand-logo">
             N<span>!</span>
           </div>
-
           <div>
             <h1>NPC LIFE</h1>
             <p>
               THE CITY OF IDIOTS{' '}
-              <span>•</span> ALPHA 0.6
+              <span>•</span> ALPHA 0.7
             </p>
           </div>
         </div>
 
         <div className="economy">
-          <span className="coin-icon">
-            ◆
-          </span>
-
+          <span className="coin-icon">◆</span>
           <div>
-            <span>
-              YOUR ENTIRE FORTUNE
-            </span>
-
+            <span>YOUR ENTIRE FORTUNE</span>
             <strong>
               {coins.toLocaleString()}
               <small> COINS</small>
@@ -1179,20 +1167,15 @@ export default function App() {
       </header>
 
       {/* Reputation HUD */}
-
       <div className="alpha6-hud">
         <small>NPC REPUTATION</small>
-        <strong>
-          {reputationTier.title}
-        </strong>
-
+        <strong>{reputationTier.title}</strong>
         <span>
           {reputation} REP · K for daily challenges
         </span>
       </div>
 
       {/* Quest tracker */}
-
       <section
         className="quest-panel"
         aria-live="polite"
@@ -1238,7 +1221,6 @@ export default function App() {
       </section>
 
       {/* City events */}
-
       {cityEvent !== 'none' && (
         <div
           className="event-banner"
@@ -1252,7 +1234,6 @@ export default function App() {
       )}
 
       {/* Existing minimap */}
-
       <div
         className="minimap"
         aria-label="Map showing your position"
@@ -1277,7 +1258,6 @@ export default function App() {
           >
             S
           </div>
-
           <div
             className="mini-pin citizen-pin"
             title="Marty"
@@ -1316,8 +1296,7 @@ export default function App() {
         </span>
       </div>
 
-      {/* Interaction prompt */}
-
+      {/* Messages and existing interaction */}
       <div
         className="center-message"
         aria-live="polite"
@@ -1330,22 +1309,17 @@ export default function App() {
           className="interaction"
           onClick={interact}
         >
-          <span className="keycap">
-            E
-          </span>
+          <span className="keycap">E</span>
           {nearby.label}
         </button>
       )}
 
       {/* Bottom toolbar */}
-
       <div className="bottom-bar">
         <button
           className="help-toggle"
           onClick={() =>
-            setShowHelp(
-              (old) => !old
-            )
+            setShowHelp((old) => !old)
           }
         >
           ⓘ Controls <span>H</span>
@@ -1395,19 +1369,13 @@ export default function App() {
       </div>
 
       {/* Help panel */}
-
       {showHelp && (
         <section className="controls-panel">
           <div className="controls-heading">
-            <strong>
-              HOW TO BE AN NPC
-            </strong>
-
+            <strong>HOW TO BE AN NPC</strong>
             <button
               aria-label="Close help"
-              onClick={() =>
-                setShowHelp(false)
-              }
+              onClick={() => setShowHelp(false)}
             >
               ×
             </button>
@@ -1419,83 +1387,69 @@ export default function App() {
             <kbd>S</kbd>
             <kbd>D</kbd> Move relative to camera
           </p>
-
           <p>
             <kbd>SHIFT</kbd> Run from responsibilities
           </p>
-
           <p>
             <kbd>SPACE</kbd> Jump
           </p>
-
           <p>
             <kbd>E</kbd> Interact
           </p>
-
+          <p>
+            <kbd>F</kbd> Talk to special citizens
+          </p>
           <p>
             <kbd>B</kbd> Awkward wave
           </p>
-
           <p>
             <kbd>H</kbd> Toggle help
           </p>
-
           <p>
             <kbd>I</kbd> Wardrobe
           </p>
-
           <p>
             <kbd>J</kbd> Achievements
           </p>
-
           <p>
             <kbd>K</kbd> Daily challenges
           </p>
-
           <p>
             <kbd>DRAG</kbd> Rotate camera
           </p>
-
           <p>
             <kbd>SCROLL</kbd> Zoom camera
           </p>
 
           <p className="muted">
-            Talk to Gary or Marty for jobs.
-            Visit the arcade for Pigeon Panic.
-            Complete daily challenges for extra
-            rewards. Your existing job rank:{' '}
-            {cityRank(jobsDone)}.
+            Talk to Gary for pigeon debt, or Marty
+            for grass inspections. Quest progress
+            saves locally. Press F near named
+            citizens for street encounters.
+            Your rank: {cityRank(jobsDone)}.
           </p>
         </section>
       )}
 
-      {/* Alpha 0.6 daily challenges */}
-
+      {/* Daily challenges */}
       {dailyOpen && (
         <DailyBoard
           daily={currentDaily(daily)}
           reputation={reputation}
           onClaim={claimChallenge}
-          onClose={() =>
-            setDailyOpen(false)
-          }
+          onClose={() => setDailyOpen(false)}
         />
       )}
 
-      {/* Alpha 0.6 minigame */}
-
+      {/* Arcade */}
       {arcadeOpen && (
         <PigeonPanic
-          onClose={() =>
-            setArcadeOpen(false)
-          }
+          onClose={() => setArcadeOpen(false)}
           onFinish={arcadeFinished}
         />
       )}
 
-      {/* Alpha 0.5 wardrobe and achievements */}
-
+      {/* Wardrobe and achievements */}
       {profile && (
         <ProgressionPanel
           key={profile}
@@ -1506,38 +1460,28 @@ export default function App() {
           stats={stats}
           onEquip={equip}
           onShirt={changeShirt}
-          onClose={() =>
-            setProfile(null)
-          }
+          onClose={() => setProfile(null)}
         />
       )}
 
-      {/* Marty's original dialogue and job */}
-
+      {/* Marty dialogue */}
       {dialogOpen && (
         <div
           className="npc-dialog-backdrop"
-          onClick={() =>
-            setDialogOpen(false)
-          }
+          onClick={() => setDialogOpen(false)}
         >
           <section
             className="npc-dialog"
             role="dialog"
             aria-modal="true"
             aria-label="Talk to Marty"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            onClick={(e) => e.stopPropagation()}
           >
             <span className="npc-dialog-label">
               LOCAL CITIZEN • VERY EMPLOYED
             </span>
 
-            <h2>
-              Marty, Grass Inspector
-            </h2>
-
+            <h2>Marty, Grass Inspector</h2>
             <p>{dialogText}</p>
 
             <div className="npc-dialog-actions">
@@ -1551,7 +1495,6 @@ export default function App() {
                   setDialogText(
                     randomLine(CITIZEN_LINES)
                   );
-
                   playGameSound('talk');
                 }}
               >
@@ -1560,9 +1503,7 @@ export default function App() {
 
               <button
                 className="secondary"
-                onClick={() =>
-                  setDialogOpen(false)
-                }
+                onClick={() => setDialogOpen(false)}
               >
                 Leave
               </button>
@@ -1571,32 +1512,25 @@ export default function App() {
         </div>
       )}
 
-      {/* Original cosmetic shop */}
-
+      {/* Cosmetic shop */}
       {shopOpen && (
         <div
           className="shop-backdrop"
-          onClick={() =>
-            setShopOpen(false)
-          }
+          onClick={() => setShopOpen(false)}
         >
           <section
             className="shop-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Stupid Shop"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="shop-heading">
               <div>
                 <span className="panel-eyebrow">
                   QUESTIONABLE PURCHASES
                 </span>
-
                 <h2>THE STUPID SHOP</h2>
-
                 <p>
                   Everything is overpriced.
                   Nothing improves your life.
@@ -1604,9 +1538,7 @@ export default function App() {
               </div>
 
               <button
-                onClick={() =>
-                  setShopOpen(false)
-                }
+                onClick={() => setShopOpen(false)}
                 aria-label="Close shop"
               >
                 ×
@@ -1614,7 +1546,7 @@ export default function App() {
             </div>
 
             <div className="shop-balance">
-              YOUR WALLET{' '}
+              YOUR WALLET
               <strong>
                 ◆ {coins.toLocaleString()}
               </strong>
@@ -1624,7 +1556,6 @@ export default function App() {
               {COSMETICS.map((item) => {
                 const owned =
                   inventory.includes(item.id);
-
                 const wearing =
                   equipped === item.id;
 
@@ -1638,14 +1569,8 @@ export default function App() {
                     </div>
 
                     <div className="shop-details">
-                      <strong>
-                        {item.name}
-                      </strong>
-
-                      <span>
-                        {item.description}
-                      </span>
-
+                      <strong>{item.name}</strong>
+                      <span>{item.description}</span>
                       <small>
                         {owned
                           ? 'OWNED'
@@ -1654,12 +1579,9 @@ export default function App() {
                     </div>
 
                     <button
-                      onClick={() =>
-                        buyOrEquip(item)
-                      }
+                      onClick={() => buyOrEquip(item)}
                       disabled={
-                        !owned &&
-                        coins < item.price
+                        !owned && coins < item.price
                       }
                     >
                       {wearing
@@ -1674,8 +1596,8 @@ export default function App() {
             </div>
 
             <p className="shop-note">
-              Purchases appear in your Wardrobe (I).
-              Press ESC to leave.
+              Purchases appear in your Wardrobe
+              (I). Press ESC to leave.
             </p>
           </section>
         </div>
