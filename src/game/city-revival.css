@@ -69,3 +69,25 @@
 }
 
 .vehicle-hud{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:15;display:grid;gap:6px;min-width:240px;max-width:90vw;padding:12px 18px;background:#26372eee;color:#f0dfb7;border:2px solid #b5a173;box-shadow:4px 4px 0 #14231d;font:12px monospace;pointer-events:none}.vehicle-hud strong{font-size:26px;color:#c9dba5}.vehicle-hud small{font-size:12px}.vehicle-hud b{letter-spacing:2px;text-transform:uppercase}
+/* Resident bureau follows the same paper-and-ink game panels. */
+.resident-access{position:absolute;right:22px;bottom:65px;z-index:15}.resident-access button,.resident-prompt{background:#293b33;color:#f4e6c7;border:2px solid #d2bf91;padding:10px 14px;font:bold 12px var(--ui-display);box-shadow:3px 3px #111d18}
+.resident-phone{width:min(980px,94vw);max-height:88vh;padding:24px}.resident-phone h3{color:#edbe56;margin:18px 0 10px}.resident-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}.resident-grid article{border-top:1px solid #627163;padding:12px 0}.resident-grid article p{margin:6px 0}.resident-grid article button{display:block;margin-top:8px}.resident-grid svg{width:100%;max-height:270px}.resident-notice{padding:12px;background:#33483c;border-left:3px solid #edbe56}.resident-badges{display:flex;flex-wrap:wrap;gap:10px}.resident-badges span{width:165px;border:1px solid #5b6859;padding:10px;opacity:.6}.resident-badges small{display:block;margin-top:6px}.resident-badges .earned{opacity:1;border-color:#edbe56}.shift-tracker{position:absolute;top:290px;left:22px;width:280px;z-index:12;background:#29392e;border:2px solid #c89d64;border-left:5px solid #ffad68;padding:12px;color:#f4e8c6}.shift-tracker span,.shift-tracker small{display:block;margin-top:8px}.resident-prompt{position:absolute;bottom:125px;left:50%;transform:translateX(-50%);z-index:15}.court-dialog{width:min(560px,92vw);padding:25px}.court-meter{height:36px;background:#15271e;position:relative;margin:25px 0;border:2px solid #d7c69f}.court-meter span{position:absolute;left:34%;width:32%;height:100%;background:#739b62}.court-meter i{position:absolute;width:5px;height:100%;background:#f9dfa0}.quest-panel.idle-job{display:none!important}
+@media(max-width:760px){.resident-grid{grid-template-columns:1fr}.resident-access{right:12px;bottom:58px}.shift-tracker{top:auto;bottom:160px;left:12px;width:225px}.resident-prompt{max-width:75vw;font-size:10px;bottom:110px}}
+@media(max-height:690px){.shift-tracker{top:auto;bottom:175px;width:225px;padding:8px}.revival-tracker .district-status{display:none}.resident-access{right:12px;bottom:48px}}
+.resident-phone button,.court-dialog button{padding:9px 12px;background:#e5bd69;color:#18291f;border:2px solid #f6e8c2;box-shadow:3px 3px #112419;font:bold 12px var(--ui-display);cursor:pointer}.resident-phone button:hover,.court-dialog button:hover{background:#f8d684}.resident-phone button:active,.court-dialog button:active{transform:translate(2px,2px);box-shadow:1px 1px #112419}.resident-phone button:disabled{opacity:.5;cursor:default;box-shadow:none}.court-dialog button+button{margin-left:12px}.map-service-legend{columns:2;font-size:11px;line-height:1.6;padding-left:18px;color:#e1d7ba}
+
+/* Give the active resident shift the single primary objective slot. */
+.game-shell:has(.shift-tracker) .revival-tracker{display:none}
+.game-shell .shift-tracker{top:105px;bottom:auto}
+.game-shell .resident-prompt{bottom:169px;max-width:min(500px,90vw)}
+.game-shell:has(.resident-prompt) .interaction{bottom:225px}
+.game-shell:has(.resident-prompt) .encounter-prompt{bottom:281px}
+.game-shell:has(.vehicle-hud) .center-message{bottom:260px}
+@media(max-height:740px){.game-shell .shift-tracker{top:90px}}
+@media(max-width:900px){.game-shell .shift-tracker{width:235px}}
+@media(max-width:700px){.game-shell .shift-tracker{top:126px;left:10px;width:210px;padding:10px}.shift-tracker b{font-size:13px}}
+
+.game-shell .resident-access{bottom:65px}
+@media(max-width:650px){.game-shell .resident-access{bottom:125px;right:14px}.resident-access button{font-size:10px;padding:9px}}
+
+@media(max-width:650px){.game-shell .resident-prompt{bottom:215px;left:14px;transform:none;max-width:calc(100vw - 180px)}.game-shell:has(.resident-prompt) .interaction{bottom:265px}.game-shell:has(.resident-prompt) .encounter-prompt{bottom:321px}}

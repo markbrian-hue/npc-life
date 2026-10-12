@@ -1,5 +1,5 @@
 import { WORLD_RADIUS, SPAWN, blocked } from '../shared/world.mjs';
-import { createFleet, stepVehicle, neutralControls, exitPosition } from '../shared/vehicles.mjs';
+import { createFleet, stepTraffic, stepVehicle, neutralControls, exitPosition } from '../shared/vehicles.mjs';
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
@@ -18,6 +18,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
     const time = now(), dt = Math.min((time-lastPhysics)/1000,.1); lastPhysics=time;
     for (const room of rooms.values()) for (const car of room.cars) {
       const driver=room.players.get(car.driver);
+      if(car.traffic){stepTraffic(car,dt,room.cars,[...room.players.values()].filter(p=>!p.vehicleId));continue;}
       stepVehicle(car,driver && time-driver.lastMove<750 ? driver.controls : neutralControls(),dt,room.cars);
       if (driver) Object.assign(driver,{x:car.x,z:car.z,y:0,heading:car.heading+Math.PI/2});
     }

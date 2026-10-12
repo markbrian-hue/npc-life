@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { walkingRoute } from './pathing.mjs';
 import { mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createServer } from 'vite';
@@ -162,13 +163,13 @@ try {
   await page.getByRole('dialog', { name: 'NPC LIFE game menu' }).waitFor();
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => window.__npcQA.samples > 1);
-  async function walkTo(x, z) {
+  async function walkSegment(x, z) {
     let held = [];
     try {
       for (let step = 0; step < 65; step++) {
         const here = await position();
         const dx = x - here.x, dz = z - here.z;
-        if (Math.hypot(dx, dz) < 1.65) return;
+        if (Math.hypot(dx, dz) < .65) return;
         const side = Math.cos(.6) * dx - Math.sin(.6) * dz;
         const forward = -Math.sin(.6) * dx - Math.cos(.6) * dz;
         const max = Math.max(Math.abs(side), Math.abs(forward));
@@ -186,8 +187,8 @@ try {
       await page.waitForTimeout(180);
     }
   }
-  await walkTo(-6, 16);
-  await walkTo(-6, -3);
+  async function walkTo(x,z){for(const [px,pz] of walkingRoute(await position(),{x,z})) await walkSegment(px,pz);}
+  await walkTo(-8, -16);
   await page.getByRole('button', { name: 'E Browse the Stupid Shop', exact: true }).click();
   await page.getByRole('dialog', { name: 'Stupid Shop' }).waitFor();
   await page.locator('.shop-item').filter({ hasText: 'Traffic Cone Hat' }).getByRole('button', { name: 'Buy', exact: true }).click();
@@ -197,7 +198,7 @@ try {
   await page.keyboard.press('Escape');
   pass('shop opens via real movement; purchase and save retain the correct price');
 
-  await walkTo(6, -4);
+  await walkTo(8, -16);
   await page.getByRole('button', { name: 'E Talk to Marty', exact: true }).click();
   await page.getByRole('dialog', { name: 'Talk to Marty' }).waitFor();
   await page.getByRole('button', { name: 'Give me a job (+45 ◆)' }).click();
@@ -205,7 +206,7 @@ try {
   assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem('npc-life:active-quest-v1'))).job, 'grass');
   pass('Marty dialog starts the existing grass quest');
 
-  await walkTo(9, 7.8);
+  await walkTo(8.5, 10.5);
   await page.getByRole('button', { name: 'E Play Pigeon Panic', exact: true }).click();
   await page.getByRole('dialog', { name: 'Pigeon Panic arcade' }).waitFor();
   await page.getByRole('button', { name: 'Start round', exact: true }).click();

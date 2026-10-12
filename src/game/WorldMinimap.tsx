@@ -1,11 +1,11 @@
+import { CityMapLayer } from './CityMapLayer';
 import { DISTRICTS } from './campaign';
-import { WORLD_RADIUS, GROVE } from './world';
+import { WORLD_RADIUS } from './world';
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
-  BUILDINGS,
   FOUNTAIN,
   BUS_STOP,
   TREES,
@@ -108,67 +108,7 @@ export function WorldMinimap({ target }: { target: { x: number; z: number } }) {
             role="img"
             aria-label="City roads, buildings and player location"
           >
-            {/* Grass */}
-            <rect
-              width="336"
-              height="336"
-              fill="#94b58d"
-            />
-
-            {/* Crossroads */}
-            <path
-              d="M 0 168 H 336 M 168 0 V 336"
-              stroke="#616a77"
-              strokeWidth={8.5 * unit}
-            />
-
-            {/* Plaza */}
-            <circle
-              cx="168"
-              cy="168"
-              r={8.3 * unit}
-              fill="#e4d1ac"
-              stroke="#bea27e"
-              strokeWidth="3"
-            />
-
-            {/* Road lane markings */}
-            <path
-              d="M0 168H336M168 0V336"
-              stroke="#e8dcae"
-              strokeWidth="1"
-              strokeDasharray="7 7"
-            />
-
-            <path d={`M ${scale(GROVE.x)} 168 V ${scale(GROVE.z)} H 168`} fill="none" stroke="#566c69" strokeWidth={8.5 * unit} />
-          <circle cx={scale(GROVE.x)} cy={scale(GROVE.z)} r={12 * unit} fill="#566c69" />
-          <text x={scale(GROVE.x)} y={scale(GROVE.z)-17} textAnchor="middle" fontSize="10" fill="#fff4d6">GROVE ST.</text>
-          <circle cx="168" cy="168" r={12 * unit} fill="#566c69" />
-          <circle cx="168" cy="168" r={5.5 * unit} fill="#84997a" />
-          {/* Actual building footprints */}
-            {BUILDINGS.map((building, index) => (
-              <rect
-                key={index}
-                transform={`rotate(${-(building.rotation || 0)*180/Math.PI} ${scale(building.x)} ${scale(building.z)})`}
-                x={scale(
-                  building.x - building.w / 2
-                )}
-                y={scale(
-                  building.z - building.d / 2
-                )}
-                width={building.w * unit}
-                height={building.d * unit}
-                rx="2.5"
-                fill={building.roof}
-                stroke="#263e4a"
-                strokeWidth="2"
-              >
-                <title>
-                  {`Building ${index + 1}`}
-                </title>
-              </rect>
-            ))}
-
+            <CityMapLayer size={336}/>
             {/* Real tree locations */}
             {TREES.map((tree, index) => (
               <circle

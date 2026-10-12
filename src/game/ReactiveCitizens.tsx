@@ -1,6 +1,7 @@
+import { citizenPositions } from './citizenPositions';
 import { Character } from './Character';
 
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -73,6 +74,7 @@ function Citizen({
   const pauseTimer = useRef(0.4);
   const walkClock = useRef(0);
   const movingBlend = useRef(0);
+  useEffect(()=>()=>{citizenPositions.delete(npc.id);},[npc.id]);
 
   useFrame(({ clock }, rawDelta) => {
     const actor = root.current;
@@ -85,6 +87,8 @@ function Citizen({
     const dz = player.z - actor.position.z;
 
     const playerDistance = Math.hypot(dx, dz);
+    citizenPositions.set(npc.id,{x:actor.position.x,z:actor.position.z});
+    if(playerDistance>65)return;
     const watching = playerDistance < 3.8;
 
     const path = ROUTES[npc.id];

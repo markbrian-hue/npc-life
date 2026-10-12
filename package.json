@@ -11,7 +11,9 @@
     "test:browser": "node tests/browser.mjs",
     "dev:multi": "node scripts/dev.mjs",
     "start": "node server/multiplayer.mjs",
-    "test:city": "node tests/city-browser.mjs"
+    "test:city": "node tests/city-browser.mjs",
+    "test:foundation": "node tests/foundation-browser.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@react-three/fiber": "^9.0.0",

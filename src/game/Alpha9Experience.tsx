@@ -54,12 +54,12 @@ function TourGuide({
     {
       title: 'Find Gary, the pigeon debt collector',
       done: progress.visitedGary,
-      detail: 'X 3 / Z 3',
+      detail: `X ${TOUR_TARGETS.gary.x} / Z ${TOUR_TARGETS.gary.z}`,
     },
     {
       title: 'Find the Pigeon Panic arcade',
       done: progress.visitedArcade,
-      detail: 'X 9 / Z 8',
+      detail: `X ${TOUR_TARGETS.arcade.x} / Z ${TOUR_TARGETS.arcade.z}`,
     },
   ];
 
@@ -361,9 +361,9 @@ export function Alpha9Experience() {
             </h2>
 
             <p>
-              The festival is cancelled. Four districts are broken.
-              You are the background character who has to fix it.
-              Follow the gold council marker to start City Revival.
+              Start with a small shift: press L and choose Go Buy Milk.
+              Earn coins, unlock better work, and explore Juniper Close.
+              The festival campaign is waiting in C whenever you are ready.
             </p>
 
             <div className="alpha9-welcome-grid">

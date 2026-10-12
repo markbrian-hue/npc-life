@@ -1,8 +1,9 @@
+import { CityMapLayer } from './CityMapLayer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CAMPAIGN_KEY, DISTRICTS, MISSIONS, currentTask, districtAt, loadCampaign, type Campaign } from './campaign';
 import { GameDialog } from './ui/GameDialog';
 import { isTyping, useGameUI } from './ui/GameUI';
-import { BUILDINGS, WORLD_RADIUS, GROVE } from './world';
+import { WORLD_RADIUS } from './world';
 
 export function useCityRevival(player: { x: number; z: number }, onReward: (coins: number, rep: number, message: string) => void) {
   const [campaign, setCampaign] = useState(loadCampaign);
@@ -60,7 +61,6 @@ export function CityRevival({ revival, player }: { revival: Revival; player: { x
   const district = districtAt(player.x, player.z);
   const completed = campaign.step >= MISSIONS.length;
   const scale = (n: number) => (n + WORLD_RADIUS) / (WORLD_RADIUS * 2) * 400;
-  const unit = 400 / (WORLD_RADIUS * 2);
   const north = task.z < player.z - 3, south = task.z > player.z + 3, east = task.x > player.x + 3, west = task.x < player.x - 3;
   const bearing = `${north ? 'N' : south ? 'S' : ''}${east ? 'E' : west ? 'W' : ''}` || 'HERE';
   return <>
@@ -79,14 +79,7 @@ export function CityRevival({ revival, player }: { revival: Revival; player: { x
       <p>Restore four districts. Reopen the festival. Become the NPC this city accidentally needed.</p>
       <div className="journal-layout">
         <svg viewBox="0 0 400 400" role="img" aria-label="Full city map with your location and current objective">
-          <rect width="400" height="400" fill="#84997a" /><rect y={scale(75)} width="400" height="40" fill="#548991" />
-          <path d="M0 200H400M200 0V400" stroke="#c4bba1" strokeWidth="30" /><path d="M0 200H400M200 0V400" stroke="#566c69" strokeWidth="19" />
-          <path d={`M ${scale(GROVE.x)} 200 V ${scale(GROVE.z)} H 200`} fill="none" stroke="#566c69" strokeWidth={8.5 * unit} />
-          <circle cx={scale(GROVE.x)} cy={scale(GROVE.z)} r={12 * unit} fill="#566c69" />
-          <text x={scale(GROVE.x)} y={scale(GROVE.z)-17} textAnchor="middle" fontSize="10" fill="#fff4d6">GROVE ST.</text>
-          <circle cx="200" cy="200" r={12 * unit} fill="#566c69" />
-          <circle cx="200" cy="200" r={5.5 * unit} fill="#84997a" />
-          {BUILDINGS.map((b, i) => <rect key={i} transform={`rotate(${-(b.rotation || 0)*180/Math.PI} ${scale(b.x)} ${scale(b.z)})`} x={scale(b.x - b.w / 2)} y={scale(b.z - b.d / 2)} width={b.w * unit} height={b.d * unit} fill={b.roof} stroke="#d0c5a5" />)}
+          <CityMapLayer size={400} details/>
           {DISTRICTS.map(d => <g key={d.id}><circle cx={scale(d.x)} cy={scale(d.z)} r="9" fill={d.color} /><text x={scale(d.x)} y={scale(d.z) + 23} textAnchor="middle" fill="#fff4d6" stroke="#243a35" strokeWidth="3" paintOrder="stroke" fontSize="12" fontWeight="bold">{d.name}</text></g>)}
           <circle cx={scale(task.x)} cy={scale(task.z)} r="12" fill="none" stroke="#ffdf83" strokeWidth="3" /><text x={scale(task.x)} y={scale(task.z) + 4} textAnchor="middle" fill="#fff3bf" fontSize="15">!</text>
           <circle cx={scale(player.x)} cy={scale(player.z)} r="5" fill="#fff" stroke="#152b29" strokeWidth="2" />

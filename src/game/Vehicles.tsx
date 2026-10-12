@@ -1,7 +1,8 @@
+import { playGameSound } from './gameAudio';
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils, type Group } from 'three';
-import { createFleet, exitPosition, neutralControls, stepVehicle } from '../../shared/vehicles.mjs';
+import { createFleet, exitPosition, neutralControls, stepTraffic, stepVehicle } from '../../shared/vehicles.mjs';
 import type { Multiplayer } from './Multiplayer';
 import { SPAWN } from './world';
 import { CarModel } from './CityProps';
@@ -9,17 +10,18 @@ import { Character } from './Character';
 import { isTyping, useGameUI } from './ui/GameUI';
 
 type Car = ReturnType<typeof createFleet>[number];
-export type VehicleRuntime = { cars: Car[]; targets: Car[]; ownedId: string; networked: boolean; controls: ReturnType<typeof neutralControls> };
+export type VehicleRuntime = { player:{x:number;z:number}; cars: Car[]; targets: Car[]; ownedId: string; networked: boolean; controls: ReturnType<typeof neutralControls> };
 export function useVehicles(multiplayer: Multiplayer, player: {x:number;z:number}) {
   const {store}=useGameUI();
-  const runtime=useRef<VehicleRuntime>({cars:createFleet(),targets:[],ownedId:'',networked:false,controls:neutralControls()});
+  const runtime=useRef<VehicleRuntime>({player,cars:createFleet(),targets:[],ownedId:'',networked:false,controls:neutralControls()});
+  runtime.current.player=player;
   const [message,setMessage]=useState('');
   const [status,setStatus]=useState({name:'',speed:0,near:''});
   const state=useRef({multiplayer,player}); state.current={multiplayer,player};
   const pending=useRef(false);
   useEffect(()=>{
     if(runtime.current.ownedId) window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:SPAWN}));
-    runtime.current={cars:multiplayer.session ? multiplayer.cars.map(c=>({...c})) : createFleet(),targets:[],ownedId:'',networked:!!multiplayer.session,controls:neutralControls()};
+    runtime.current={player,cars:multiplayer.session ? multiplayer.cars.map(c=>({...c})) : createFleet(),targets:[],ownedId:'',networked:!!multiplayer.session,controls:neutralControls()};
     window.dispatchEvent(new CustomEvent('npc-life:driving',{detail:false}));
   },[multiplayer.session?.id]);
   useEffect(()=>{
@@ -40,6 +42,7 @@ export function useVehicles(multiplayer: Multiplayer, player: {x:number;z:number
       if(store.getSnapshot()!==null || isTyping(e.target)) return;
       keys.add(e.code); update();
       if(runtime.current.ownedId && ['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+      if(e.code==='KeyV'&&runtime.current.ownedId&&!e.repeat)playGameSound('horn');
       if(e.code!=='KeyR'||e.repeat||pending.current)return;
       pending.current=true;
       try {
@@ -64,8 +67,10 @@ export function useVehicles(multiplayer: Multiplayer, player: {x:number;z:number
     const up=(e:KeyboardEvent)=>{keys.delete(e.code);update();};
     const unsub=store.subscribe(()=>{if(store.getSnapshot()!==null)reset();});
     const timer=window.setInterval(()=>{const r=runtime.current,p=state.current.player,car=r.cars.find(c=>c.id===r.ownedId);const near=r.cars.find(c=>!c.driver&&Math.hypot(c.x-p.x,c.z-p.z)<4);setStatus({name:car?.name||'',speed:Math.round(Math.abs(car?.speed||0)*3.6),near:near?.name||''});},150);
+    const position=(e:Event)=>{const p=(e as CustomEvent<{x:number;z:number}>).detail;state.current.player=p;runtime.current.player=p;};
+    window.addEventListener('npc-life:position',position);
     window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('blur',reset);
-    return()=>{unsub();clearInterval(timer);window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',reset);reset();};
+    return()=>{window.removeEventListener('npc-life:position',position);unsub();clearInterval(timer);window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',reset);reset();};
   },[store]);
   return {runtime,status,message};
 }
@@ -88,12 +93,12 @@ export function VehiclesWorld({vehicles}:{vehicles:Vehicles}) {
         car.heading+=Math.atan2(Math.sin(t.heading-car.heading),Math.cos(t.heading-car.heading))*(1-Math.exp(-16*dt));
         car.speed=t.speed;car.driver=t.driver;car.steer=t.steer;car.braking=t.braking;
       }
-    }else for(const car of r.cars)stepVehicle(car,car.id===r.ownedId?r.controls:neutralControls(),dt,r.cars);
+    }else for(const car of r.cars){if(car.traffic)stepTraffic(car,dt,r.cars,[r.player]);else stepVehicle(car,car.id===r.ownedId?r.controls:neutralControls(),dt,r.cars);}
   },-2);
   return <>{vehicles.runtime.current.cars.map(car=><MovingCar key={car.id} id={car.id} vehicles={vehicles}/>)}</>;
 }
 export function VehicleHUD({vehicles}:{vehicles:Vehicles}) {
   const {status,message}=vehicles;
   if(!status.name&&!status.near&&!message)return null;
-  return <aside className="vehicle-hud" role="status">{status.name?<><b>{status.name}</b><strong>{status.speed} <small>KM/H</small></strong><span>W/S accelerate · A/D steer · SPACE brake · R exit</span></>:<><b>{status.near||'MOTOR POOL'}</b><span>{status.near?'R · Get in and drive':''}</span></>}{message&&<span>{message}</span>}</aside>;
+  return <aside className="vehicle-hud" role="status">{status.name?<><b>{status.name}</b><strong>{status.speed} <small>KM/H</small></strong><span>W/S accelerate · A/D steer · SPACE brake · V horn · R exit</span></>:<><b>{status.near||'MOTOR POOL'}</b><span>{status.near?'R · Get in and drive':''}</span></>}{message&&<span>{message}</span>}</aside>;
 }

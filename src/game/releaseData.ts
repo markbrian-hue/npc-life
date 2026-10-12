@@ -1,3 +1,4 @@
+import { LIFE_KEY, validateLife } from '../../shared/residentLife.mjs';
 import { CAMPAIGN_KEY, validateCampaign } from './campaign';
 
 import { COSMETICS, isCosmetic, isShirt } from './progression';
@@ -7,6 +8,7 @@ import { STREET_NPCS } from './alpha7';
 import { DAILY_CHALLENGES } from './alpha6';
 
 export const RELEASE_KEYS = [
+  LIFE_KEY,
   CAMPAIGN_KEY,
   'npc-life:coins-v1',
   'npc-life:inventory-v1',
@@ -210,6 +212,7 @@ export function exportSave(): void {
 }
 
 function validateValue(key: string, raw: string): string {
+  if(key===LIFE_KEY) return JSON.stringify(validateLife(JSON.parse(raw)));
   if (key === CAMPAIGN_KEY) return JSON.stringify(validateCampaign(JSON.parse(raw)));
   if ([
     'npc-life:coins-v1',

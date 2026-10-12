@@ -2,12 +2,14 @@
 import { useEffect, useState } from 'react';
 import {
   playGameSound,
+  setAudioChannel,
   setGameAudioVolume,
   startGameAudio,
   stopGameAudio,
 } from './gameAudio';
 
 export function AmbientSound() {
+  const [sfx,setSfx]=useState(80),[ambience,setAmbience]=useState(45);
   const [on, setOn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [volume, setVolume] = useState(75);
@@ -71,7 +73,7 @@ export function AmbientSound() {
       </div>
 
       <label className="npc-volume">
-        Volume: {volume}%
+        Master: {volume}%
         <input
           type="range"
           min="0"
@@ -86,6 +88,7 @@ export function AmbientSound() {
         />
       </label>
 
+      {(['sfx','ambience'] as const).map(channel=><label className="npc-volume" key={channel}>{channel==='sfx'?'SFX':'Ambience'}: {channel==='sfx'?sfx:ambience}%<input type="range" min="0" max="100" step="5" value={channel==='sfx'?sfx:ambience} onChange={e=>{const v=Number(e.target.value);if(channel==='sfx')setSfx(v);else setAmbience(v);setAudioChannel(channel,v/100);}}/></label>)}
       <small aria-live="polite">{message}</small>
     </details>
   );

@@ -1,5 +1,5 @@
 
-export const ARCADE_POSITION = { x: 9, z: 7.8 } as const;
+export const ARCADE_POSITION = { x: 10.5, z: 10.5 } as const;
 
 export const DAILY_CHALLENGES = [
   {

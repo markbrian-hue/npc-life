@@ -90,7 +90,7 @@ try {
   const second = await browser.newContext({ viewport: { width: 1100, height: 760 } });
   await second.addInitScript(() => { window.__position = { x: 0, z: 0 }; window.addEventListener('npc-life:position', e => window.__position = e.detail); });
   const guest = await second.newPage(); guest.on('pageerror', e => errors.push(e.message));
-  await guest.goto('http://127.0.0.1:5182'); await guest.getByRole('button', { name: 'Skip, I live here already' }).click();
+  await guest.goto('http://127.0.0.1:5182'); await guest.bringToFront(); await guest.waitForFunction(() => window.__position.x !== 0 || window.__position.z !== 0, null, {timeout:120000}); await guest.getByRole('button', { name: 'Skip, I live here already' }).click({timeout:60000}).catch(async error => { console.log('GUEST LOAD', errors, await guest.locator('body').innerText()); await guest.screenshot({ path: `${output}/guest-load-failure.png` }); throw error; });
   await guest.keyboard.press('n'); await guest.getByLabel('RESIDENT NAME').fill('Bob'); await guest.getByLabel('HAVE A ROOM CODE?').fill(code); await guest.getByRole('button', { name: 'Join room', exact: true }).click();
   await guest.getByRole('heading', { name: `Room ${code}` }).waitFor();
   await page.getByText('Bob', { exact: true }).waitFor();

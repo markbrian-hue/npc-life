@@ -1,3 +1,4 @@
+import { citizenPositions } from './citizenPositions';
 import { GameDialog } from './ui/GameDialog';
 import { useGameUI } from './ui/GameUI';
 
@@ -81,8 +82,8 @@ export function CityEncounters({
         distance: distance2D(
           player.x,
           player.z,
-          npc.x,
-          npc.z
+          (citizenPositions.get(npc.id) || npc).x,
+          (citizenPositions.get(npc.id) || npc).z
         ),
       }))
       .filter(({ distance }) => distance < 3.25)

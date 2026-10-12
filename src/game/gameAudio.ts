@@ -1,5 +1,6 @@
 
 export type GameSound =
+  | 'step' | 'horn' | 'impact'
   | 'interact'
   | 'talk'
   | 'coin'
@@ -15,6 +16,11 @@ let noiseSource: AudioBufferSourceNode | null = null;
 let birdTimer: number | null = null;
 let enabled = false;
 let volume = 0.75;
+let sfxGain: GainNode | null=null, ambienceGain: GainNode | null=null;
+let motor: OscillatorNode | null=null, motorGain: GainNode | null=null;
+let sfxVolume=.8, ambienceVolume=.45;
+export function setAudioChannel(channel:'sfx'|'ambience',value:number){const v=Math.max(0,Math.min(1,value));if(channel==='sfx'){sfxVolume=v;if(sfxGain)sfxGain.gain.value=v;}else{ambienceVolume=v;if(ambienceGain)ambienceGain.gain.value=v;}}
+export function updateEngineSound(speed:number,driving:boolean){if(!context||!motor||!motorGain)return;motor.frequency.setTargetAtTime(45+Math.abs(speed)*4,context.currentTime,.15);motorGain.gain.setTargetAtTime(driving?.025+Math.abs(speed)*.001:0,context.currentTime,.12);}
 
 function tone(
   frequency: number,
@@ -22,7 +28,8 @@ function tone(
   level: number,
   delay = 0,
   shape: OscillatorType = 'sine',
-  endFrequency = frequency
+  endFrequency = frequency,
+  ambient = false
 ): void {
   if (!context || !master || !enabled) return;
 
@@ -48,7 +55,7 @@ function tone(
   );
 
   oscillator.connect(envelope);
-  envelope.connect(master);
+  envelope.connect((ambient?ambienceGain:sfxGain)||master);
   oscillator.start(start);
   oscillator.stop(start + duration + 0.025);
 
@@ -62,6 +69,9 @@ export function playGameSound(sound: GameSound): void {
   if (!enabled || context?.state !== 'running') return;
 
   switch (sound) {
+    case 'step': tone(100,.055,.026,0,'triangle',65); break;
+    case 'horn': tone(280,.28,.06,0,'sawtooth'); tone(355,.28,.04,0,'triangle'); break;
+    case 'impact': tone(90,.18,.075,0,'triangle',25); break;
     case 'start':
       tone(523, 0.17, 0.17);
       tone(659, 0.17, 0.17, 0.13);
@@ -107,8 +117,8 @@ export function playGameSound(sound: GameSound): void {
 function birdChirp(): void {
   if (!enabled || context?.state !== 'running') return;
 
-  tone(1160, 0.12, 0.03, 0, 'sine', 1750);
-  tone(1420, 0.115, 0.025, 0.16, 'sine', 1880);
+  tone(1160, 0.12, 0.03, 0, 'sine', 1750,true);
+  tone(1420, 0.115, 0.025, 0.16, 'sine', 1880,true);
 }
 
 function beginAmbience(
@@ -175,7 +185,11 @@ export async function startGameAudio(): Promise<void> {
 
     if (!enabled || context !== ctx) return;
 
-    beginAmbience(ctx, gain);
+    sfxGain=ctx.createGain();sfxGain.gain.value=sfxVolume;sfxGain.connect(gain);
+    ambienceGain=ctx.createGain();ambienceGain.gain.value=ambienceVolume;ambienceGain.connect(gain);
+    motor=ctx.createOscillator();motor.type='triangle';motor.frequency.value=45;
+    motorGain=ctx.createGain();motorGain.gain.value=0;motor.connect(motorGain);motorGain.connect(sfxGain);motor.start();
+    beginAmbience(ctx, ambienceGain);
     playGameSound('start');
   } catch (error) {
     await stopGameAudio();
@@ -202,6 +216,7 @@ export async function stopGameAudio(): Promise<void> {
     noiseSource = null;
   }
 
+  motor?.stop();motor?.disconnect();motorGain?.disconnect();motor=null;motorGain=null;sfxGain=null;ambienceGain=null;
   const old = context;
   context = null;
   master = null;

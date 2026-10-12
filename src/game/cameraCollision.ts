@@ -22,7 +22,7 @@ const PADDING = 0.30;
 const CAMERA_STRUCTURES = [
   ...BUILDINGS.map(b => ({...b, w: Math.abs(Math.cos(b.rotation || 0))*b.w + Math.abs(Math.sin(b.rotation || 0))*b.d, d: Math.abs(Math.sin(b.rotation || 0))*b.w + Math.abs(Math.cos(b.rotation || 0))*b.d})),
   ...[48, 60, 72].map(x => ({ x, z: 10, w: 5.4, d: 3.4, h: 3.8 })),
-  ...[-6, 0, 6].map(x => ({ x, z: -73, w: 3, d: 3, h: 4.8 })),
+  ...[16, 22, 28].map(x => ({ x, z: -82, w: 3, d: 3, h: 4.8 })),
   { x: 10, z: 70, w: 2.2, d: 2.2, h: 8 },
 ];
 const BUILDING_BOXES: Bounds[] = CAMERA_STRUCTURES.map((building) => ({

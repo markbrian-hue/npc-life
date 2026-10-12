@@ -1,3 +1,5 @@
+import { CityTrees } from './CityTrees';
+import { CityInfrastructure } from './CityInfrastructure';
 import { Character } from './Character';
 import { GroveNeighborhood } from './GroveNeighborhood';
 import { memo, useEffect, useMemo, useRef } from 'react';
@@ -6,7 +8,7 @@ import { DirectionalLight, Object3D } from 'three';
 
 import {
   BENCHES, BUILDINGS, GARY, LAMP_POSTS,
-  PIGEONS, PLANTERS, TREES, WORLD_RADIUS, type BuildingDef,
+  PIGEONS, PLANTERS, type BuildingDef,
 } from './world';
 
 import {
@@ -140,70 +142,6 @@ function Building({
   );
 }
 
-function Tree({
-  x, z, index,
-}: {
-  x: number;
-  z: number;
-  index: number;
-}) {
-  const dark = [
-    '#4f805a', '#608d5c', '#477554', '#719a66',
-  ][index % 4];
-
-  const light = [
-    '#719e70', '#88ae77', '#628f61', '#5b8b60',
-  ][index % 4];
-
-  const scale = 0.9 + (index % 3) * 0.08;
-
-  return (
-    <group position={[x, 0, z]} scale={scale}>
-      <mesh castShadow position={[0, 1.52, 0]}>
-        <cylinderGeometry args={[0.22, 0.35, 3.04, 8]} />
-        <meshStandardMaterial color="#795a41" roughness={1} />
-      </mesh>
-
-      {[-1, 1].map(side => <mesh key={side} castShadow position={[side * .38, 2.55, 0]} rotation={[0, 0, side * -.65]}><cylinderGeometry args={[.09, .17, 1.5, 7]} /><meshStandardMaterial color="#76573f" /></mesh>)}
-      <mesh castShadow position={[0, 3.33, 0]}>
-        <icosahedronGeometry args={[1.56, 1]} />
-        <meshStandardMaterial
-          color={dark}
-          flatShading
-          roughness={1}
-        />
-      </mesh>
-
-      <mesh castShadow position={[-0.72, 3.04, -0.2]}>
-        <dodecahedronGeometry args={[0.92, 0]} />
-        <meshStandardMaterial
-          color={light}
-          flatShading
-          roughness={1}
-        />
-      </mesh>
-
-      <mesh castShadow position={[0.8, 3.15, 0.29]}>
-        <dodecahedronGeometry args={[1.01, 0]} />
-        <meshStandardMaterial
-          color={dark}
-          flatShading
-          roughness={1}
-        />
-      </mesh>
-
-      <mesh castShadow position={[0.08, 4.15, -0.15]}>
-        <dodecahedronGeometry args={[0.84, 0]} />
-        <meshStandardMaterial
-          color={light}
-          flatShading
-          roughness={1}
-        />
-      </mesh>
-    </group>
-  );
-}
-
 function Pigeon({
   x, z,
 }: {
@@ -254,130 +192,6 @@ function GaryNPC() {
   );
 }
 
-function GroundAndRoads() {
-  return (
-    <>
-      <mesh
-        receiveShadow
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.085, 0]}
-      >
-        <planeGeometry args={[WORLD_RADIUS * 2 + 12, WORLD_RADIUS * 2 + 12]} />
-        <meshStandardMaterial color="#8ab184" roughness={1} />
-      </mesh>
-
-      <mesh
-        receiveShadow
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.055, 0]}
-      >
-        <planeGeometry args={[WORLD_RADIUS * 2, 8.5]} />
-        <meshStandardMaterial color="#66737a" roughness={1} />
-      </mesh>
-
-      <mesh
-        receiveShadow
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.05, 0]}
-      >
-        <planeGeometry args={[8.5, WORLD_RADIUS * 2]} />
-        <meshStandardMaterial color="#66737a" roughness={1} />
-      </mesh>
-
-      {/* Sidewalks */}
-      {[-1, 1].flatMap((side) =>
-        [-1, 1].map((half) => (
-          <group key={`${side}-${half}`}>
-            <mesh
-              receiveShadow
-              position={[side * 5.85, -0.064, half > 0 ? 44 : -75]}
-            >
-              <boxGeometry args={[2.65, 0.12, half > 0 ? 60 : 122]} />
-              <meshStandardMaterial
-                color="#c9c5b9"
-                roughness={1}
-              />
-            </mesh>
-
-            <mesh
-              receiveShadow
-              position={[half * 75, -0.064, side * 5.85]}
-            >
-              <boxGeometry args={[122, 0.12, 2.65]} />
-              <meshStandardMaterial
-                color="#c9c5b9"
-                roughness={1}
-              />
-            </mesh>
-          </group>
-        ))
-      )}
-
-      {/* Plaza */}
-      <mesh
-        receiveShadow
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.025, 0]}
-      >
-        <circleGeometry args={[14, 64]} />
-        <meshStandardMaterial color="#e2cfac" roughness={1} />
-      </mesh>
-
-      <mesh
-        rotation={[-Math.PI / 2, 0, 0]}
-        position={[0, -0.017, 0]}
-      >
-        <ringGeometry args={[5.5, 12, 64]} />
-        <meshStandardMaterial color="#586166" side={2} />
-      </mesh>
-    </>
-  );
-}
-
-function LaneMarkings() {
-  return (
-    <>
-      {Array.from({ length: 53 }, (_, i) => -130 + i * 5).filter(v => Math.abs(v) > 15).map((v) => (
-        <group key={v}>
-          <mesh
-            rotation={[-Math.PI / 2, 0, 0]}
-            position={[v, -0.03, 0]}
-          >
-            <planeGeometry args={[2.3, 0.13]} />
-            <meshBasicMaterial color="#e8e4c6" />
-          </mesh>
-
-          <mesh
-            rotation={[-Math.PI / 2, 0, 0]}
-            visible={v < 74}
-            position={[0, -0.027, v]}
-          >
-            <planeGeometry args={[0.13, 2.3]} />
-            <meshBasicMaterial color="#e8e4c6" />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Crossings */}
-      {[-18, 18].flatMap((v) =>
-        Array.from({ length: 7 }, (_, i) => (
-          <group key={`${v}-${i}`}>
-            <mesh position={[v + (i - 3) * 0.54, -0.021, 0]}>
-              <boxGeometry args={[0.3, 0.012, 7.1]} />
-              <meshBasicMaterial color="#efeee6" />
-            </mesh>
-
-            <mesh position={[0, -0.019, v + (i - 3) * 0.54]}>
-              <boxGeometry args={[7.1, 0.012, 0.3]} />
-              <meshBasicMaterial color="#efeee6" />
-            </mesh>
-          </group>
-        ))
-      )}
-    </>
-  );
-}
-
 function LocalSun() {
   const light = useRef<DirectionalLight>(null);
   const target = useMemo(() => new Object3D(), []);
@@ -414,8 +228,7 @@ export const City = memo(function City({ caught }: { caught: number[] }) {
 
       <LocalSun />
 
-      <GroundAndRoads />
-      <LaneMarkings />
+      <CityInfrastructure />
 
       {BUILDINGS.map((building, index) => (
         <Building
@@ -425,13 +238,7 @@ export const City = memo(function City({ caught }: { caught: number[] }) {
         />
       ))}
 
-      {TREES.map((tree, index) => (
-        <Tree
-          key={`${tree.x}-${tree.z}`}
-          {...tree}
-          index={index}
-        />
-      ))}
+      <CityTrees />
 
       {BENCHES.map((bench) => (
         <Bench

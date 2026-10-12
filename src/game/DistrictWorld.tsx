@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { CanvasTexture, DoubleSide, NearestFilter, type Group } from 'three';
 import { DISTRICTS, MISSIONS, currentTask, type Campaign } from './campaign';
-import { StreetLamp, Bench } from './CityProps';
+import { StreetLamp } from './CityProps';
 
 export function WorldSign({ text, color = '#edbe56', width = 5 }: { text: string; color?: string; width?: number }) {
   const texture = useMemo(() => {
@@ -19,6 +19,12 @@ export function WorldSign({ text, color = '#edbe56', width = 5 }: { text: string
 }
 function Block({ at, size, color }: { at: [number, number, number]; size: [number, number, number]; color: string }) {
   return <mesh position={at} castShadow receiveShadow><boxGeometry args={size} /><meshStandardMaterial color={color} roughness={0.9} /></mesh>;
+}
+export function StreetBoard({text,width=4,height=2.6,color}:{text:string;width?:number;height?:number;color?:string}) {
+  return <>
+    {[-1,1].map(side=><Block key={side} at={[side*width*.36,height/2,-.04]} size={[.12,height,.12]} color="#536358"/>)}
+    <group position={[0,height,0]}><WorldSign text={text} width={width} color={color}/></group>
+  </>;
 }
 function Beacon({ done }: { done: boolean }) {
   const rotor = useRef<Group>(null);
@@ -41,15 +47,13 @@ export const DistrictWorld = memo(function DistrictWorld({ campaign, carrying }:
   return <>
     {/* Small district squares give the street network a readable rhythm. */}
     {DISTRICTS.slice(1).map(d => <group key={d.id} position={[d.x, 0, d.z]}>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -.017, 0]} receiveShadow><circleGeometry args={[11, 32]} /><meshStandardMaterial color={d.id === 'park' ? '#879f6c' : '#c4bba1'} /></mesh>
+
       <group position={[0, 5, -9]}><WorldSign text={d.name} color={d.color} width={9} /></group>
       {[-5, 5].map(x => <Block key={x} at={[x, 2.5, -9]} size={[.18, 5, .18]} color="#455952" />)}
     </group>)}
     {[-62, -44, 44, 62].flatMap(v => [<StreetLamp key={`x${v}`} x={v} z={8} />, <StreetLamp key={`z${v}`} x={-8} z={v} />])}
-    <Bench x={-56} z={10} rotation={0} /><Bench x={-64} z={10} rotation={0} />
-    <Bench x={17} z={68} rotation={Math.PI} />
     {/* Switchyard: transformer bank and power indicators. */}
-    {[-6, 0, 6].map(x => <group key={x} position={[x, 0, -73]}>
+    {[16, 22, 28].map(x => <group key={x} position={[x, 0, -82]}>
       <Block at={[0, 1.7, 0]} size={[3, 3.4, 3]} color="#5b7474" />
       <Block at={[0, 2.2, 1.53]} size={[1.8, .25, .1]} color={power ? '#b9ed9a' : '#d48361'} />
       {[-.9, .9].map(dx => <mesh key={dx} position={[dx, 4.1, 0]}><cylinderGeometry args={[.25, .4, 1.5, 8]} /><meshStandardMaterial color="#b6c5b7" /></mesh>)}

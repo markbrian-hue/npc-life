@@ -2,9 +2,17 @@
 
 A retro multiplayer browser comedy sandbox. The festival is cancelled, four districts are broken, and the city has hired the least qualified person available: you.
 
-## Grove & Motors update
+## World rebuild & gameplay foundation
 
-- Larger bounds (±136), connected Grove Street neighborhood, bungalows and palms.
+The city now uses a shared road/placement plan, connected collectors and an eastern bypass, marked parking, park paths and Juniper Close. Placement rules keep building footprints and tree canopies out of roads and recreation areas. Shared traffic follows a checked lane circuit.
+
+Press **L** for the resident record: start with **Go Buy Milk**, then try park cleanup, timed courier work and taxi shifts. Earn coins/reputation, purchase a Motor Club licence or courier bag, and explore city services with **T**. Benches, coffee, the civic shuttle and Juniper Court now have activities. The existing festival campaign remains in **C**.
+
+See [milestone notes and verification](docs/world-foundation.md) for implementation, tests and limits.
+
+## Vehicle and character foundation
+
+- Larger bounds (±136), connected Juniper Close neighborhood, bungalows and palms.
 - Fountain traffic island and circulating roundabout, marked crossings, sidewalk arrival point.
 - Defined faces, hair, male and female residents, articulated limbs, improved street-facing assets.
 - Six drivable cars: turning wheels, brake lights, acceleration, braking, reverse, off-road speed limits and collision hulls.
@@ -20,7 +28,7 @@ A retro multiplayer browser comedy sandbox. The festival is cancelled, four dist
 - **Navigation:** full city journal, tracked objectives, distance and compass directions, minimap waypoints, and current district indicator.
 - Existing jobs, NPC conversations, discoveries, shop, wardrobe, dailies, minigames, City Permit objective, procedural audio, and save import/export remain available.
 
-**Multiplayer scope:** this is a working guest-room presence slice. Movement, waves, cars and vehicle ownership are shared. Campaign, district restoration, minigames, cosmetics and economy remain local to each browser. The room server authoritatively simulates cars and ownership; pedestrian movement remains a presence relay and does not accept or trust local save balances. Shared objectives/economy, accounts, moderation and public-host hardening are later milestones.
+**Multiplayer scope:** this is a working guest-room presence slice. Movement, waves, cars, traffic and vehicle ownership are shared. Campaign, district restoration, minigames, cosmetics and economy remain local to each browser. The room server authoritatively simulates cars and ownership; pedestrian movement remains a presence relay and does not accept or trust local save balances. Shared objectives/economy, accounts, moderation and public-host hardening are later milestones.
 
 ## Run it
 
@@ -50,9 +58,10 @@ Open `http://localhost:3001`. `PORT` changes the production port. Rooms are held
 | --- | --- |
 | WASD / arrows | Move relative to camera |
 | Shift / Space | Sprint / jump on foot |
-| R | Enter a nearby parked car / exit when stopped |
+| R / V | Enter or exit a stopped car / horn while driving |
 | W/S, A/D, Space in car | Accelerate/reverse, steer, brake |
 | Mouse drag / scroll | Orbit / zoom |
+| L / T | Resident record and shifts / use nearby resident activity |
 | C | City journal and full map |
 | Hold Q | Work on the nearby tracked objective |
 | N | Create or join a multiplayer room |
@@ -64,19 +73,21 @@ Open `http://localhost:3001`. `PORT` changes the production port. Rooms are held
 | Escape / P | Game menu; Escape closes the active dialog |
 | Tab / Shift+Tab | Navigate dialog controls |
 
-Desktop is the primary playable target. Responsive menus do not imply full mobile movement controls. Gold markers track the main campaign; side jobs remain optional. Follow streets around buildings instead of walking directly through them.
+Desktop is the primary playable target. Responsive menus do not imply full mobile movement controls. The minimap follows an accepted resident shift, or the festival campaign when no shift is active. Both activity tracks remain optional. Follow streets around buildings instead of walking directly through them.
 
 ## Saves and verification
 
-Existing saves are preserved. City Revival adds `npc-life:city-revival-v1`, included in validated export/import and reset. In-progress courier cargo is transient: after a reload, collect the parcel again. Completed deliveries and campaign stages persist.
+Existing saves are preserved. Resident shifts, unlocks, bench visits and court wins use `npc-life:resident-life-v1`; this key is included in validated export/import/reset. City Revival uses `npc-life:city-revival-v1`, included in validated export/import and reset. In-progress courier cargo is transient: after a reload, collect the parcel again. Completed deliveries and campaign stages persist.
 
 ```bash
 npm test
+npm run typecheck
 npm run build
 npm run test:browser
 npm run test:city
+npm run test:foundation
 ```
 
-The two browser suites require optional Playwright tooling; see [development notes](docs/development.md). Core tests use the existing toolchain. The large Three.js bundle warning remains; software-rendered QA is not a hardware performance benchmark.
+The browser suites require optional Playwright tooling; see [development notes](docs/development.md). Core tests use the existing toolchain. The large Three.js bundle warning remains; software-rendered QA is not a hardware performance benchmark.
 
-Use `develop` for integration and `main` for reviewed releases. This update is on `feat/retro-game-ui` until reviewed and merged.
+Use `develop` for integration and `main` for reviewed releases. The world foundation milestone is on `feat/world-foundation`. No deployment is included.

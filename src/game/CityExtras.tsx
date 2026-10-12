@@ -1,3 +1,4 @@
+import { blocked } from './world';
 import { Character } from './Character';
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
@@ -32,6 +33,10 @@ type WalkerDef = {
 };
 
 const WALKERS: readonly WalkerDef[] = [
+  { id: 'juniper-resident', shirt: '#ae8db8', pants: '#48574e', hair: '#715242', speed: .95, path: [[-97,-74],[-97,-62]] },
+  { id: 'dispatch-worker', shirt: '#658ba1', pants: '#38434c', hair: '#443931', speed: 1.15, path: [[6.5,-85],[6.5,-70]] },
+  { id: 'market-shopper', shirt: '#dc9b8b', pants: '#535b54', hair: '#62452f', speed: .9, path: [[42,6.4],[63,6.4]] },
+  { id: 'park-jogger', shirt: '#74a47b', pants: '#354056', hair: '#473930', speed: 1.8, path: [[-44,-10],[-74,-10]] },
   {
     id: 'commuter',
     shirt: '#658ba1',
@@ -111,7 +116,7 @@ function CitizenBody({
   leftLegRef?: React.RefObject<THREE.Group | null>;
   rightLegRef?: React.RefObject<THREE.Group | null>;
 }) {
-  return <Character shirt={shirt} hair={hair} pants={pants} gender={shirt === '#ab88bf' || shirt === '#dc9b8b' ? 'woman' : 'man'} bodyRef={bodyRef} leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />;
+  return <Character shirt={shirt} hair={hair} pants={pants} gender={['#ab88bf','#dc9b8b','#ae8db8'].includes(shirt) ? 'woman' : 'man'} skin={['#658ba1','#ae8db8'].includes(shirt)?'#98674e':'#d5a17a'} bodyRef={bodyRef} leftArmRef={leftArmRef} rightArmRef={rightArmRef} leftLegRef={leftLegRef} rightLegRef={rightLegRef} />;
 }
 
 function StaticCitizen({
@@ -234,11 +239,14 @@ function WalkingCitizen({
       dzPlayer
     );
 
+    if(playerDistance>65)return;
     const reactingToPlayer =
       playerDistance < 3.6;
 
-    if (pauseTimer.current > 0) {
-      pauseTimer.current -= delta;
+    if (pauseTimer.current > 0 || reactingToPlayer) {
+      pauseTimer.current = Math.max(0,pauseTimer.current-delta);
+      if(reactingToPlayer)actor.rotation.y=rotateToward(actor.rotation.y,Math.atan2(dxPlayer,dzPlayer),delta,7);
+      for(const limb of [leftLeg,rightLeg,leftArm,rightArm])if(limb.current)limb.current.rotation.x=THREE.MathUtils.damp(limb.current.rotation.x,0,8,delta);
 
       body.current.position.y =
         THREE.MathUtils.damp(
@@ -293,6 +301,7 @@ function WalkingCitizen({
         const moveX = (dx / distance) * step;
         const moveZ = (dz / distance) * step;
 
+        if(blocked(actor.position.x+moveX,actor.position.z+moveZ)){nextPoint.current=(nextPoint.current+1)%data.path.length;pauseTimer.current=.5;return;}
         actor.position.x += moveX;
         actor.position.z += moveZ;
 

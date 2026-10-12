@@ -1,3 +1,4 @@
+import { useResidentLife, ResidentLifeWorld, ResidentLifeUI } from './game/ResidentLife';
 import { useVehicles, VehiclesWorld, VehicleHUD } from './game/Vehicles';
 import { SPAWN } from './game/world';
 import { MultiplayerMenu, RemoteResidents, useMultiplayer } from './game/Multiplayer';
@@ -427,13 +428,17 @@ export default function App() {
     useState<CityEvent>('none');
 
   const [toast, setToast] = useState(
-    'The festival needs saving. Press C for your city journal, then follow the gold marker.'
+    'Start small: press L and take Go Buy Milk. The festival campaign is in C.'
   );
 
   const revival = useCityRevival(player, (earnedCoins, rep, message) => {
     setCoins(n => n + earnedCoins); setReputation(n => n + rep); setToast(message);
     playGameSound('interact');
   });
+
+  const life = useResidentLife(player, coins, reputation, vehicles, (amount, rep, message) => {
+    setCoins(n => Math.max(0,n + amount)); setReputation(n => n + rep); setToast(message);
+  }, setToast);
 
   // Save existing progression without migrating or resetting it.
 
@@ -1016,6 +1021,7 @@ export default function App() {
         <City caught={quest.caught} />
         <DistrictWorld campaign={revival.campaign} carrying={revival.carrying} />
         <RemoteResidents multiplayer={multiplayer} />
+        <ResidentLifeWorld life={life} />
         <CityActivities touched={quest.touched} />
         <ArcadeKiosk />
 
@@ -1041,6 +1047,7 @@ export default function App() {
         />
       </Canvas>
       <VehicleHUD vehicles={vehicles} />
+      <ResidentLifeUI life={life} />
 
       {/* New Alpha 0.7 interaction layer */}
       <CityEncounters
@@ -1066,7 +1073,7 @@ export default function App() {
       />
 
       <CityRevival revival={revival} player={player} />
-      <WorldMinimap target={revival.task} />
+      <WorldMinimap target={life.target || revival.task} />
       <MultiplayerMenu multiplayer={multiplayer} />
 
       {/* Header */}
@@ -1107,7 +1114,7 @@ export default function App() {
 
       {/* Quest tracker */}
       <section
-        className="quest-panel"
+        className={`quest-panel ${quest.job === 'none' ? 'idle-job' : ''}`}
         aria-live="polite"
       >
         <span className="panel-eyebrow">
@@ -1162,69 +1169,6 @@ export default function App() {
             : 'GIANT DUCK INVASION'}
         </div>
       )}
-
-      {/* Existing minimap */}
-      <div
-        className="minimap"
-        aria-label="Map showing your position"
-      >
-        <div className="map-label">
-          IDIOT CITY <span>LIVE</span>
-        </div>
-
-        <div className="mini-world">
-          <div className="mini-road mini-road-x" />
-          <div className="mini-road mini-road-y" />
-          <div className="mini-plaza" />
-
-          <div className="mini-building a" />
-          <div className="mini-building b" />
-          <div className="mini-building c" />
-          <div className="mini-building d" />
-
-          <div
-            className="mini-pin shop-pin"
-            title="Shop"
-          >
-            S
-          </div>
-          <div
-            className="mini-pin citizen-pin"
-            title="Marty"
-          >
-            ?
-          </div>
-
-          <div
-            className="mini-player"
-            style={{
-              left: `${
-                Math.max(
-                  2,
-                  Math.min(
-                    98,
-                    ((player.x + 42) / 84) * 100
-                  )
-                )
-              }%`,
-              top: `${
-                Math.max(
-                  2,
-                  Math.min(
-                    98,
-                    ((player.z + 42) / 84) * 100
-                  )
-                )
-              }%`,
-            }}
-          />
-        </div>
-
-        <span className="map-coords">
-          X {Math.round(player.x)} • Z{' '}
-          {Math.round(player.z)}
-        </span>
-      </div>
 
       {/* Messages and existing interaction */}
       <div
@@ -1327,6 +1271,8 @@ export default function App() {
           <p><kbd>R</kbd> Enter a parked car / exit when stopped</p>
           <p><kbd>W/S</kbd> Accelerate/reverse · <kbd>A/D</kbd> Steer</p>
           <p>
+            <kbd>L</kbd> Resident shifts and services · <kbd>T</kbd> Use activity
+          </p><p>
             <kbd>C</kbd> City journal and map
           </p>
           <p>

@@ -17,11 +17,23 @@ test('rooms isolate residents, relay movement, enforce limits and expire session
     const guest = await request('/api/join', { name: 'Guest', code: host.code }); assert.equal(guest.players.length, 2);
     const separate = await request('/api/join', { name: 'Other' }); assert.notEqual(separate.code, host.code); assert.equal(separate.players.length, 1);
     const events = await fetch(`${base}/api/events?token=${guest.token}`); reader = events.body.getReader();
-    const decode = chunk => JSON.parse(new TextDecoder().decode(chunk).trim().slice(6));
-    assert.equal(decode((await reader.read()).value).players.length, 2);
+    // Network chunks need not align with SSE message boundaries.
+    const decoder = new TextDecoder(); let buffered = '';
+    async function nextSnapshot() {
+      while (!buffered.includes('\n\n')) {
+        const {value, done} = await reader.read();
+        assert.equal(done, false, 'snapshot stream ended early');
+        buffered += decoder.decode(value, {stream: true});
+      }
+      const end = buffered.indexOf('\n\n'), message = buffered.slice(0, end);
+      buffered = buffered.slice(end + 2);
+      return JSON.parse(message.slice(6));
+    }
+    assert.equal((await nextSnapshot()).players.length, 2);
     time += 200;
     const moved = await request('/api/move', { x: 18, y: 2, z: 4, heading: 1.3, wave: true }, host.token); assert.equal(moved.status, 200);
-    const update = decode((await reader.read()).value);
+    let update;
+    for(let i=0;i<6;i++){update=await nextSnapshot();if(update.players.find(p=>p.id===host.id)?.x===18)break;}
     const remote = update.players.find(p => p.id === host.id);
     assert.equal(remote.x, 18); assert.equal(remote.y, 2); assert.equal(remote.waving, true);
     assert.ok(!update.players.some(p => p.id === separate.id));

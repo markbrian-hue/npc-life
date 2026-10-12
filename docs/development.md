@@ -1,5 +1,7 @@
 # Development contract
 
+The current milestone is documented in [World rebuild & gameplay foundation](world-foundation.md). Older sections below describe historical milestones and their validation, not the current verification status.
+
 ## City Revival / multiplayer slice — 12 October 2026
 
 The owner confirmed multiplayer as a core requirement and requested a substantial whole-game update. The new world expands the playable bounds from ±42 to ±88. Five districts and a nine-stage revival campaign give the exploration a goal; completing it unlocks rotating pickup/delivery contracts.

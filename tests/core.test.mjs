@@ -105,7 +105,7 @@ test('display preferences apply even when persistence fails', () => {
   assert.throws(() => setSettings({ reducedMotion: true, compactHud: false, hideMinimap: true }));
   assert.equal(applied.get('npc-reduce-motion'), true);
   assert.equal(applied.get('npc-hide-minimap'), true);
-  assert.equal(RELEASE_KEYS.length, 16);
+  assert.equal(RELEASE_KEYS.length, 17);
 });
 
 test('city revival progress participates in import and invalid progress preserves the prior save', async () => {
@@ -114,4 +114,11 @@ test('city revival progress participates in import and invalid progress preserve
   assert.equal(localStorage.getItem('npc-life:coins-v1'), '200');
   await importSave(file({ 'npc-life:coins-v1': '615', 'npc-life:city-revival-v1': '{"step":9,"deliveries":2}' }));
   assert.equal(localStorage.getItem('npc-life:city-revival-v1'), '{"step":9,"deliveries":2}');
+});
+
+test('resident unlocks round-trip through backup and invalid records cannot erase saves', async()=>{
+  const key='npc-life:resident-life-v1';const resident={completed:{milk:3},upgrades:['club'],benches:[1],wins:2,secret:false};
+  globalThis.localStorage=storage({'npc-life:coins-v1':'150'});
+  await assert.rejects(importSave(file({[key]:JSON.stringify({...resident,wins:-1})})));assert.equal(localStorage.getItem('npc-life:coins-v1'),'150');
+  await importSave(file({'npc-life:coins-v1':'150',[key]:JSON.stringify(resident)}));const saved=JSON.parse(localStorage.getItem(key));assert.equal(saved.completed.milk,3);assert.deepEqual(saved.upgrades,['club']);assert.equal(saved.wins,2);
 });

@@ -1,3 +1,4 @@
+import { playGameSound, updateEngineSound } from './gameAudio';
 import type { Vehicles } from './Vehicles';
 import { pedestrianBlocked } from '../../shared/vehicles.mjs';
 
@@ -51,10 +52,13 @@ export function Player({
 
   const upwardSpeed = useRef(0);
   const grounded = useRef(true);
+  const sitting = useRef<{x:number;z:number;rotation:number;exit:{x:number;z:number}}|null>(null);
+  const coffeeUntil = useRef(0);
   const jumpBuffer = useRef(0);
   const coyote = useRef(0.1);
 
   const walkCycle = useRef(0);
+  const footstep=useRef(0), previousCarSpeed=useRef(0);
   const walkBlend = useRef(0);
   const reporting = useRef(0);
 
@@ -80,8 +84,11 @@ export function Player({
   const { camera, gl } = useThree();
 
   useEffect(() => {
-    const relocate=(event:Event)=>{const p=(event as CustomEvent).detail;position.current.set(p.x,0,p.z);velocity.current.set(0,0);upwardSpeed.current=0;grounded.current=true;keys.current.clear();};
-    window.addEventListener('npc-life:relocate',relocate);return()=>window.removeEventListener('npc-life:relocate',relocate);
+    const relocate=(event:Event)=>{sitting.current=null;window.dispatchEvent(new CustomEvent('npc-life:stood'));const p=(event as CustomEvent).detail;position.current.set(p.x,0,p.z);velocity.current.set(0,0);upwardSpeed.current=0;grounded.current=true;keys.current.clear();};
+    const rest=(event:Event)=>{const p=(event as CustomEvent).detail;if(p){sitting.current={...p,exit:{x:position.current.x,z:position.current.z}};keys.current.clear();velocity.current.set(0,0);}else if(sitting.current){position.current.set(sitting.current.exit.x,0,sitting.current.exit.z);sitting.current=null;window.dispatchEvent(new CustomEvent('npc-life:stood'));}};
+    const coffee=()=>{coffeeUntil.current=performance.now()+60000;};
+    window.addEventListener('npc-life:rest',rest);window.addEventListener('npc-life:coffee',coffee);
+    window.addEventListener('npc-life:relocate',relocate);return()=>{window.removeEventListener('npc-life:relocate',relocate);window.removeEventListener('npc-life:rest',rest);window.removeEventListener('npc-life:coffee',coffee);};
   },[]);
   // Mouse camera and keyboard input.
   useEffect(() => {
@@ -183,6 +190,7 @@ export function Player({
         jumpBuffer.current = 0.12;
       }
 
+      if(sitting.current&&['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code))window.dispatchEvent(new CustomEvent('npc-life:rest',{detail:null}));
       keys.current.add(event.code);
     };
 
@@ -269,7 +277,7 @@ export function Player({
         pressed.has('ShiftRight')
       );
 
-    const speed = running ? 9.2 : 5.6;
+    const speed = running ? (performance.now()<coffeeUntil.current ? 10.6 : 9.2) : 5.6;
     const length = Math.hypot(side, forward);
     const yaw = orbit.current.yaw;
 
@@ -327,6 +335,9 @@ export function Player({
     }
 
     const actualSpeed = v.length();
+    updateEngineSound(car?.speed||0,!!car);
+    if(car&&previousCarSpeed.current>3&&Math.abs(car.speed)<.2)playGameSound('impact');previousCarSpeed.current=Math.abs(car?.speed||0);
+    footstep.current+=actualSpeed*dt;if(!car&&grounded.current&&footstep.current>2){footstep.current=0;playGameSound('step');}
 
     // Character rotation.
     if (actualSpeed > 0.15 && actor.current) {
@@ -468,7 +479,8 @@ export function Player({
       );
     }
 
-    if(car){position.current.set(car.x,0,car.z);velocity.current.set(0,0);jumpBuffer.current=0;upwardSpeed.current=0;grounded.current=true;if(actor.current)actor.current.rotation.y=car.heading+Math.PI/2;orbit.current.yaw=car.heading-Math.PI/2;}
+    if(sitting.current&&!car){const seat=sitting.current;position.current.set(seat.x,-.4,seat.z);if(actor.current)actor.current.rotation.y=seat.rotation;if(leftLeg.current)leftLeg.current.rotation.x=-Math.PI/2;if(rightLeg.current)rightLeg.current.rotation.x=-Math.PI/2;velocity.current.set(0,0);jumpBuffer.current=0;}
+    if(car){position.current.set(car.x,0,car.z);velocity.current.set(0,0);jumpBuffer.current=0;upwardSpeed.current=0;grounded.current=true;if(actor.current)actor.current.rotation.y=car.heading+Math.PI/2;if(dragging.current===null&&Math.abs(car.speed)>.5){const wanted=car.heading-Math.PI/2;orbit.current.yaw+=Math.atan2(Math.sin(wanted-orbit.current.yaw),Math.cos(wanted-orbit.current.yaw))*(1-Math.exp(-2.5*dt));}}
     if (actor.current) {
       actor.current.position.copy(position.current);
     }
@@ -562,7 +574,7 @@ export function Player({
           detail: {
             ...location,
             heading: actor.current?.rotation.y ?? 0,
-            y: position.current.y,
+            y: Math.max(0,position.current.y),
             driving: !!car,
             cameraYaw: orbit.current.yaw,
           },
