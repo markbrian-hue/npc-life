@@ -1,20 +1,16 @@
-
 import { Canvas } from '@react-three/fiber';
 import { useCallback, useEffect, useState } from 'react';
-
 import { City } from './game/City';
 import {
   CityExtras,
   CITIZEN_POSITION,
   SHOP_POSITION,
 } from './game/CityExtras';
-
 import {
   Player,
   type CityEvent,
   type PlayerLocation,
 } from './game/Player';
-
 import { distance2D, GARY, PIGEONS } from './game/world';
 
 const COIN_KEY = 'npc-life:coins-v1';
@@ -52,17 +48,20 @@ function loadNumber(key: string): number {
 
     if (raw === null) return 0;
 
-    const n = Number(raw);
+    const value = Number(raw);
 
-    return Number.isFinite(n) && n >= 0
-      ? Math.floor(n)
+    return Number.isFinite(value) && value >= 0
+      ? Math.floor(value)
       : 0;
   } catch {
     return 0;
   }
 }
 
-function loadText(key: string, fallback: string): string {
+function loadText(
+  key: string,
+  fallback: string
+): string {
   try {
     return localStorage.getItem(key) || fallback;
   } catch {
@@ -80,7 +79,9 @@ function loadInventory(): string[] {
       ? value.filter(
           (item): item is string =>
             typeof item === 'string' &&
-            SHOP_ITEMS.some((s) => s.id === item)
+            SHOP_ITEMS.some(
+              (shopItem) => shopItem.id === item
+            )
         )
       : [];
   } catch {
@@ -108,9 +109,8 @@ export default function App() {
     loadNumber(COIN_KEY)
   );
 
-  const [inventory, setInventory] = useState<string[]>(
-    loadInventory
-  );
+  const [inventory, setInventory] =
+    useState<string[]>(loadInventory);
 
   const [equipped, setEquipped] = useState(() =>
     loadText(EQUIPPED_KEY, 'none')
@@ -138,12 +138,13 @@ export default function App() {
     'Find Gary (orange shirt) and press E to get a job.'
   );
 
-  // Save coins, inventory, equipment and completed jobs.
+  // Preserve Alpha 0.2 saved game data.
+
   useEffect(() => {
     try {
       localStorage.setItem(COIN_KEY, String(coins));
     } catch {
-      // Storage may be disabled.
+      // Storage can be disabled.
     }
   }, [coins]);
 
@@ -154,7 +155,7 @@ export default function App() {
         JSON.stringify(inventory)
       );
     } catch {
-      // Storage may be disabled.
+      // Storage can be disabled.
     }
   }, [inventory]);
 
@@ -162,29 +163,37 @@ export default function App() {
     try {
       localStorage.setItem(EQUIPPED_KEY, equipped);
     } catch {
-      // Storage may be disabled.
+      // Storage can be disabled.
     }
   }, [equipped]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(JOBS_KEY, String(jobsDone));
+      localStorage.setItem(
+        JOBS_KEY,
+        String(jobsDone)
+      );
     } catch {
-      // Storage may be disabled.
+      // Storage can be disabled.
     }
   }, [jobsDone]);
 
-  // Random brainrot city events.
+  // Existing Alpha 0.2 random events.
+
   useEffect(() => {
     let count = 0;
 
-    let end: ReturnType<typeof setTimeout> | undefined;
+    let end:
+      | ReturnType<typeof setTimeout>
+      | undefined;
 
     const startEvent = () => {
       count += 1;
 
       const next: CityEvent =
-        count % 2 ? 'low-gravity' : 'duck-invasion';
+        count % 2
+          ? 'low-gravity'
+          : 'duck-invasion';
 
       setCityEvent(next);
 
@@ -202,7 +211,6 @@ export default function App() {
     };
 
     const first = setTimeout(startEvent, 35000);
-
     const cycle = setInterval(startEvent, 80000);
 
     return () => {
@@ -214,15 +222,23 @@ export default function App() {
   }, []);
 
   const onMove = useCallback(
-    (position: PlayerLocation) => setPlayer(position),
+    (location: PlayerLocation) => {
+      setPlayer(location);
+    },
     []
   );
 
-  // Determine which nearby object can be interacted with.
+  // Find the nearest interaction.
+
   let nearby: Nearby = null;
 
   if (
-    distance2D(player.x, player.z, GARY.x, GARY.z) < 3
+    distance2D(
+      player.x,
+      player.z,
+      GARY.x,
+      GARY.z
+    ) < 3
   ) {
     nearby = { kind: 'gary' };
   } else if (
@@ -244,17 +260,25 @@ export default function App() {
   ) {
     nearby = { kind: 'citizen' };
   } else if (working) {
-    for (let i = 0; i < PIGEONS.length; i++) {
+    for (
+      let index = 0;
+      index < PIGEONS.length;
+      index++
+    ) {
       if (
-        !caught.includes(i) &&
+        !caught.includes(index) &&
         distance2D(
           player.x,
           player.z,
-          PIGEONS[i].x,
-          PIGEONS[i].z
+          PIGEONS[index].x,
+          PIGEONS[index].z
         ) < 2.5
       ) {
-        nearby = { kind: 'pigeon', index: i };
+        nearby = {
+          kind: 'pigeon',
+          index,
+        };
+
         break;
       }
     }
@@ -263,24 +287,23 @@ export default function App() {
   const interact = useCallback(() => {
     if (!nearby || shopOpen) return;
 
-    // Shop interaction.
     if (nearby.kind === 'shop') {
       setShopOpen(true);
       return;
     }
 
-    // Random NPC conversation.
     if (nearby.kind === 'citizen') {
       const quote =
         NPC_QUOTES[
-          Math.floor(Math.random() * NPC_QUOTES.length)
+          Math.floor(
+            Math.random() * NPC_QUOTES.length
+          )
         ];
 
       setToast(`Random Citizen: ${quote}`);
       return;
     }
 
-    // Gary's job.
     if (nearby.kind === 'gary') {
       if (working) {
         setToast(
@@ -298,9 +321,7 @@ export default function App() {
       return;
     }
 
-    // Catch a pigeon.
     const next = [...caught, nearby.index];
-
     setCaught(next);
 
     if (next.length === PIGEONS.length) {
@@ -318,7 +339,8 @@ export default function App() {
     }
   }, [nearby, working, caught, shopOpen]);
 
-  // Cosmetic shop buying and equipping.
+  // Buying and equipping existing cosmetics.
+
   const buyOrEquip = (
     item: (typeof SHOP_ITEMS)[number]
   ) => {
@@ -338,13 +360,21 @@ export default function App() {
 
     if (coins < item.price) {
       setToast(
-        `You need ${item.price - coins} more coins. Return to your terrible job.`
+        `You need ${
+          item.price - coins
+        } more coins. Return to your terrible job.`
       );
+
       return;
     }
 
     setCoins((old) => old - item.price);
-    setInventory((old) => [...old, item.id]);
+
+    setInventory((old) => [
+      ...old,
+      item.id,
+    ]);
+
     setEquipped(item.id);
 
     setToast(
@@ -352,9 +382,12 @@ export default function App() {
     );
   };
 
-  // Keyboard interactions.
+  // Existing interaction keyboard shortcuts.
+
   useEffect(() => {
-    const key = (event: KeyboardEvent) => {
+    const onKeyDown = (
+      event: KeyboardEvent
+    ) => {
       if (event.repeat) return;
 
       if (event.code === 'Escape') {
@@ -381,10 +414,16 @@ export default function App() {
       }
     };
 
-    window.addEventListener('keydown', key);
+    window.addEventListener(
+      'keydown',
+      onKeyDown
+    );
 
     return () => {
-      window.removeEventListener('keydown', key);
+      window.removeEventListener(
+        'keydown',
+        onKeyDown
+      );
     };
   }, [interact, shopOpen]);
 
@@ -400,6 +439,7 @@ export default function App() {
   return (
     <div className="game-shell">
       {/* 3D WORLD */}
+
       <Canvas
         shadows
         dpr={[1, 1.5]}
@@ -420,10 +460,12 @@ export default function App() {
           equipped={equipped}
           emote={emote}
           cityEvent={cityEvent}
+          inputLocked={shopOpen}
         />
       </Canvas>
 
       {/* HEADER */}
+
       <header className="game-header">
         <div className="branding">
           <div className="brand-logo">
@@ -432,8 +474,10 @@ export default function App() {
 
           <div>
             <h1>NPC LIFE</h1>
+
             <p>
-              THE CITY OF IDIOTS <span>•</span> ALPHA 0.2
+              THE CITY OF IDIOTS{' '}
+              <span>•</span> ALPHA 0.3A
             </p>
           </div>
         </div>
@@ -442,7 +486,9 @@ export default function App() {
           <span className="coin-icon">◆</span>
 
           <div>
-            <span>YOUR ENTIRE FORTUNE</span>
+            <span>
+              YOUR ENTIRE FORTUNE
+            </span>
 
             <strong>
               {coins.toLocaleString()}
@@ -452,8 +498,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* CURRENT QUEST */}
-      <section className="quest-panel" aria-live="polite">
+      {/* QUEST TRACKER */}
+
+      <section
+        className="quest-panel"
+        aria-live="polite"
+      >
         <span className="panel-eyebrow">
           CURRENT LIFE PURPOSE
         </span>
@@ -471,7 +521,10 @@ export default function App() {
             style={{
               width: `${
                 working
-                  ? (caught.length / PIGEONS.length) * 100
+                  ? (
+                      caught.length /
+                      PIGEONS.length
+                    ) * 100
                   : 0
               }%`,
             }}
@@ -484,14 +537,19 @@ export default function App() {
         </div>
       </section>
 
-      {/* RANDOM CITY EVENT */}
+      {/* RANDOM EVENTS */}
+
       {cityEvent !== 'none' && (
-        <div className="event-banner" role="status">
+        <div
+          className="event-banner"
+          role="status"
+        >
           ⚠ CITY EVENT: {eventTitle}
         </div>
       )}
 
       {/* MINIMAP */}
+
       <div
         className="minimap"
         aria-label="Map showing your position"
@@ -532,7 +590,10 @@ export default function App() {
                   2,
                   Math.min(
                     98,
-                    ((player.x + 42) / 84) * 100
+                    (
+                      (player.x + 42) /
+                      84
+                    ) * 100
                   )
                 )
               }%`,
@@ -541,7 +602,10 @@ export default function App() {
                   2,
                   Math.min(
                     98,
-                    ((player.z + 42) / 84) * 100
+                    (
+                      (player.z + 42) /
+                      84
+                    ) * 100
                   )
                 )
               }%`,
@@ -550,22 +614,30 @@ export default function App() {
         </div>
 
         <span className="map-coords">
-          X {Math.round(player.x)} • Z {Math.round(player.z)}
+          X {Math.round(player.x)} • Z{' '}
+          {Math.round(player.z)}
         </span>
       </div>
 
       {/* GAME MESSAGES */}
-      <div className="center-message" aria-live="polite">
+
+      <div
+        className="center-message"
+        aria-live="polite"
+      >
         {toast}
       </div>
 
       {/* INTERACTION PROMPT */}
+
       {nearby && !shopOpen && (
         <button
           className="interaction"
           onClick={interact}
         >
-          <span className="keycap">E</span>
+          <span className="keycap">
+            E
+          </span>
 
           {nearby.kind === 'gary'
             ? 'Talk to Gary'
@@ -578,16 +650,20 @@ export default function App() {
       )}
 
       {/* BOTTOM BUTTONS */}
+
       <div className="bottom-bar">
         <button
           className="help-toggle"
-          onClick={() => setShowHelp((old) => !old)}
+          onClick={() =>
+            setShowHelp((old) => !old)
+          }
         >
           ⓘ Controls <span>H</span>
         </button>
 
         <span className="jobs-counter">
-          JOBS COMPLETED <strong>{jobsDone}</strong>
+          JOBS COMPLETED{' '}
+          <strong>{jobsDone}</strong>
         </span>
 
         <button
@@ -604,15 +680,20 @@ export default function App() {
         </button>
       </div>
 
-      {/* CONTROL GUIDE */}
+      {/* CONTROLS PANEL */}
+
       {showHelp && (
         <section className="controls-panel">
           <div className="controls-heading">
-            <strong>HOW TO BE AN NPC</strong>
+            <strong>
+              HOW TO BE AN NPC
+            </strong>
 
             <button
               aria-label="Close help"
-              onClick={() => setShowHelp(false)}
+              onClick={() =>
+                setShowHelp(false)
+              }
             >
               ×
             </button>
@@ -622,11 +703,13 @@ export default function App() {
             <kbd>W</kbd>
             <kbd>A</kbd>
             <kbd>S</kbd>
-            <kbd>D</kbd> Move relative to camera
+            <kbd>D</kbd>{' '}
+            Move relative to camera
           </p>
 
           <p>
-            <kbd>SHIFT</kbd> Run from responsibilities
+            <kbd>SHIFT</kbd>{' '}
+            Run from responsibilities
           </p>
 
           <p>
@@ -654,25 +737,31 @@ export default function App() {
           </p>
 
           <p className="muted">
-            Earn coins with Gary, then visit the blue-shirt
-            shopkeeper near the plaza. Coins and purchased
+            Earn coins with Gary, then visit
+            the blue-shirt shopkeeper near
+            the plaza. Coins and purchased
             cosmetics save locally.
           </p>
         </section>
       )}
 
-      {/* STUPID SHOP MODAL */}
+      {/* STUPID SHOP */}
+
       {shopOpen && (
         <div
           className="shop-backdrop"
-          onClick={() => setShopOpen(false)}
+          onClick={() =>
+            setShopOpen(false)
+          }
         >
           <section
             className="shop-modal"
             role="dialog"
             aria-modal="true"
             aria-label="Stupid Shop"
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event) =>
+              event.stopPropagation()
+            }
           >
             <div className="shop-heading">
               <div>
@@ -680,16 +769,20 @@ export default function App() {
                   QUESTIONABLE PURCHASES
                 </span>
 
-                <h2>THE STUPID SHOP</h2>
+                <h2>
+                  THE STUPID SHOP
+                </h2>
 
                 <p>
-                  Everything is overpriced. Nothing improves
-                  your life.
+                  Everything is overpriced.
+                  Nothing improves your life.
                 </p>
               </div>
 
               <button
-                onClick={() => setShopOpen(false)}
+                onClick={() =>
+                  setShopOpen(false)
+                }
                 aria-label="Close shop"
               >
                 ×
@@ -706,8 +799,11 @@ export default function App() {
 
             <div className="shop-items">
               {SHOP_ITEMS.map((item) => {
-                const owned = inventory.includes(item.id);
-                const wearing = equipped === item.id;
+                const owned =
+                  inventory.includes(item.id);
+
+                const wearing =
+                  equipped === item.id;
 
                 return (
                   <div
@@ -719,7 +815,9 @@ export default function App() {
                     </div>
 
                     <div className="shop-details">
-                      <strong>{item.name}</strong>
+                      <strong>
+                        {item.name}
+                      </strong>
 
                       <span>
                         {item.description}
@@ -733,9 +831,12 @@ export default function App() {
                     </div>
 
                     <button
-                      onClick={() => buyOrEquip(item)}
+                      onClick={() =>
+                        buyOrEquip(item)
+                      }
                       disabled={
-                        !owned && coins < item.price
+                        !owned &&
+                        coins < item.price
                       }
                     >
                       {wearing
@@ -750,8 +851,9 @@ export default function App() {
             </div>
 
             <p className="shop-note">
-              Complete Gary's pigeon job repeatedly to earn
-              money. Press ESC to leave.
+              Complete Gary's pigeon job
+              repeatedly to earn money.
+              Press ESC to leave.
             </p>
           </section>
         </div>
