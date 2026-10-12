@@ -1,3 +1,4 @@
+import { CAMPAIGN_KEY, validateCampaign } from './campaign';
 
 import { COSMETICS, isCosmetic, isShirt } from './progression';
 import { DISCOVERIES, GRASS_SPOTS } from './interactions';
@@ -6,6 +7,7 @@ import { STREET_NPCS } from './alpha7';
 import { DAILY_CHALLENGES } from './alpha6';
 
 export const RELEASE_KEYS = [
+  CAMPAIGN_KEY,
   'npc-life:coins-v1',
   'npc-life:inventory-v1',
   'npc-life:equipped-v1',
@@ -208,6 +210,7 @@ export function exportSave(): void {
 }
 
 function validateValue(key: string, raw: string): string {
+  if (key === CAMPAIGN_KEY) return JSON.stringify(validateCampaign(JSON.parse(raw)));
   if ([
     'npc-life:coins-v1',
     'npc-life:jobs-v1',

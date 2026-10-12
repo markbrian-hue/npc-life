@@ -234,7 +234,7 @@ export function ReleaseCenter() {
                 <h1>NPC LIFE</h1>
 
                 <p>
-                  VERSION 1.0 · THE CITY OF IDIOTS
+                  CITY REVIVAL · THE CITY OF IDIOTS
                 </p>
               </div>
 
@@ -283,16 +283,14 @@ export function ReleaseCenter() {
                     </span>
 
                     <h2>
-                      YOUR MAIN QUEST IS TO BE
-                      SOMEWHAT USEFUL.
+                      THE FESTIVAL IS CANCELLED.
+                      YOU'RE ON SHIFT.
                     </h2>
 
                     <p>
-                      Find ridiculous jobs,
-                      investigate the city, buy
-                      questionable cosmetics,
-                      and earn the prestigious
-                      Idiot City Permit.
+                      Restore four districts and bring the festival back.
+                      Follow the gold council marker or press C for your city journal.
+                      Press N to explore with friends.
                     </p>
 
                     <button
@@ -668,10 +666,9 @@ export function ReleaseCenter() {
                   </h2>
 
                   <p className="release-muted">
-                    A free browser comedy sandbox
-                    being built for multiplayer.
-                    This build runs locally; online
-                    sessions are not connected yet.
+                    A free multiplayer browser comedy sandbox. Press N to create
+                    or join an eight-player room on a running game server.
+                    Movement and waves are shared; progression stays personal.
                     Explore the city, complete jobs,
                     and become the least productive
                     local celebrity.

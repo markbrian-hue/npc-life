@@ -1,3 +1,4 @@
+export const WORLD_RADIUS = 88;
 
 export type BuildingDef = {
   x: number; z: number; w: number; d: number; h: number;
@@ -14,6 +15,18 @@ export const BUILDINGS: BuildingDef[] = [
   { x: -32, z: 17, w: 10, d: 10, h: 12, color: '#a7c9ab', roof: '#56735e' },
   { x: 32, z: 17, w: 10, d: 10, h: 8, color: '#e7c2b7', roof: '#a36f72' },
 ];
+
+// Outer neighborhoods frame the roads; every mission remains on a clear sidewalk.
+BUILDINGS.push(
+  ...[-1, 1].flatMap(side => [
+    { x: side * 16, z: -48, w: 12, d: 15, h: 8, color: '#b4a08c', roof: '#596d6b' },
+    { x: side * 28, z: -69, w: 12, d: 13, h: 11, color: '#b78363', roof: '#566365' },
+    { x: 49, z: side * 17, w: 13, d: 10, h: 8, color: '#dfb388', roof: '#947262' },
+    { x: 70, z: side * 20, w: 12, d: 12, h: 10, color: side > 0 ? '#d1a1a6' : '#8bafb6', roof: '#586c79' },
+    { x: side * 23, z: 53, w: 12, d: 12, h: 7, color: '#b6c8bd', roof: '#597d7e' },
+    { x: -69, z: side * 28, w: 10, d: 10, h: 6, color: '#d6bb92', roof: '#6f8972' },
+  ])
+);
 
 export const PIGEONS = [
   { x: -7, z: 6 }, { x: 9, z: -7 }, { x: 10, z: 10 },
@@ -52,7 +65,10 @@ export const PLANTERS = [
 
 // Trees stay in landscaped perimeter strips.
 // Validation also protects against future building changes.
-const TREE_CANDIDATES = [
+const TREE_CANDIDATES: readonly (readonly [number, number])[] = [
+  ...[-78, -62, -46, 46, 62, 78].flatMap(x => [-38, 38].map(z => [x, z] as const)),
+  ...[-78, -62, -46, 46, 62].flatMap(z => [-38, 38].map(x => [x, z] as const)),
+  [-74, -14], [-54, -18], [-46, 17], [-68, 16], [-79, 9],
   [-37, -35], [-26, -35], [-13, -35],
   [13, -35], [26, -35], [37, -35],
   [-37, 35], [-26, 35], [-13, 35],
@@ -65,7 +81,7 @@ const TREE_CANDIDATES = [
 
 function safeTree(x: number, z: number): boolean {
   if (Math.abs(x) < 7 || Math.abs(z) < 7) return false;
-  if (Math.abs(x) > 41 || Math.abs(z) > 41) return false;
+  if (Math.abs(x) > WORLD_RADIUS - 2 || Math.abs(z) > WORLD_RADIUS - 2) return false;
 
   return !BUILDINGS.some((b) =>
     Math.abs(x - b.x) < b.w / 2 + 2.4 &&
@@ -77,7 +93,23 @@ export const TREES = TREE_CANDIDATES
   .filter(([x, z]) => safeTree(x, z))
   .map(([x, z]) => ({ x, z }));
 
+export const DISTRICT_COLLIDERS = [
+  ...[48, 60, 72].map(x => ({ x, z: 10, halfX: 2.5, halfZ: 1 })),
+  ...[-6, 0, 6].map(x => ({ x, z: -73, halfX: 1.5, halfZ: 1.5 })),
+  { x: 6, z: -62, halfX: .9, halfZ: .4 },
+  { x: 6, z: -13, halfX: 1.25, halfZ: .6 },
+  { x: 10, z: 70, halfX: 1.1, halfZ: 1.1 },
+  { x: -19, z: -32, halfX: 6.5, halfZ: 3 },
+  ...[-62, -44, 44, 62].flatMap(v => [{ x: v, z: 8, halfX: .22, halfZ: .22 }, { x: -8, z: v, halfX: .22, halfZ: .22 }]),
+  ...[-56, -64].map(x => ({ x, z: 10, halfX: 1.2, halfZ: .6 })),
+  { x: 17, z: 68, halfX: 1.2, halfZ: .6 },
+  { x: -7, z: -47.7, halfX: .6, halfZ: .6 },
+  { x: -6, z: 59.3, halfX: .6, halfZ: .6 },
+  { x: 70, z: -7.7, halfX: .6, halfZ: .6 },
+];
+
 const roadProps = [
+  ...DISTRICT_COLLIDERS,
   ...PARKED_CARS.map(({ x, z, rotation }) => ({
     x, z,
     halfX: Math.abs(Math.cos(rotation)) > 0.5 ? 2.3 : 1.15,
@@ -102,7 +134,9 @@ const roadProps = [
 ];
 
 export function blocked(x: number, z: number): boolean {
-  if (Math.abs(x) > 42 || Math.abs(z) > 42) return true;
+  if (Math.abs(x) > WORLD_RADIUS || Math.abs(z) > WORLD_RADIUS) return true;
+
+  if (z > 75 && Math.abs(x) > 10) return true; // Harbor seawall; the center pier remains walkable.
 
   if (BUILDINGS.some((b) =>
     Math.abs(x - b.x) < b.w / 2 + 0.7 &&

@@ -1,3 +1,7 @@
+import { MultiplayerMenu, RemoteResidents, useMultiplayer } from './game/Multiplayer';
+import { WorldMinimap } from './game/WorldMinimap';
+import { DistrictWorld } from './game/DistrictWorld';
+import { CityRevival, useCityRevival } from './game/CityRevival';
 import { GameGlyph } from './game/ui/GameGlyph';
 import { GameDialog } from './game/ui/GameDialog';
 import { useGameUI, useMenuState, isTyping } from './game/ui/GameUI';
@@ -341,6 +345,7 @@ function getNearby(
 }
 
 export default function App() {
+  const multiplayer = useMultiplayer();
   const [coins, setCoins] = useState(
     () => readNumber(COIN_KEY)
   );
@@ -421,8 +426,13 @@ export default function App() {
     useState<CityEvent>('none');
 
   const [toast, setToast] = useState(
-    'Find Gary (orange shirt) or Marty (purple shirt) to get a ridiculous job.'
+    'The festival needs saving. Press C for your city journal, then follow the gold marker.'
   );
+
+  const revival = useCityRevival(player, (earnedCoins, rep, message) => {
+    setCoins(n => n + earnedCoins); setReputation(n => n + rep); setToast(message);
+    playGameSound('interact');
+  });
 
   // Save existing progression without migrating or resetting it.
 
@@ -950,6 +960,7 @@ export default function App() {
 
   const wave = useCallback(() => {
     setEmote(true);
+    window.dispatchEvent(new CustomEvent('npc-life:wave'));
     playGameSound('wave');
 
     window.setTimeout(
@@ -997,11 +1008,13 @@ export default function App() {
           position: [9, 10, 13],
           fov: 60,
           near: 0.1,
-          far: 170,
+          far: 230,
         }}
         gl={{ antialias: true }}
       >
         <City caught={quest.caught} />
+        <DistrictWorld campaign={revival.campaign} carrying={revival.carrying} />
+        <RemoteResidents multiplayer={multiplayer} />
         <CityActivities touched={quest.touched} />
         <ArcadeKiosk />
 
@@ -1048,6 +1061,10 @@ export default function App() {
         }}
       />
 
+      <CityRevival revival={revival} player={player} />
+      <WorldMinimap target={revival.task} />
+      <MultiplayerMenu multiplayer={multiplayer} />
+
       {/* Header */}
       <header className="game-header">
         <div className="branding">
@@ -1058,7 +1075,7 @@ export default function App() {
             <h1>NPC LIFE</h1>
             <p>
               THE CITY OF IDIOTS{' '}
-              <span>•</span> ALPHA 1.0
+              <span>•</span> CITY REVIVAL
             </p>
           </div>
         </div>
@@ -1090,7 +1107,7 @@ export default function App() {
         aria-live="polite"
       >
         <span className="panel-eyebrow">
-          CURRENT LIFE PURPOSE
+          SIDE JOB
         </span>
 
         <h2>
@@ -1225,6 +1242,7 @@ export default function App() {
 
       {/* Bottom toolbar */}
       <div className="bottom-bar">
+        <button onClick={() => store.open('city-journal')}>City map <span>C</span></button>
         <button
           className="help-toggle"
           onClick={() =>
@@ -1256,7 +1274,7 @@ export default function App() {
             playGameSound('interact');
           }}
         >
-          Journal <span>J</span>
+          Badges <span>J</span>
         </button>
 
         <button
@@ -1301,6 +1319,15 @@ export default function App() {
           </p>
           <p>
             <kbd>SPACE</kbd> Jump
+          </p>
+          <p>
+            <kbd>C</kbd> City journal and map
+          </p>
+          <p>
+            <kbd>HOLD Q</kbd> Work on the nearby objective
+          </p>
+          <p>
+            <kbd>N</kbd> Create or join a room
           </p>
           <p>
             <kbd>E</kbd> Interact

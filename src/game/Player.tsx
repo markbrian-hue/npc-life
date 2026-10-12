@@ -548,6 +548,7 @@ export function Player({
           detail: {
             ...location,
             heading: actor.current?.rotation.y ?? 0,
+            y: position.current.y,
           },
         })
       );

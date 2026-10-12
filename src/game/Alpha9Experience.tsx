@@ -361,10 +361,9 @@ export function Alpha9Experience() {
             </h2>
 
             <p>
-              You are an unemployed background
-              character in a city that
-              desperately needs adult
-              supervision.
+              The festival is cancelled. Four districts are broken.
+              You are the background character who has to fix it.
+              Follow the gold council marker to start City Revival.
             </p>
 
             <div className="alpha9-welcome-grid">
@@ -385,16 +384,16 @@ export function Alpha9Experience() {
               </div>
 
               <div>
-                <strong>I / J / K</strong>
+                <strong>C / HOLD Q</strong>
                 <span>
-                  Wardrobe, achievements, dailies
+                  City journal / work on objectives
                 </span>
               </div>
 
               <div>
-                <strong>M</strong>
+                <strong>N</strong>
                 <span>
-                  Play the new survival mini-game
+                  Create or join a room with friends
                 </span>
               </div>
             </div>

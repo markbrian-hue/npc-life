@@ -1,21 +1,28 @@
 # Development contract
 
-## Product correction — 12 October 2026
+## City Revival / multiplayer slice — 12 October 2026
 
-The owner confirmed NPC LIFE is a **multiplayer game**. This supersedes the earlier handoff's single-player scope and the starter README's deferred multiplayer roadmap.
+The owner confirmed multiplayer as a core requirement and requested a substantial whole-game update. The new world expands the playable bounds from ±42 to ±88. Five districts and a nine-stage revival campaign give the exploration a goal; completing it unlocks rotating pickup/delivery contracts.
 
-The audited repository has no multiplayer transport, server, room discovery, remote-player replication or shared persistence. This UI milestone does not claim to add them. Shared sessions are the next core development milestone, before public multiplayer release.
+### Multiplayer architecture and limits
 
-### Multiplayer requirements to carry forward
+- `server/multiplayer.mjs` uses Node's HTTP server, SSE snapshots and authenticated POST movement updates. No new dependencies. Rooms have a deliberate prototype limit of eight guests and a server-wide limit of 64 rooms.
+- `scripts/dev.mjs` starts Vite and the API server together; Vite proxies `/api`. `npm start` serves the built client and API from one origin.
+- A session uses an unguessable bearer token. Snapshot payloads contain no tokens. Same-origin checking, bounded payloads, room capacity, join/movement rate limits, and idle expiration limit basic misuse.
+- Room membership is ephemeral. EventSource reconnects across short interruptions; an expired session must rejoin. A server restart ends rooms.
+- `Multiplayer.tsx` owns networking separately from dialog and camera state. Peers interpolate snapshots, show names, jump, and wave. Local menus never pause peers.
+- This is a **presence relay**, not authoritative simulation: it bounds position values but does not prevent cheating through client movement. It never accepts economy/progression data. Do not describe it as competitive-ready or deploy it as a secure public game service.
+- Campaign, district visuals, coins, cosmetics and saves are personal. Shared restoration and rewards require server-owned objectives, identity and persistence. No imported browser balance can become trusted shared currency.
+- Next networking milestone: shared objective state with server-validated actions; cosmetic replication; accounts/reconnect identity; abuse controls and load-tested public hosting.
 
-- Menus, settings, focus and input locks are client-local; never broadcast a menu as a global pause.
-- Continue rendering world activity while a local menu is open. Decide explicitly whether a player using a minigame remains vulnerable/interactive in the shared city.
-- Put networking behind a separate session layer. Keep camera control, dialog state and display settings client-local.
-- Next vertical slice: two browser clients join one room, see each other's movement/cosmetics/emotes, and handle disconnect/reconnect without duplicate avatars.
-- Use server authority for shared rewards, balances and contested objectives. Do not trust imported localStorage balances or the client clock for multiplayer rewards.
-- Preserve existing browser saves as local progression. Any migration into multiplayer identities needs an explicit, tested policy.
-- Public-room capacity, guest identity, shared versus per-player quests, and hosting are unresolved architecture decisions. Do not invent a player limit, promise unlimited free hosting, or add a paid service.
-- Verify with two independent browser contexts and an actual session server. Two tabs running isolated local games do not constitute multiplayer.
+### World and campaign architecture
+
+- `campaign.ts`: serializable progress, mission and district definitions, courier rotation and strict save validation.
+- `CityRevival.tsx`: local mission state, proximity/hold interaction, one reward per completion, journal and HUD. Releasing Q, moving away, losing focus or opening a menu cancels the hold.
+- `DistrictWorld.tsx`: district art and restoration changes; text signs use disposable local canvas textures.
+- `world.ts`: shared world bounds, building footprints and prop collision. Collision flood-fill verifies that all campaign and courier targets are reachable.
+- `WorldMinimap.tsx`: uses the same world bounds and objective as the journal; the gold dotted line is a direction indicator, not a pathfinding route.
+- Existing save keys are preserved. `npc-life:city-revival-v1` is the only new persistent key and participates in backup/import/reset. Courier cargo is intentionally transient; deliveries persist.
 
 ## Retro municipal arcade UI
 
@@ -30,7 +37,7 @@ Palette: charcoal #151c1b, deep green #232d2a, warm paper #f2e8cd, mustard #edbe
 - `App.tsx`: derives the local player lock from the shared active menu.
 - `WorkDodge.tsx`: receives keys from the active dialog rather than capturing global input.
 
-The world visuals, quest rewards, local save keys and scene simulation are preserved. The interface pass is not a photorealistic asset overhaul.
+The original UI milestone preserved gameplay; City Revival now extends the world and adds a separate main campaign while retaining the original jobs and rewards.
 
 ## Regression checklist
 
@@ -65,7 +72,7 @@ npm run test:browser
 
 A preinstalled runner can instead set `NPC_LIFE_PLAYWRIGHT_MODULE` to its Playwright module and `NPC_LIFE_CHROMIUM` to its browser executable. `NPC_LIFE_QA_OUTPUT` overrides the screenshot directory. Rendering speed under software WebGL is not a meaningful player-device performance benchmark.
 
-## Verified in this workspace
+## Earlier retro UI milestone verification
 
 - 9/9 focused Node tests passed.
 - 19/19 Chromium browser checks passed with no uncaught page errors in those flows.
@@ -93,4 +100,33 @@ Updated:
 - `src/styles.css`, `phase2.css`, `phase4c.css`, `phase5.css`, `phase6.css`, `phase8.css`, `phase9.css`, `src/game/encounters.css`, `release.css`: shared font tokens, removal of obsolete backdrop rules and remote font import.
 - `README.md`, `package.json`, `.gitignore`: multiplayer scope, testing commands and ignored browser captures.
 
-No application dependencies or save keys were added or renamed.
+The earlier UI milestone added no dependencies or save keys. City Revival adds one save key and no application dependencies.
+
+## City Revival verification
+
+`tests/world.test.mjs` validates campaign data, courier reward structure, map boundaries, harbor collision, and reachable objectives. `tests/multiplayer.test.mjs` starts a real HTTP server and checks room isolation, replication, token privacy, capacity, bad requests, cross-origin rejection, leaving, and expiration.
+
+`tests/city-browser.mjs` starts Vite on 5182 and the room server on 3001. It walks the actual character through all nine missions, tests cancelled holds and exact coin totals, completes a courier contract, reloads saves, joins two independent browsers to one room, checks live waves and local input ownership, then captures responsive journals. Do not edit game source while browser suites run: Vite reloads invalidate long playthroughs.
+
+```bash
+npm run test:city
+```
+
+Both browser suites use the optional Playwright installation described above. No existing player profile is read or reset.
+
+### Observed results for City Revival
+
+- Production TypeScript/Vite build passes (approximately 1.25 MB JS / 351 KB gzip; existing chunk warning).
+- 15 core tests pass, including the new world/campaign, camera and real HTTP multiplayer tests.
+- All 19 pre-existing browser regression checks pass with no uncaught page errors.
+- All nine campaign stages were completed with real keyboard movement across all five districts. The exact campaign payout is 515 coins. Releasing the work key early did not complete the first mission.
+- A focused completed-campaign fixture then verified a courier pickup with no reward, delivery for 45 coins, and persistence of completed stages/delivery count through reload.
+- Two independent browser contexts created/joined a real room through Vite's API proxy; movement, live waves, local menu input isolation and leaving were verified. No browser errors occurred. The proxy explicitly preserves Host so the API's same-origin check works in development.
+- Journals and HUD captures were inspected at desktop, 390×844 and 768×600. A portrait minimap stretch was fixed and covered by an explicit height assertion. Market awnings now participate in camera collision; nearby shadow rendering and memoized world components limit the expanded scene's cost.
+- Public internet hosting, shared progression, sustained eight-client load, real-device audio and hardware performance are not verified by these checks.
+
+Focused browser reruns can use `NPC_CITY_START_AT=9` for the courier/persistence portion or `NPC_CITY_ONLY_NETWORK=1` for rooms and responsive UI. Defaults still run the full campaign and follow-on scenarios in a fresh profile.
+
+![City journal and five-district map](city-journal.png)
+
+![Two residents in a multiplayer room](multiplayer-world.png)

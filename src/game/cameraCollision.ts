@@ -19,7 +19,13 @@ type Bounds = {
 const PADDING = 0.30;
 
 // Create collision boxes once instead of every frame.
-const BUILDING_BOXES: Bounds[] = BUILDINGS.map((building) => ({
+const CAMERA_STRUCTURES = [
+  ...BUILDINGS,
+  ...[48, 60, 72].map(x => ({ x, z: 10, w: 5.4, d: 3.4, h: 3.8 })),
+  ...[-6, 0, 6].map(x => ({ x, z: -73, w: 3, d: 3, h: 4.8 })),
+  { x: 10, z: 70, w: 2.2, d: 2.2, h: 8 },
+];
+const BUILDING_BOXES: Bounds[] = CAMERA_STRUCTURES.map((building) => ({
   minX: building.x - building.w / 2 - PADDING,
   maxX: building.x + building.w / 2 + PADDING,
   minY: -0.2,
@@ -30,7 +36,7 @@ const BUILDING_BOXES: Bounds[] = BUILDINGS.map((building) => ({
 
 /**
  * Returns a safe camera distance along a normalized
- * direction vector, stopping in front of buildings.
+ * direction vector, stopping in front of buildings and district structures.
  */
 export function safeCameraDistance(
   origin: Vec3,

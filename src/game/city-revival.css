@@ -1,0 +1,69 @@
+/* Field notebook, transit wayfinding and honest multiplayer status. */
+.revival-tracker { position: absolute; z-index: 12; left: 22px; top: 105px; width: 280px; padding: 15px; background: #202d2cf5; border: 2px solid #d7caa5; border-left: 5px solid var(--ui-gold); box-shadow: 5px 5px 0 #162523; color: var(--ui-paper); }
+.revival-kicker { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--ui-gold); font: bold 10px var(--ui-display); letter-spacing: .5px; }
+.revival-kicker button { padding: 4px 6px; background: #35443b; color: var(--ui-paper); }
+.revival-tracker h2 { font-size: 18px; line-height: 1.2; margin: 12px 0 7px; }
+.revival-tracker p { color: #d4d9c4; font: bold 12px var(--ui-display); margin: 8px 0; }
+.district-status { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+.district-status span { border: 1px solid #59695b; padding: 3px 5px; color: #8d9e91; font: 10px var(--ui-display); }
+.district-status .restored { color: #c5e6a9; border-color: #a3bb8b; background: #405139; }
+.game-shell .mission-hold { position: relative; overflow: hidden; touch-action: none; user-select: none; width: 100%; padding: 12px 4px; margin-top: 10px; background: #35443b; color: #fff0c8; }
+.mission-hold > span { position: absolute; inset: 0; right: auto; background: #577254; }
+.mission-hold b { position: relative; font-size: 11px; }
+.district-location { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); text-align: center; color: var(--ui-paper); text-shadow: 1px 2px #263b33; font: bold 14px var(--ui-display); pointer-events: none; }
+.district-location > span { width: 7px; height: 7px; display: inline-block; margin-right: 8px; box-shadow: 1px 1px #263b33; }
+.district-location small { display: block; font-size: 9px; letter-spacing: 2px; margin-top: 5px; }
+.game-shell .quest-panel { top: 325px; width: 280px; padding: 12px 15px; opacity: .94; }
+.game-shell .quest-panel h2 { font-size: 14px; margin: 6px 0; }
+.game-shell .quest-panel p { font-size: 11px; }
+.game-shell .quest-panel .npc-discovery { display: none; }
+.game-shell .alpha6-hud { display: none; }
+.game-dialog.city-journal, .game-dialog.multiplayer-menu { width: min(850px, calc(100vw - 32px)); padding: 24px; }
+.dossier-heading { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.dossier-heading small, .journal-label { color: var(--ui-gold); font: bold 10px var(--ui-display); letter-spacing: 1px; }
+.dossier-heading h2 { font-size: 28px; margin: 8px 0 0; }
+.dossier-heading button { background: var(--ui-raised); color: var(--ui-paper); padding: 5px 12px; font-size: 24px; }
+.journal-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 20px 0; border-block: 1px dashed var(--ui-line); }
+.journal-layout svg { width: 100%; border: 3px solid #b8ad8b; }
+.journal-layout h3 { font-size: 21px; line-height: 1.15; }
+.journal-layout p { font-size: 13px; }
+.journal-reward { color: var(--ui-gold); font-family: var(--ui-display); }
+.journal-layout button, .multiplayer-menu button { padding: 10px 14px; background: var(--ui-gold); color: var(--ui-ink); }
+.mission-log { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mission-log li { display: flex; gap: 10px; align-items: center; padding: 10px; border: 1px solid #4a5a51; color: #99a697; }
+.mission-log li > span { font: bold 20px var(--ui-display); }
+.mission-log li > div { flex: 1; }
+.mission-log strong { font-size: 11px; display: block; }
+.mission-log small { display: block; font-size: 10px; margin-top: 5px; }
+.mission-log b { font: 9px var(--ui-display); }
+.mission-log .current { color: #fff0c8; border-color: var(--ui-gold); }
+.mission-log .done { color: var(--ui-mint); }
+.room-control { position: absolute; right: 22px; top: 85px; z-index: 13; display: flex; gap: 8px; }
+.game-shell .room-control button { background: var(--ui-panel); color: var(--ui-paper); padding: 9px 12px; font-size: 11px; }
+.room-control .online-dot { display: inline-block; width: 6px; height: 6px; margin-right: 7px; background: #95c49f; }
+.multiplayer-menu { max-width: 620px !important; }
+.multiplayer-menu label { display: block; color: var(--ui-muted); font: bold 12px var(--ui-display); margin: 16px 0; }
+.multiplayer-menu input { display: block; width: 100%; padding: 12px; margin-top: 7px; border: 1px solid var(--ui-line); border-radius: 0; background: var(--ui-ink); color: var(--ui-paper); font: 16px var(--ui-display); }
+.room-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.room-error { color: #f3b19b; }
+.room-roster { list-style: none; padding: 0; }
+.room-roster li { display: flex; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--ui-line); }
+.room-roster i { width: 12px; height: 12px; }
+.room-roster small { margin-left: auto; color: var(--ui-muted); }
+@media (max-height: 740px) { .game-shell .quest-panel { display: none; } .revival-tracker { top: 90px; } }
+@media (max-width: 900px) { .district-location { top: 76px; } .revival-tracker { width: 235px; } .game-shell .quest-panel { width: 235px; } }
+@media (max-width: 700px) { .revival-tracker { left: 10px; top: 126px; width: 210px; padding: 10px; } .revival-tracker h2 { font-size: 14px; } .district-status { display: none; } .district-location { top: 82px; left: 10px; transform: none; text-align: left; font-size: 12px; } .district-location small { font-size: 8px; } .room-control { top: 78px; right: 10px; } .room-control button { padding: 7px !important; font-size: 9px !important; } .game-shell .quest-panel { display: none; } .journal-layout, .mission-log { grid-template-columns: 1fr; } .journal-layout svg { max-height: 270px; } .game-dialog.city-journal, .game-dialog.multiplayer-menu { padding: 16px; } .dossier-heading h2 { font-size: 23px; } }
+@media (max-width: 500px) { .alpha8-minimap { width: 130px !important; top: 126px !important; right: 10px !important; } .alpha8-map-top { font-size: 8px !important; } .alpha8-map-top button { font-size: 8px !important; padding: 3px !important; } .alpha8-map-bottom { font-size: 7px !important; } }
+.game-shell .alpha9-toolbar { top: 129px; right: 28px; }
+.game-shell .release-menu-button { top: 180px; }
+.game-shell .alpha9-guide { z-index: 16; }
+@media (max-width: 700px) {
+  .game-shell .alpha9-toolbar { top: auto; bottom: 100px; right: 10px; flex-direction: row; }
+  .game-shell .release-menu-button { top: 310px; right: 10px; }
+}
+@media (max-width: 700px) {
+  .game-shell .alpha9-toolbar { top: 354px; bottom: auto; }
+}
+@media (max-width: 500px) {
+  .game-shell .alpha8-minimap { bottom: auto !important; height: auto !important; }
+}

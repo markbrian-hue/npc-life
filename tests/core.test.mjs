@@ -105,5 +105,13 @@ test('display preferences apply even when persistence fails', () => {
   assert.throws(() => setSettings({ reducedMotion: true, compactHud: false, hideMinimap: true }));
   assert.equal(applied.get('npc-reduce-motion'), true);
   assert.equal(applied.get('npc-hide-minimap'), true);
-  assert.equal(RELEASE_KEYS.length, 15);
+  assert.equal(RELEASE_KEYS.length, 16);
+});
+
+test('city revival progress participates in import and invalid progress preserves the prior save', async () => {
+  globalThis.localStorage = storage({ 'npc-life:coins-v1': '200' });
+  await assert.rejects(importSave(file({ 'npc-life:city-revival-v1': '{"step":900,"deliveries":0}' })));
+  assert.equal(localStorage.getItem('npc-life:coins-v1'), '200');
+  await importSave(file({ 'npc-life:coins-v1': '615', 'npc-life:city-revival-v1': '{"step":9,"deliveries":2}' }));
+  assert.equal(localStorage.getItem('npc-life:city-revival-v1'), '{"step":9,"deliveries":2}');
 });

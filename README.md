@@ -1,38 +1,40 @@
 # NPC LIFE — The City of Idiots
 
-A multiplayer browser comedy sandbox in development. Take pointless jobs, annoy pigeons, dress badly, and become a questionable local celebrity.
+A retro multiplayer browser comedy sandbox. The festival is cancelled, four districts are broken, and the city has hired the least qualified person available: you.
 
-**Multiplayer is a core product requirement.** This repository currently contains the local playable client. Online rooms, a networking transport, remote players, and authoritative shared-world state are not implemented yet. The current version label describes the local gameplay milestone, not multiplayer release readiness.
+## City Revival update
 
-## Playable client
+- **Five districts, over four times the original map area:** Civic Square, Switchyard, Market Mile, Willow Park, and Saltwater Dock.
+- **Nine-step main campaign:** collect supplies, restore power, reopen the market, plant the garden, repair the beacon, and bring back the festival. Restored districts visibly change.
+- **After the ending:** earn the City Keeper title and run repeatable courier contracts between districts.
+- **Multiplayer rooms:** up to eight guests, room codes, live movement, jumping, nameplates, and waves. Menus lock only your own character.
+- **World improvements:** warm lighting, district signs, transformers, striped stalls, garden beds, boats, seawall, pier, beacon, festival stage, expanded building collision and camera coverage.
+- **Navigation:** full city journal, tracked objectives, distance and compass directions, minimap waypoints, and current district indicator.
+- Existing jobs, NPC conversations, discoveries, shop, wardrobe, dailies, minigames, City Permit objective, procedural audio, and save import/export remain available.
 
-- Stylized 3D city, third-person movement, sprinting, jumping, orbit camera and building collision.
-- Gary and Marty's jobs, discoveries, coins, reputation, cosmetic shop, wardrobe and achievements.
-- Branching citizen conversations, daily challenges, Pigeon Panic and Unemployment Simulator.
-- City events, orientation, minimap, procedural audio and a five-part City Permit objective.
-- Local save persistence, validated import/export, reset confirmation and display preferences.
-- Retro municipal-arcade interface with original pixel icons, shared dialogs and keyboard focus handling.
+**Multiplayer scope:** this is a working guest-room presence slice. Movement and waves are shared. Campaign, district restoration, minigames, cosmetics and economy remain local to each browser. The room server is not an authoritative game simulation and does not accept or trust local save balances. Shared objectives/economy, accounts, moderation and public-host hardening are later milestones.
 
-Progress currently belongs to this browser. Local save files must not become trusted multiplayer economy data.
+## Run it
 
-## Development
-
-Node.js 20.19+ or a supported newer version, npm, and a current desktop browser with WebGL and native dialog support.
+Node.js 20.19+ (or a supported newer version), npm, and a desktop browser with WebGL.
 
 ```bash
 npm ci
-npm run dev
+npm run dev:multi
 ```
 
-Desktop is the primary playable target. Responsive menus do not imply full mobile movement controls.
+Open the Vite address shown in the terminal. Press **N**, choose a name, and **Create room**. Friends open **the same game server address**, enter the room code, and join. On a trusted LAN, use the host computer's LAN address with the Vite port; other devices cannot use your `localhost` address. Windows may ask to allow Node on the private network.
+
+`npm run dev:multi` starts Vite and the room server (port 3001). `npm run dev` starts only the local client; multiplayer will report the missing server. No new dependencies, paid service, or external art downloads are required.
+
+For a built game served by the same Node process:
 
 ```bash
-npm test
 npm run build
-npm run preview
+npm start
 ```
 
-`npm test` runs focused menu-state and save regression tests using Node's test runner and the existing Vite toolchain. Build performs TypeScript checking and produces `dist/`. A bundle-size warning is currently expected; performance on target hardware still needs profiling.
+Open `http://localhost:3001`. `PORT` changes the production port. Rooms are held in memory, expire after disconnected guests stop sending updates, and close when empty. Server restarts end rooms; personal saves stay in the browser. Internet play requires hosting this Node process behind HTTPS with streaming/SSE support; a static-only host does not run the room server. This change does not deploy a public server.
 
 ## Controls
 
@@ -41,20 +43,30 @@ npm run preview
 | WASD / arrows | Move relative to camera |
 | Shift / Space | Sprint / jump |
 | Mouse drag / scroll | Orbit / zoom |
-| E / F | Interact / talk to special citizens |
-| B | Wave |
-| H | Controls |
-| I / J | Wardrobe / achievements |
-| K | Daily challenges |
+| C | City journal and full map |
+| Hold Q | Work on the nearby tracked objective |
+| N | Create or join a multiplayer room |
+| E / F | Existing interactions / special citizens |
+| B | Wave, also visible to room members |
+| I / J / K | Wardrobe / achievements / dailies |
 | M | Unemployment Simulator |
-| Escape / P | Open menu; Escape closes the active dialog |
-| Tab / Shift+Tab | Navigate the active dialog |
-| Enter / Space | Activate focused controls |
+| H | Controls |
+| Escape / P | Game menu; Escape closes the active dialog |
+| Tab / Shift+Tab | Navigate dialog controls |
 
-Opening any dialog locks **only this client's character input and camera gestures**. It does not pause the world or future remote players. Movement keys are cleared on lock to prevent drifting after closing a menu. Unemployment Simulator keeps its own movement keys inside its dialog.
+Desktop is the primary playable target. Responsive menus do not imply full mobile movement controls. Gold markers track the main campaign; side jobs remain optional. Follow streets around buildings instead of walking directly through them.
 
-## Design and architecture
+## Saves and verification
 
-See [development notes](docs/development.md) for the retro UI system, multiplayer requirements and regression checklist.
+Existing saves are preserved. City Revival adds `npc-life:city-revival-v1`, included in validated export/import and reset. In-progress courier cargo is transient: after a reload, collect the parcel again. Completed deliveries and campaign stages persist.
 
-Use `develop` for integration and `main` for reviewed releases. Do not deploy a client-only build as a functioning multiplayer release. Static client hosting does not supply the missing session server.
+```bash
+npm test
+npm run build
+npm run test:browser
+npm run test:city
+```
+
+The two browser suites require optional Playwright tooling; see [development notes](docs/development.md). Core tests use the existing toolchain. The large Three.js bundle warning remains; software-rendered QA is not a hardware performance benchmark.
+
+Use `develop` for integration and `main` for reviewed releases. This update is on `feat/retro-game-ui` until reviewed and merged.

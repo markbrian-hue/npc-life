@@ -1,3 +1,5 @@
+import { DISTRICTS } from './campaign';
+import { WORLD_RADIUS } from './world';
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -5,18 +7,9 @@ import { createPortal } from 'react-dom';
 import {
   BUILDINGS,
   FOUNTAIN,
-  GARY,
   BUS_STOP,
   TREES,
 } from './world';
-
-import {
-  SHOP_POSITION,
-  CITIZEN_POSITION,
-} from './CityExtras';
-
-import { ARCADE_POSITION } from './alpha6';
-import { STREET_NPCS } from './alpha7';
 
 type Location = {
   x: number;
@@ -24,46 +17,14 @@ type Location = {
   heading: number;
 };
 
-const markers = [
-  {
-    id: 'gary',
-    x: GARY.x,
-    z: GARY.z,
-    label: 'Gary',
-    fill: '#f8b36d',
-  },
-  {
-    id: 'shop',
-    ...SHOP_POSITION,
-    label: 'Shop',
-    fill: '#8ee0ef',
-  },
-  {
-    id: 'marty',
-    ...CITIZEN_POSITION,
-    label: 'Marty',
-    fill: '#c0a6fa',
-  },
-  {
-    id: 'arcade',
-    ...ARCADE_POSITION,
-    label: 'Arcade',
-    fill: '#ffe18b',
-  },
-  ...STREET_NPCS.map((npc) => ({
-    id: npc.id,
-    x: npc.x,
-    z: npc.z,
-    label: npc.name,
-    fill: '#eeacbc',
-  })),
-];
+const markers = DISTRICTS.map(d => ({ ...d, label: d.name, fill: d.color }));
 
-// Convert -42..42 world coordinates to 0..336 SVG.
+// Use the same world bounds as collision and the full city journal.
+const unit = 336 / (WORLD_RADIUS * 2);
 const scale = (worldCoordinate: number) =>
-  (worldCoordinate + 42) * 4;
+  (worldCoordinate + WORLD_RADIUS) * unit;
 
-export function WorldMinimap() {
+export function WorldMinimap({ target }: { target: { x: number; z: number } }) {
   const [player, setPlayer] = useState<Location>({
     x: 0,
     z: 0,
@@ -158,14 +119,14 @@ export function WorldMinimap() {
             <path
               d="M 0 168 H 336 M 168 0 V 336"
               stroke="#616a77"
-              strokeWidth="34"
+              strokeWidth={8.5 * unit}
             />
 
             {/* Plaza */}
             <circle
               cx="168"
               cy="168"
-              r="33.2"
+              r={8.3 * unit}
               fill="#e4d1ac"
               stroke="#bea27e"
               strokeWidth="3"
@@ -189,8 +150,8 @@ export function WorldMinimap() {
                 y={scale(
                   building.z - building.d / 2
                 )}
-                width={building.w * 4}
-                height={building.d * 4}
+                width={building.w * unit}
+                height={building.d * unit}
                 rx="2.5"
                 fill={building.roof}
                 stroke="#263e4a"
@@ -217,7 +178,7 @@ export function WorldMinimap() {
             <circle
               cx={scale(FOUNTAIN.x)}
               cy={scale(FOUNTAIN.z)}
-              r="9"
+              r={2.35 * unit}
               fill="#6cbdc5"
               stroke="#eaf5e9"
               strokeWidth="1.5"
@@ -268,6 +229,8 @@ export function WorldMinimap() {
               </g>
             ))}
 
+            <path d={`M${playerX} ${playerY} L${scale(target.x)} ${scale(target.z)}`} stroke="#fce18b" strokeWidth="1.5" strokeDasharray="4 4" />
+            <circle cx={scale(target.x)} cy={scale(target.z)} r="8" fill="none" stroke="#ffe9a8" strokeWidth="3" />
             {/* Live player location and heading */}
             <g
               transform={`translate(${playerX}, ${playerY}) rotate(${

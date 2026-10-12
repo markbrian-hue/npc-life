@@ -1,5 +1,5 @@
 export type MenuId =
-  | 'controls' | 'welcome' | 'release' | 'shop' | 'marty' | 'encounter'
+  | 'city-journal' | 'multiplayer' | 'controls' | 'welcome' | 'release' | 'shop' | 'marty' | 'encounter'
   | 'wardrobe' | 'achievements' | 'daily' | 'pigeon-panic' | 'work-dodge';
 
 /** Local UI ownership only. Opening a menu must never pause a shared world. */

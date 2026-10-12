@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 
 import { AmbientSound } from './game/AmbientSound';
-import { WorldMinimap } from './game/WorldMinimap';
+
 import { Alpha9Experience } from './game/Alpha9Experience';
 
 import { ReleaseCenter } from './game/ReleaseCenter';
@@ -23,6 +23,7 @@ import './phase8.css';
 import './phase9.css';
 import './game/release.css';
 import './game/ui/retro.css';
+import './game/city-revival.css';
 
 ReactDOM.createRoot(
   document.getElementById('root')!
@@ -31,7 +32,6 @@ ReactDOM.createRoot(
     <GameErrorBoundary>
       <GameUIProvider initialMenu={loadTour().status === 'new' ? 'welcome' : 'release'}>
       <App />
-      <WorldMinimap />
       <AmbientSound />
       <Alpha9Experience />
       <ReleaseCenter />

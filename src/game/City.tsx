@@ -1,7 +1,10 @@
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { DirectionalLight, Object3D } from 'three';
 
 import {
   BENCHES, BUILDINGS, GARY, LAMP_POSTS, PARKED_CARS,
-  PIGEONS, PLANTERS, TREES, type BuildingDef,
+  PIGEONS, PLANTERS, TREES, WORLD_RADIUS, type BuildingDef,
 } from './world';
 
 import {
@@ -283,7 +286,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.085, 0]}
       >
-        <planeGeometry args={[95, 95]} />
+        <planeGeometry args={[WORLD_RADIUS * 2 + 12, WORLD_RADIUS * 2 + 12]} />
         <meshStandardMaterial color="#8ab184" roughness={1} />
       </mesh>
 
@@ -292,7 +295,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.055, 0]}
       >
-        <planeGeometry args={[95, 8.5]} />
+        <planeGeometry args={[WORLD_RADIUS * 2, 8.5]} />
         <meshStandardMaterial color="#66737a" roughness={1} />
       </mesh>
 
@@ -301,7 +304,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.05, 0]}
       >
-        <planeGeometry args={[8.5, 95]} />
+        <planeGeometry args={[8.5, WORLD_RADIUS * 2]} />
         <meshStandardMaterial color="#66737a" roughness={1} />
       </mesh>
 
@@ -311,9 +314,9 @@ function GroundAndRoads() {
           <group key={`${side}-${half}`}>
             <mesh
               receiveShadow
-              position={[side * 5.85, -0.064, half * 25]}
+              position={[side * 5.85, -0.064, half * 48]}
             >
-              <boxGeometry args={[2.65, 0.12, 31]} />
+              <boxGeometry args={[2.65, 0.12, 77]} />
               <meshStandardMaterial
                 color="#c9c5b9"
                 roughness={1}
@@ -322,9 +325,9 @@ function GroundAndRoads() {
 
             <mesh
               receiveShadow
-              position={[half * 25, -0.064, side * 5.85]}
+              position={[half * 48, -0.064, side * 5.85]}
             >
-              <boxGeometry args={[31, 0.12, 2.65]} />
+              <boxGeometry args={[77, 0.12, 2.65]} />
               <meshStandardMaterial
                 color="#c9c5b9"
                 roughness={1}
@@ -358,7 +361,7 @@ function GroundAndRoads() {
 function LaneMarkings() {
   return (
     <>
-      {Array.from({ length: 17 }, (_, i) => -40 + i * 5).map((v) => (
+      {Array.from({ length: 35 }, (_, i) => -85 + i * 5).map((v) => (
         <group key={v}>
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
@@ -398,26 +401,41 @@ function LaneMarkings() {
   );
 }
 
-export function City({ caught }: { caught: number[] }) {
+function LocalSun() {
+  const light = useRef<DirectionalLight>(null);
+  const target = useMemo(() => new Object3D(), []);
+  const player = useRef({ x: 0, z: 0 });
+  useEffect(() => {
+    const update = (event: Event) => { player.current = (event as CustomEvent<{ x: number; z: number }>).detail; };
+    window.addEventListener('npc-life:position', update);
+    return () => window.removeEventListener('npc-life:position', update);
+  }, []);
+  useFrame(() => {
+    // Quantize the local shadow camera: sharper nearby shadows without rendering
+    // every distant neighborhood into a giant shadow map each frame.
+    const x = Math.round(player.current.x * 16) / 16;
+    const z = Math.round(player.current.z * 16) / 16;
+    target.position.set(x, 0, z);
+    light.current?.position.set(x + 25, 40, z + 18);
+  });
+  return <>
+    <primitive object={target} />
+    <directionalLight ref={light} target={target} position={[25, 40, 18]} color="#ffe2b1" intensity={2.3}
+      castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-32} shadow-camera-right={32}
+      shadow-camera-top={32} shadow-camera-bottom={-32} shadow-bias={-.0002} />
+  </>;
+}
+
+export const City = memo(function City({ caught }: { caught: number[] }) {
   return (
     <>
-      <color attach="background" args={['#b7d8e7']} />
-      <fog attach="fog" args={['#b7d8e7', 65, 135]} />
+      <color attach="background" args={['#c6d6c8']} />
+      <fog attach="fog" args={['#c6d6c8', 85, 185]} />
 
-      <hemisphereLight args={['#eaf5ff', '#72876f', 1.15]} />
+      <hemisphereLight args={['#ffefd0', '#677e70', 1.5]} />
       <ambientLight intensity={0.35} />
 
-      <directionalLight
-        position={[25, 40, 18]}
-        intensity={2.05}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-44}
-        shadow-camera-right={44}
-        shadow-camera-top={44}
-        shadow-camera-bottom={-44}
-        shadow-bias={-0.0002}
-      />
+      <LocalSun />
 
       <GroundAndRoads />
       <LaneMarkings />
@@ -489,4 +507,4 @@ export function City({ caught }: { caught: number[] }) {
       )}
     </>
   );
-}
+});
