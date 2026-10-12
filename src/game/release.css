@@ -1,0 +1,630 @@
+
+/* NPC LIFE 1.0 — Final Release */
+
+.release-menu-button {
+  position: absolute;
+  z-index: 9;
+  top: 145px;
+  right: 27px;
+  border: 1px solid #ffffff50;
+  border-radius: 11px;
+  background: #172638ef;
+  color: #ffe4a0;
+  padding: 10px 13px;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 8px 22px #0003;
+}
+
+.release-menu-button kbd {
+  font: inherit;
+  font-size: 9px;
+  opacity: .72;
+  margin-left: 8px;
+}
+
+.release-menu-button > span {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+.release-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: #08111fe8;
+  backdrop-filter: blur(9px);
+}
+
+.release-menu {
+  width: min(740px, 100%);
+  max-height: min(94dvh, 850px);
+  overflow: auto;
+  border-radius: 23px;
+  border: 1px solid #adc0ce6b;
+  color: #edf5fc;
+  background: #19283c;
+  box-shadow: 0 28px 90px #000a;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.release-header {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 23px 25px 19px;
+  background: linear-gradient(
+    110deg,
+    #293b53,
+    #16283b
+  );
+}
+
+.release-logo {
+  flex: 0 0 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  transform: rotate(-7deg);
+  border: 3px solid #192537;
+  border-radius: 15px;
+  box-shadow: 5px 5px 0 #101a28;
+  background: #ffeb91;
+  color: #1b2639;
+  font: 900 31px 'Space Grotesk', sans-serif;
+}
+
+.release-logo span {
+  color: #d96677;
+}
+
+.release-brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.release-kicker {
+  font-size: 10px;
+  color: #f3d78c;
+  letter-spacing: 1.8px;
+  font-weight: 900;
+}
+
+.release-brand h1 {
+  font: 900 34px/1 'Space Grotesk', sans-serif;
+  margin: 5px 0;
+  letter-spacing: -1.4px;
+}
+
+.release-brand p {
+  margin: 0;
+  color: #a8c3d7;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 800;
+}
+
+.release-close {
+  align-self: flex-start;
+  width: 35px;
+  height: 35px;
+  border: 0;
+  border-radius: 9px;
+  color: #f4f8fc;
+  background: #4a6078;
+  font-size: 23px;
+}
+
+.release-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 11px 23px 0;
+  border-bottom: 1px solid #ffffff18;
+}
+
+.release-tabs button {
+  color: #b8c7d5;
+  border: 0;
+  background: transparent;
+  border-bottom: 3px solid transparent;
+  padding: 11px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.release-tabs button.active {
+  color: #ffe498;
+  border-bottom-color: #ffe498;
+}
+
+.release-content {
+  padding: 24px 25px 26px;
+  min-height: 300px;
+}
+
+.release-hero {
+  padding: 24px;
+  border: 1px solid #e3ca8a58;
+  border-radius: 16px;
+  background: radial-gradient(
+    circle at 85% 15%,
+    #3f5b70,
+    #26374c 72%
+  );
+}
+
+.release-hero > span {
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  font-size: 10px;
+  color: #ffe08d;
+}
+
+.release-hero h2 {
+  font: 900 29px/1.13 'Space Grotesk', sans-serif;
+  max-width: 510px;
+  margin: 11px 0;
+  letter-spacing: -.5px;
+}
+
+.release-hero p {
+  font-size: 13px;
+  color: #c8d9e5;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+.release-primary,
+.release-secondary,
+.release-danger-outline,
+.release-danger {
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.release-primary {
+  background: #f8dc92;
+  color: #1a2839;
+  border: 1px solid #ffe9a9;
+}
+
+.release-primary:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.release-secondary {
+  background: #354963;
+  color: #f5f9fc;
+  border: 1px solid #75849e79;
+}
+
+.release-wide {
+  margin-top: 13px;
+  width: 100%;
+  text-align: center;
+}
+
+.release-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.release-stats > div {
+  border: 1px solid #ffffff1e;
+  background: #263a50;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.release-stats strong {
+  display: block;
+  font: 900 20px 'Space Grotesk', sans-serif;
+  color: #ffe196;
+}
+
+.release-stats small {
+  display: block;
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1px;
+  color: #acbfd0;
+}
+
+.release-section-title {
+  font: 800 21px 'Space Grotesk', sans-serif;
+  margin: 0 0 10px;
+}
+
+.release-muted {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #b9cbd9;
+  margin: 7px 0 18px;
+}
+
+.release-goal-list {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+.release-goal {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #ffffff21;
+  background: #25374c;
+  border-radius: 12px;
+}
+
+.release-goal.done {
+  border-color: #8acfab68;
+}
+
+.release-goal > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.release-goal strong {
+  font-size: 12px;
+}
+
+.release-goal p {
+  font-size: 11px;
+  color: #b5c8d8;
+  margin: 4px 0 7px;
+}
+
+.release-goal > small {
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: 11px;
+  color: #ffe39b;
+}
+
+.release-check {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  border-radius: 50%;
+  background: #3e5367;
+  color: #f4dc99;
+}
+
+.release-goal.done .release-check {
+  background: #428165;
+  color: #fff;
+}
+
+.release-track {
+  height: 5px;
+  border-radius: 10px;
+  background: #52657d;
+  overflow: hidden;
+}
+
+.release-track span {
+  display: block;
+  height: 100%;
+  background: #e9ce7d;
+  border-radius: inherit;
+}
+
+.release-setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #283950;
+  border-radius: 11px;
+  margin-bottom: 8px;
+  padding: 13px;
+}
+
+.release-setting strong {
+  display: block;
+  font-size: 12px;
+}
+
+.release-setting small {
+  display: block;
+  font-size: 10px;
+  color: #bdccda;
+  margin-top: 5px;
+}
+
+.release-setting input {
+  width: 19px;
+  height: 19px;
+  accent-color: #f2d482;
+  flex: 0 0 19px;
+}
+
+.release-save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.release-danger-outline {
+  display: block;
+  margin-top: 17px;
+  color: #f6b8b4;
+  background: #382b36;
+  border: 1px solid #ae646e;
+}
+
+.release-danger {
+  background: #b94c57;
+  color: #fff;
+  border: 0;
+  margin-right: 8px;
+}
+
+.release-confirm {
+  background: #432b36;
+  padding: 13px;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+
+.release-confirm strong {
+  font-size: 12px;
+}
+
+.release-confirm p {
+  color: #ebbdc5;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.release-message {
+  font-size: 11px;
+  color: #ace6c7;
+  padding: 10px;
+  background: #285344;
+  border-radius: 8px;
+}
+
+.release-about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.release-about-grid p {
+  background: #283950;
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.release-about-grid strong {
+  color: #f8df9c;
+  font-size: 12px;
+  display: block;
+}
+
+.release-about-grid span {
+  display: block;
+  font-size: 11px;
+  color: #b9cbda;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.release-external {
+  color: #fbe2a3;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.release-footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #ffffff16;
+  padding: 13px 25px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #99aec0;
+  letter-spacing: 1px;
+}
+
+.release-ending {
+  text-align: center;
+  padding: 17px 7px;
+  background: radial-gradient(
+    circle at 50% 0%,
+    #435b69 0%,
+    transparent 65%
+  );
+}
+
+.release-seal {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 17px;
+  border: 4px double #f8df96;
+  color: #ffe2a0;
+  border-radius: 50%;
+  font-size: 35px;
+}
+
+.release-ending h2 {
+  margin: 12px auto;
+  max-width: 500px;
+  font: 900 31px/1.2 'Space Grotesk', sans-serif;
+  color: #ffe39b;
+}
+
+.release-ending p {
+  color: #cad9e4;
+  font-size: 13px;
+  max-width: 450px;
+  margin: 0 auto 17px;
+  line-height: 1.6;
+}
+
+.release-ending strong,
+.release-ending small {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.release-ending strong {
+  letter-spacing: 1.4px;
+  color: #ffe2a0;
+}
+
+.release-ending small {
+  color: #a7bfd0;
+  font-size: 10px;
+}
+
+.release-menu button:focus-visible,
+.release-menu-button:focus-visible {
+  outline: 3px solid #ffedaa;
+  outline-offset: 3px;
+}
+
+.release-menu button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+/* Keep the Alpha 0.9 guide below the menu button. */
+
+.alpha9-guide {
+  top: 202px;
+}
+
+/* Functional UI preferences */
+
+.npc-hide-minimap .alpha8-minimap {
+  display: none;
+}
+
+.npc-compact-hud .game-shell .quest-panel {
+  transform: scale(.87);
+  transform-origin: left top;
+}
+
+.npc-compact-hud .game-shell .bottom-bar {
+  gap: 5px;
+}
+
+.npc-reduce-motion *,
+.npc-reduce-motion *::before,
+.npc-reduce-motion *::after {
+  animation-duration: .001ms !important;
+  transition-duration: .001ms !important;
+}
+
+@media (max-width: 850px) {
+  .release-menu-button {
+    top: 137px;
+    right: 14px;
+  }
+
+  .alpha9-guide {
+    top: 205px;
+  }
+}
+
+@media (max-width: 650px) {
+  .release-backdrop {
+    padding: 7px;
+  }
+
+  .release-menu {
+    max-height: 96dvh;
+    border-radius: 14px;
+  }
+
+  .release-header {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .release-logo {
+    flex-basis: 45px;
+    height: 45px;
+    font-size: 23px;
+  }
+
+  .release-brand h1 {
+    font-size: 26px;
+  }
+
+  .release-kicker {
+    letter-spacing: 1px;
+    font-size: 8px;
+  }
+
+  .release-brand p {
+    font-size: 8px;
+  }
+
+  .release-tabs {
+    overflow-x: auto;
+    padding: 7px 10px 0;
+  }
+
+  .release-tabs button {
+    white-space: nowrap;
+    font-size: 11px;
+    padding: 9px 10px;
+  }
+
+  .release-content {
+    padding: 15px;
+  }
+
+  .release-hero {
+    padding: 18px;
+  }
+
+  .release-hero h2 {
+    font-size: 22px;
+  }
+
+  .release-about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .release-ending h2 {
+    font-size: 24px;
+  }
+
+  .release-footer {
+    padding: 12px;
+  }
+
+  .release-menu-button {
+    top: 73px;
+    right: 12px;
+    font-size: 10px;
+    padding: 7px 9px;
+  }
+
+  .alpha9-guide {
+    top: auto;
+    bottom: 305px;
+  }
+}

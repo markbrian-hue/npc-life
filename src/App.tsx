@@ -1149,7 +1149,7 @@ export default function App() {
             <h1>NPC LIFE</h1>
             <p>
               THE CITY OF IDIOTS{' '}
-              <span>•</span> ALPHA 0.7
+              <span>•</span> ALPHA 1.0
             </p>
           </div>
         </div>
