@@ -1,3 +1,5 @@
+import { GameGlyph } from './ui/GameGlyph';
+import { GameDialog } from './ui/GameDialog';
 
 import { useEffect, useRef, useState } from 'react';
 import { playGameSound } from './gameAudio';
@@ -151,23 +153,11 @@ export function PigeonPanic({
   };
 
   return (
-    <div
-      className="alpha6-overlay"
-      onMouseDown={onClose}
-    >
-      <section
-        className="alpha6-arcade"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Pigeon Panic arcade"
-        onMouseDown={(event) =>
-          event.stopPropagation()
-        }
-      >
+    <GameDialog id="pigeon-panic" className="alpha6-arcade" label="Pigeon Panic arcade" onClose={onClose}>
         <div className="alpha6-heading">
           <div>
             <small>IDIOT CITY ARCADE</small>
-            <h2>🐦 PIGEON PANIC</h2>
+            <h2>PIGEON PANIC</h2>
             <p>
               Tap 7 suspicious pigeons before the
               timer runs out.
@@ -210,7 +200,7 @@ export function PigeonPanic({
               onClick={() => hit(index)}
             >
               {playing && target === index
-                ? '🐦'
+                ? <GameGlyph name="pigeon" />
                 : '·'}
             </button>
           ))}
@@ -233,7 +223,6 @@ export function PigeonPanic({
             </button>
           )}
         </div>
-      </section>
-    </div>
+    </GameDialog>
   );
 }

@@ -1,64 +1,60 @@
 # NPC LIFE — The City of Idiots
 
-A **free-to-develop** 3D browser-game prototype with a little open world, a character you can control, and one extremely important job: collecting debt from pigeons.
+A multiplayer browser comedy sandbox in development. Take pointless jobs, annoy pigeons, dress badly, and become a questionable local celebrity.
 
-## Current playable features (Alpha 0.1)
+**Multiplayer is a core product requirement.** This repository currently contains the local playable client. Online rooms, a networking transport, remote players, and authoritative shared-world state are not implemented yet. The current version label describes the local gameplay milestone, not multiplayer release readiness.
 
-- Low-poly city generated entirely from Three.js meshes: buildings, roads, trees, plaza.
-- Third-person character, camera follow, WASD/arrow movement, Shift sprint, Space jump.
-- Simple world boundaries and building collisions.
-- Gary the NPC offers the **Pigeon Debt** quest.
-- Press E near each of three pigeons to catch it; complete the job for 75 coins.
-- Coin balance saved locally in the current browser via `localStorage`.
-- Quest tracker, mini-map, controls panel, keyboard and clickable interaction prompt.
-- No paid models, paid APIs, backend, or database required.
+## Playable client
 
-## Requirements
+- Stylized 3D city, third-person movement, sprinting, jumping, orbit camera and building collision.
+- Gary and Marty's jobs, discoveries, coins, reputation, cosmetic shop, wardrobe and achievements.
+- Branching citizen conversations, daily challenges, Pigeon Panic and Unemployment Simulator.
+- City events, orientation, minimap, procedural audio and a five-part City Permit objective.
+- Local save persistence, validated import/export, reset confirmation and display preferences.
+- Retro municipal-arcade interface with original pixel icons, shared dialogs and keyboard focus handling.
 
-- Node.js **20.19+** or a later supported version (Vite 7 requirement)
-- npm
-- A desktop browser with WebGL support and a keyboard (mobile controls are planned later)
+Progress currently belongs to this browser. Local save files must not become trusted multiplayer economy data.
 
-## Run locally
+## Development
+
+Node.js 20.19+ or a supported newer version, npm, and a current desktop browser with WebGL and native dialog support.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open the local URL shown in your terminal (normally http://localhost:5173/).
-
-## Build for deployment
+Desktop is the primary playable target. Responsive menus do not imply full mobile movement controls.
 
 ```bash
+npm test
 npm run build
 npm run preview
 ```
 
-`dist/` contains the static game. Publish it to a free Cloudflare Pages static site using build command `npm run build` and output directory `dist`. Use a standard root URL, or update `vite.config.ts` if deploying under a subpath.
+`npm test` runs focused menu-state and save regression tests using Node's test runner and the existing Vite toolchain. Build performs TypeScript checking and produces `dist/`. A bundle-size warning is currently expected; performance on target hardware still needs profiling.
 
 ## Controls
 
-| Key | Action |
+| Control | Action |
 | --- | --- |
-| WASD or arrow keys | Walk |
-| Shift | Sprint |
-| Space | Jump |
-| E | Speak to Gary or catch nearby pigeon |
-| H | Toggle help |
+| WASD / arrows | Move relative to camera |
+| Shift / Space | Sprint / jump |
+| Mouse drag / scroll | Orbit / zoom |
+| E / F | Interact / talk to special citizens |
+| B | Wave |
+| H | Controls |
+| I / J | Wardrobe / achievements |
+| K | Daily challenges |
+| M | Unemployment Simulator |
+| Escape / P | Open menu; Escape closes the active dialog |
+| Tab / Shift+Tab | Navigate the active dialog |
+| Enter / Space | Activate focused controls |
 
-## Suggested next milestones
+Opening any dialog locks **only this client's character input and camera gestures**. It does not pause the world or future remote players. Movement keys are cleared on lock to prevent drifting after closing a menu. Unemployment Simulator keeps its own movement keys inside its dialog.
 
-1. Better character animations, camera rotation with mouse, and mobile input.
-2. Shops, items, and persistent locally stored unlocks.
-3. More ridiculous jobs and timed serverless random events.
-4. Optimization, visual polish, and launch of the **single-player** browser version.
-5. Multiplayer *after* the single-player game is fun, with a real backend and separate hosting plan.
+## Design and architecture
 
-## Budget reality
+See [development notes](docs/development.md) for the retro UI system, multiplayer requirements and regression checklist.
 
-The prototype runs at no monetary cost locally. Static hosting can use a provider's free tier subject to its limits. A publicly available, always-running shared multiplayer server is **not guaranteed to remain free**, so it is intentionally not included in Alpha 0.1. No accounts, ads, or purchases are built in.
-
-## Note on testing
-
-Generated starter source code. Dependencies must be downloaded with `npm install` to build or run the game. Verify `npm run build` on your machine after install.
+Use `develop` for integration and `main` for reviewed releases. Do not deploy a client-only build as a functioning multiplayer release. Static client hosting does not supply the missing session server.

@@ -1,8 +1,11 @@
+import { GameGlyph } from './ui/GameGlyph';
+import { GameDialog } from './ui/GameDialog';
 
 import {
   useEffect,
   useRef,
   useState,
+  type KeyboardEvent,
 } from 'react';
 
 import { playGameSound } from './gameAudio';
@@ -238,102 +241,17 @@ export function WorkDodge({ onClose }: Props) {
     }
   };
 
-  // Prevent WASD from moving the 3D player
-  // while this minigame is open.
-  useEffect(() => {
-    window.dispatchEvent(
-      new Event('blur')
-    );
-
-    const keys: Record<
-      string,
-      [number, number]
-    > = {
-      KeyW: [0, -1],
-      ArrowUp: [0, -1],
-      KeyS: [0, 1],
-      ArrowDown: [0, 1],
-      KeyA: [-1, 0],
-      ArrowLeft: [-1, 0],
-      KeyD: [1, 0],
-      ArrowRight: [1, 0],
+  function handleGameKey(event: KeyboardEvent<HTMLDialogElement>) {
+    const directions: Record<string, [number, number]> = {
+      KeyW: [0, -1], ArrowUp: [0, -1], KeyS: [0, 1], ArrowDown: [0, 1],
+      KeyA: [-1, 0], ArrowLeft: [-1, 0], KeyD: [1, 0], ArrowRight: [1, 0],
     };
-
-    const suppressed = new Set([
-      ...Object.keys(keys),
-      'Space',
-      'KeyE',
-      'KeyF',
-      'KeyI',
-      'KeyJ',
-      'KeyK',
-      'KeyB',
-      'ShiftLeft',
-      'ShiftRight',
-    ]);
-
-    const onKey = (
-      event: KeyboardEvent
-    ) => {
-      if (event.code === 'Escape') {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        onClose();
-        return;
-      }
-
-      if (!suppressed.has(event.code)) {
-        return;
-      }
-
+    const direction = directions[event.code];
+    if (direction) {
       event.preventDefault();
-      event.stopImmediatePropagation();
-
-      if (
-        !event.repeat &&
-        keys[event.code]
-      ) {
-        move(...keys[event.code]);
-      }
-    };
-
-    const onUp = (
-      event: KeyboardEvent
-    ) => {
-      if (
-        suppressed.has(event.code)
-      ) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    window.addEventListener(
-      'keydown',
-      onKey,
-      true
-    );
-
-    window.addEventListener(
-      'keyup',
-      onUp,
-      true
-    );
-
-    return () => {
-      window.removeEventListener(
-        'keydown',
-        onKey,
-        true
-      );
-
-      window.removeEventListener(
-        'keyup',
-        onUp,
-        true
-      );
-    };
-  }, []);
+      if (!event.repeat) move(...direction);
+    }
+  }
 
   // Countdown timer.
   useEffect(() => {
@@ -420,19 +338,7 @@ export function WorkDodge({ onClose }: Props) {
   }, [board.score >= 60]);
 
   return (
-    <div
-      className="alpha9-backdrop"
-      onMouseDown={onClose}
-    >
-      <section
-        className="alpha9-modal alpha9-game"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Unemployment Simulator"
-        onMouseDown={(event) =>
-          event.stopPropagation()
-        }
-      >
+    <GameDialog id="work-dodge" className="alpha9-modal alpha9-game" label="Unemployment Simulator" onClose={onClose} onKeyDown={handleGameKey}>
         <div className="alpha9-modal-head">
           <div>
             <span className="alpha9-eyebrow">
@@ -440,11 +346,11 @@ export function WorkDodge({ onClose }: Props) {
             </span>
 
             <h2>
-              💼 UNEMPLOYMENT SIMULATOR
+              UNEMPLOYMENT SIMULATOR
             </h2>
 
             <p>
-              Steal coffee ☕. Avoid managers 💼.
+              Collect coffee. Avoid managers.
               Survive the shift.
             </p>
           </div>
@@ -526,11 +432,11 @@ export function WorkDodge({ onClose }: Props) {
                   }`}
                 >
                   {playerHere
-                    ? '🧍'
+                    ? <GameGlyph name="person" />
                     : bossHere
-                      ? '💼'
+                      ? <GameGlyph name="case" />
                       : coffeeHere
-                        ? '☕'
+                        ? <GameGlyph name="coffee" />
                         : ''}
                 </div>
               );
@@ -602,13 +508,12 @@ export function WorkDodge({ onClose }: Props) {
         </div>
 
         <div className="alpha9-record">
-          🏅 {scoreRank(Math.max(best, board.score))}
+          {scoreRank(Math.max(best, board.score))}
           {' · '}
           {rounds} completed rounds
           {' · '}
           Scores are saved in this browser.
         </div>
-      </section>
-    </div>
+    </GameDialog>
   );
 }

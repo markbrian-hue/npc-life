@@ -1,3 +1,5 @@
+import { GameDialog } from './ui/GameDialog';
+import { useGameUI } from './ui/GameUI';
 
 import {
   useEffect,
@@ -26,7 +28,6 @@ type Props = {
   player: PlayerLocation;
   reputation: number;
   disabled: boolean;
-  onModalChange: (open: boolean) => void;
   onReward: (
     coins: number,
     reputation: number
@@ -37,9 +38,9 @@ export function CityEncounters({
   player,
   reputation,
   disabled,
-  onModalChange,
   onReward,
 }: Props) {
+  const { menu, store } = useGameUI();
   const [progress, setProgress] =
     useState<EncounterProgress>(loadEncounters);
 
@@ -95,11 +96,11 @@ export function CityEncounters({
     setReply('');
     setNotice('');
     rewardLock.current = false;
-    onModalChange(false);
+    store.close('encounter');
   }
 
   function open(npc: StreetNpc) {
-    if (disabled || selected) return;
+    if (disabled || !store.open('encounter')) return;
 
     setProgress((p) => freshEncounters(p));
     rewardLock.current = false;
@@ -107,7 +108,6 @@ export function CityEncounters({
     setSelected(npc);
     setReply('');
     setNotice('');
-    onModalChange(true);
 
     playGameSound('talk');
   }
@@ -115,10 +115,8 @@ export function CityEncounters({
   // F is independent from the existing E interactions.
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
-      if (event.code === 'Escape' && selected) {
-        event.preventDefault();
-        close();
-      } else if (
+      if (store.getSnapshot() !== null) return;
+      if (
         event.code === 'KeyF' &&
         !event.repeat &&
         !selected &&
@@ -223,20 +221,8 @@ export function CityEncounters({
       </div>
 
       {/* Conversation modal */}
-      {selected && (
-        <div
-          className="encounter-backdrop"
-          onMouseDown={close}
-        >
-          <section
-            className="encounter-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Talk to ${selected.name}`}
-            onMouseDown={(event) =>
-              event.stopPropagation()
-            }
-          >
+      {selected && menu === 'encounter' && (
+        <GameDialog id="encounter" className="encounter-dialog" label={`Talk to ${selected.name}`} onClose={close}>
             <div className="encounter-heading">
               <div>
                 <small>IDIOT CITY RESIDENT</small>
@@ -257,7 +243,7 @@ export function CityEncounters({
             </p>
 
             <p className="encounter-rumor">
-              🗣️ TODAY'S RUMOR: {rumor}
+              ON THE STREET: {rumor}
             </p>
 
             <p className="encounter-question">
@@ -299,8 +285,7 @@ export function CityEncounters({
                 )
               )}
             </div>
-          </section>
-        </div>
+        </GameDialog>
       )}
     </>
   );

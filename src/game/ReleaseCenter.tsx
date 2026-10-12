@@ -1,7 +1,8 @@
+import { GameDialog } from './ui/GameDialog';
+import { useGameUI, useMenuState, isTyping } from './ui/GameUI';
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { loadTour } from './alpha9';
 import { playGameSound } from './gameAudio';
 
 import {
@@ -10,6 +11,7 @@ import {
   getSettings,
   importSave,
   readGoals,
+  readReleaseValue,
   resetSave,
   setSettings,
   type ReleaseGoal,
@@ -25,41 +27,12 @@ type Screen =
   | 'about'
   | 'permit';
 
-const OTHER_DIALOGS = [
-  '.shop-backdrop',
-  '.npc-dialog-backdrop',
-  '.progress-backdrop',
-  '.alpha6-overlay',
-  '.encounter-backdrop',
-  '.alpha9-backdrop',
-].join(',');
-
-const GAME_KEYS = new Set([
-  'KeyW',
-  'KeyA',
-  'KeyS',
-  'KeyD',
-  'Space',
-  'ArrowUp',
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'KeyE',
-  'KeyF',
-  'KeyI',
-  'KeyJ',
-  'KeyK',
-  'KeyB',
-  'KeyM',
-]);
-
 export function ReleaseCenter() {
   const [mount, setMount] =
     useState<Element | null>(null);
 
-  const [open, setOpen] = useState(
-    () => loadTour().status !== 'new'
-  );
+  const { store } = useGameUI();
+  const [open, setOpen] = useMenuState('release');
 
   const [screen, setScreen] =
     useState<Screen>('home');
@@ -72,7 +45,7 @@ export function ReleaseCenter() {
 
   const [finished, setFinished] = useState(
     () =>
-      localStorage.getItem(ENDING_KEY) === '1'
+      readReleaseValue(ENDING_KEY) === '1'
   );
 
   const [message, setMessage] = useState('');
@@ -101,7 +74,7 @@ export function ReleaseCenter() {
       setGoals(readGoals());
 
       if (
-        localStorage.getItem(ENDING_KEY) === '1'
+        readReleaseValue(ENDING_KEY) === '1'
       ) {
         setFinished(true);
       }
@@ -127,84 +100,18 @@ export function ReleaseCenter() {
     };
   }, []);
 
-  // Release stuck movement keys when the menu opens.
-  useEffect(() => {
-    if (open) {
-      window.dispatchEvent(new Event('blur'));
-    }
-  }, [open]);
-
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (open) {
-        if (
-          event.code === 'Escape' ||
-          event.code === 'KeyP'
-        ) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          setOpen(false);
-          return;
-        }
-
-        if (
-          GAME_KEYS.has(event.code) &&
-          !(event.target instanceof HTMLButtonElement)
-        ) {
-          event.preventDefault();
-        }
-
-        // Don't let menu keypresses also trigger game actions.
-        // Native keyboard activation of focused buttons still works.
-        event.stopImmediatePropagation();
-        return;
-      }
-
-      if (
-        event.code !== 'Escape' &&
-        event.code !== 'KeyP'
-      ) {
-        return;
-      }
-
-      if (
-        event.repeat ||
-        document.querySelector(OTHER_DIALOGS)
-      ) {
-        return;
-      }
-
-      if (
-        event.target instanceof HTMLElement &&
-        event.target.closest(
-          'input,textarea,select'
-        )
-      ) {
-        return;
-      }
-
+      if (event.repeat || isTyping(event.target) || store.getSnapshot() !== null) return;
+      if (event.code !== 'Escape' && event.code !== 'KeyP') return;
       event.preventDefault();
-      event.stopImmediatePropagation();
-
       setScreen('home');
       setMessage('');
       setOpen(true);
     };
-
-    window.addEventListener(
-      'keydown',
-      handler,
-      true
-    );
-
-    return () => {
-      window.removeEventListener(
-        'keydown',
-        handler,
-        true
-      );
-    };
-  }, [open]);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [store, setOpen]);
 
   function toggleSetting(
     key: keyof ReleaseSettings
@@ -299,12 +206,6 @@ export function ReleaseCenter() {
           type="button"
           className="release-menu-button"
           onClick={() => {
-            if (
-              document.querySelector(OTHER_DIALOGS)
-            ) {
-              return;
-            }
-
             setScreen('home');
             setOpen(true);
           }}
@@ -317,13 +218,9 @@ export function ReleaseCenter() {
       )}
 
       {open && (
-        <div className="release-backdrop">
-          <section
-            className="release-menu"
-            role="dialog"
-            aria-modal="true"
-            aria-label="NPC LIFE game menu"
-          >
+        <GameDialog id="release" className="release-menu" label="NPC LIFE game menu" onClose={() => setOpen(false)} onKeyDown={event => {
+          if (event.code === 'KeyP' && !event.repeat && !isTyping(event.target)) setOpen(false);
+        }}>
             <header className="release-header">
               <div className="release-logo">
                 N<span>!</span>
@@ -331,7 +228,7 @@ export function ReleaseCenter() {
 
               <div className="release-brand">
                 <span className="release-kicker">
-                  IDIOT CITY · OFFICIAL BUILD
+                  IDIOT CITY / DEPARTMENT OF DOING NOTHING
                 </span>
 
                 <h1>NPC LIFE</h1>
@@ -444,8 +341,8 @@ export function ReleaseCenter() {
                     }
                   >
                     {finished
-                      ? '🏆 View your City Permit'
-                      : '🏆 See the final quest'}
+                      ? 'View your City Permit'
+                      : 'See the final quest'}
                     {' '}→
                   </button>
                 </>
@@ -532,7 +429,7 @@ export function ReleaseCenter() {
                       onClick={claim}
                     >
                       {isReady
-                        ? '🎓 Claim your City Permit'
+                        ? 'Claim your City Permit'
                         : `Complete all goals (${done}/5)`}
                     </button>
                   )}
@@ -600,7 +497,7 @@ export function ReleaseCenter() {
                       </small>
                     </div>
 
-                    <input
+                    <input aria-label="Reduce UI animations"
                       type="checkbox"
                       checked={
                         settings.reducedMotion
@@ -621,7 +518,7 @@ export function ReleaseCenter() {
                       </small>
                     </div>
 
-                    <input
+                    <input aria-label="Compact HUD"
                       type="checkbox"
                       checked={settings.compactHud}
                       onChange={() =>
@@ -640,7 +537,7 @@ export function ReleaseCenter() {
                       </small>
                     </div>
 
-                    <input
+                    <input aria-label="Hide minimap"
                       type="checkbox"
                       checked={settings.hideMinimap}
                       onChange={() =>
@@ -771,10 +668,10 @@ export function ReleaseCenter() {
                   </h2>
 
                   <p className="release-muted">
-                    A free, single-player,
-                    browser-based comedy sandbox
-                    built with React, TypeScript,
-                    Three.js and React Three Fiber.
+                    A free browser comedy sandbox
+                    being built for multiplayer.
+                    This build runs locally; online
+                    sessions are not connected yet.
                     Explore the city, complete jobs,
                     and become the least productive
                     local celebrity.
@@ -817,8 +714,7 @@ export function ReleaseCenter() {
                     <p>
                       <strong>ESC / P</strong>
                       <span>
-                        Menu and pause player
-                        controls
+                        Menu / local controls locked
                       </span>
                     </p>
 
@@ -866,15 +762,14 @@ export function ReleaseCenter() {
 
             <footer className="release-footer">
               <span>
-                NO PAID SERVERS · LOCAL SAVES
+                LOCAL BUILD · BROWSER SAVE
               </span>
 
               <span>
                 ESC / P TO CLOSE
               </span>
             </footer>
-          </section>
-        </div>
+        </GameDialog>
       )}
     </>,
     mount

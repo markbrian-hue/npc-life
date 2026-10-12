@@ -148,17 +148,7 @@
 
 /* Modal foundation */
 
-.alpha9-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 35;
-  background: #0b1321dc;
-  backdrop-filter: blur(7px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
+
 
 .alpha9-modal {
   background: #19283c;
@@ -173,7 +163,7 @@
 }
 
 .alpha9-modal h2 {
-  font: 800 27px/1.15 'Space Grotesk', sans-serif;
+  font: 800 27px/1.15 var(--ui-display);
   margin: 8px 0 10px;
   letter-spacing: -0.4px;
 }
@@ -453,11 +443,5 @@
   .game-shell .controls-panel {
     max-height: 48dvh;
     overflow-y: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .alpha9-backdrop {
-    backdrop-filter: none;
   }
 }

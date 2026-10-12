@@ -66,8 +66,15 @@ const ids = (input: unknown, allowed: readonly string[]) =>
       ))]
     : [];
 
-const num = (key: string) =>
-  bounded(Number(localStorage.getItem(key) ?? 0));
+const num = (key: string) => bounded(Number(readReleaseValue(key) ?? 0));
+
+export function readReleaseValue(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
 
 export type ReleaseGoal = {
   id: string;
@@ -146,8 +153,6 @@ export function getSettings(): ReleaseSettings {
 }
 
 export function setSettings(value: ReleaseSettings): void {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(value));
-
   document.documentElement.classList.toggle(
     'npc-reduce-motion',
     value.reducedMotion
@@ -162,6 +167,9 @@ export function setSettings(value: ReleaseSettings): void {
     'npc-hide-minimap',
     value.hideMinimap
   );
+
+  // Preferences still apply for this session if persistent storage is blocked.
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(value));
 }
 
 export function exportSave(): void {
@@ -405,8 +413,7 @@ export async function importSave(file: File): Promise<void> {
   if (
     equipped &&
     equipped !== 'none' &&
-    inventory &&
-    !JSON.parse(inventory).includes(equipped)
+    (!inventory || !JSON.parse(inventory).includes(equipped))
   ) {
     validated['npc-life:equipped-v1'] = 'none';
   }

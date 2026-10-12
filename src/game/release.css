@@ -28,17 +28,7 @@
   margin-right: 4px;
 }
 
-.release-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: #08111fe8;
-  backdrop-filter: blur(9px);
-}
+
 
 .release-menu {
   width: min(740px, 100%);
@@ -49,7 +39,7 @@
   color: #edf5fc;
   background: #19283c;
   box-shadow: 0 28px 90px #000a;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--ui-body);
 }
 
 .release-header {
@@ -75,7 +65,7 @@
   box-shadow: 5px 5px 0 #101a28;
   background: #ffeb91;
   color: #1b2639;
-  font: 900 31px 'Space Grotesk', sans-serif;
+  font: 900 31px var(--ui-display);
 }
 
 .release-logo span {
@@ -95,7 +85,7 @@
 }
 
 .release-brand h1 {
-  font: 900 34px/1 'Space Grotesk', sans-serif;
+  font: 900 34px/1 var(--ui-display);
   margin: 5px 0;
   letter-spacing: -1.4px;
 }
@@ -165,7 +155,7 @@
 }
 
 .release-hero h2 {
-  font: 900 29px/1.13 'Space Grotesk', sans-serif;
+  font: 900 29px/1.13 var(--ui-display);
   max-width: 510px;
   margin: 11px 0;
   letter-spacing: -.5px;
@@ -227,7 +217,7 @@
 
 .release-stats strong {
   display: block;
-  font: 900 20px 'Space Grotesk', sans-serif;
+  font: 900 20px var(--ui-display);
   color: #ffe196;
 }
 
@@ -241,7 +231,7 @@
 }
 
 .release-section-title {
-  font: 800 21px 'Space Grotesk', sans-serif;
+  font: 800 21px var(--ui-display);
   margin: 0 0 10px;
 }
 
@@ -470,7 +460,7 @@
 .release-ending h2 {
   margin: 12px auto;
   max-width: 500px;
-  font: 900 31px/1.2 'Space Grotesk', sans-serif;
+  font: 900 31px/1.2 var(--ui-display);
   color: #ffe39b;
 }
 
@@ -548,9 +538,7 @@
 }
 
 @media (max-width: 650px) {
-  .release-backdrop {
-    padding: 7px;
-  }
+
 
   .release-menu {
     max-height: 96dvh;

@@ -1,3 +1,6 @@
+import { GameGlyph } from './ui/GameGlyph';
+import { useGameUI } from './ui/GameUI';
+import { GameDialog } from './ui/GameDialog';
 
 import { useState } from 'react';
 import {
@@ -34,6 +37,7 @@ export function ProgressionPanel({
   onShirt,
   onClose,
 }: Props) {
+  const { menu } = useGameUI();
   const [tab, setTab] = useState<Tab>(initialTab);
 
   const unlocked = ACHIEVEMENTS.filter(
@@ -42,17 +46,13 @@ export function ProgressionPanel({
   ).length;
 
   return (
-    <div
-      className="progress-backdrop"
-      onMouseDown={onClose}
-    >
-      <section
-        className="progress-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label="NPC progression and wardrobe"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+    <GameDialog id={menu === 'achievements' ? 'achievements' : 'wardrobe'} className="progress-panel" label="NPC progression and wardrobe" onClose={onClose} onKeyDown={event => {
+      if (event.repeat || (event.code !== 'KeyI' && event.code !== 'KeyJ')) return;
+      event.preventDefault();
+      const next = event.code === 'KeyI' ? 'wardrobe' : 'achievements';
+      if (next === tab) onClose();
+      else setTab(next);
+    }}>
         <header className="progress-head">
           <div>
             <span className="progress-eyebrow">
@@ -73,12 +73,13 @@ export function ProgressionPanel({
 
         <div className="progress-tabs">
           <button
+            aria-pressed={tab === 'wardrobe'}
             className={
               tab === 'wardrobe' ? 'selected' : ''
             }
             onClick={() => setTab('wardrobe')}
           >
-            👕 Wardrobe <small>I</small>
+            Wardrobe <small>I</small>
           </button>
 
           <button
@@ -86,8 +87,9 @@ export function ProgressionPanel({
               tab === 'achievements' ? 'selected' : ''
             }
             onClick={() => setTab('achievements')}
+            aria-pressed={tab === 'achievements'}
           >
-            🏆 Achievements <small>J</small>
+            Achievements <small>J</small>
           </button>
         </div>
 
@@ -134,7 +136,7 @@ export function ProgressionPanel({
                 onClick={() => onEquip('none')}
               >
                 <span className="wardrobe-emoji">
-                  🙂
+                  <GameGlyph name="person" />
                 </span>
                 <strong>Nothing</strong>
                 <small>
@@ -159,14 +161,14 @@ export function ProgressionPanel({
                     onClick={() => onEquip(item.id)}
                   >
                     <span className="wardrobe-emoji">
-                      {item.emoji}
+                      {<GameGlyph name={item.id} />}
                     </span>
 
                     <strong>{item.name}</strong>
 
                     <small>
                       {!owned
-                        ? '🔒 BUY AT SHOP'
+                        ? 'LOCKED / SHOP'
                         : equipped === item.id
                           ? 'EQUIPPED'
                           : 'Tap to wear'}
@@ -210,7 +212,7 @@ export function ProgressionPanel({
                     }`}
                   >
                     <span className="achievement-icon">
-                      {achievement.emoji}
+                      {<GameGlyph name="medal" />}
                     </span>
 
                     <div className="achievement-info">
@@ -251,7 +253,6 @@ export function ProgressionPanel({
             </div>
           </div>
         )}
-      </section>
-    </div>
+    </GameDialog>
   );
 }

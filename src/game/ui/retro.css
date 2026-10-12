@@ -1,0 +1,292 @@
+/* NPC LIFE / municipal arcade. Shared visual tokens for every game surface. */
+:root {
+  --ui-ink: #151c1b;
+  --ui-panel: #232d2a;
+  --ui-raised: #323e37;
+  --ui-line: #647064;
+  --ui-paper: #f2e8cd;
+  --ui-muted: #c2c9b7;
+  --ui-gold: #edbe56;
+  --ui-mint: #a7d5bc;
+  --ui-red: #e69483;
+  --ui-body: Arial, Helvetica, sans-serif;
+  --ui-display: 'Courier New', Courier, monospace;
+  color-scheme: dark;
+  font-family: var(--ui-body);
+}
+
+/* Shared native dialogs replace the phase-specific backdrop stacks. */
+.game-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 3px solid var(--ui-paper);
+  border-radius: 0;
+  background: var(--ui-panel);
+  color: var(--ui-paper);
+  box-shadow: 0 0 0 3px var(--ui-ink), 9px 9px 0 3px var(--ui-ink);
+  font-family: var(--ui-body);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ui-gold) var(--ui-ink);
+  animation: dialog-arrive 130ms steps(4, end);
+}
+.game-dialog::backdrop { background: #101918b8; }
+.game-dialog:focus { outline: none; }
+.game-dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 18px;
+  margin-top: 22px;
+  border-top: 1px dashed var(--ui-line);
+  color: var(--ui-muted);
+  font: 700 11px/1.4 var(--ui-display);
+  letter-spacing: .6px;
+}
+.game-dialog:not(.release-menu):not(.progress-panel) > .game-dialog-footer { padding: 14px 0 0; }
+.game-dialog :is(h1, h2, h3), .game-shell :is(h1, h2, h3) { font-family: var(--ui-display); font-weight: 900; }
+.game-dialog h2 { letter-spacing: -1px; }
+.game-dialog p { line-height: 1.55; }
+.game-dialog :is(button, input, a), .game-shell button, .npc-sound-panel :is(button, input, summary) { -webkit-tap-highlight-color: transparent; }
+:is(.game-dialog, .game-shell, .npc-sound-panel) :is(button, a, input, summary):focus-visible {
+  outline: 3px solid var(--ui-mint);
+  outline-offset: 3px;
+}
+:is(.game-dialog, .game-shell, .npc-sound-panel) button {
+  border-radius: 0;
+  border: 1px solid var(--ui-line);
+  box-shadow: 0 3px 0 var(--ui-ink);
+  font-family: var(--ui-display);
+  font-weight: 700;
+  transition: background-color 80ms, color 80ms, box-shadow 80ms;
+}
+:is(.game-dialog, .game-shell, .npc-sound-panel) button:hover:not(:disabled) { filter: none; background: var(--ui-paper); color: var(--ui-ink); }
+:is(.game-dialog, .game-shell, .npc-sound-panel) button:active:not(:disabled) { box-shadow: 0 1px 0 var(--ui-ink); }
+.game-dialog button:disabled { cursor: not-allowed; }
+.game-dialog :is(.selected, .active, [aria-pressed="true"]) {
+  background: var(--ui-gold);
+  color: var(--ui-ink);
+  border-color: var(--ui-paper);
+}
+.game-dialog :is(.selected, .active) small { color: inherit; }
+.game-dialog :is(kbd, .release-check), .game-shell :is(kbd, .keycap) {
+  border-radius: 0;
+  font-family: var(--ui-display);
+}
+.game-glyph { width: 32px; height: 32px; display: inline-block; vertical-align: middle; color: var(--ui-gold); flex: 0 0 auto; }
+.glyph-cone { color: #f19a60; }
+.glyph-headphones { color: #96caba; }
+.glyph-bucket { color: #b0c7d0; }
+.glyph-antenna { color: #c6adcf; }
+
+/* Main menu: a city-issued dossier, with a bold console-style title. */
+.game-dialog.release-menu { width: min(740px, calc(100vw - 32px)); padding: 0; }
+.release-header { background: var(--ui-paper); color: var(--ui-ink); border-bottom: 4px solid var(--ui-ink); padding: 25px 28px; }
+.release-logo { border-radius: 0; background: var(--ui-gold); transform: rotate(-4deg); color: var(--ui-ink); border-color: var(--ui-ink); }
+.release-brand h1 { font-size: clamp(30px, 5vw, 48px); letter-spacing: -3px; }
+.release-brand p, .release-kicker { color: #495443; font: 700 11px/1.5 var(--ui-display); letter-spacing: 1px; }
+.release-close { flex-shrink: 0; }
+.release-tabs { padding: 16px 25px; gap: 7px; background: var(--ui-ink); border-bottom: 1px solid var(--ui-line); }
+.release-tabs button { flex: 1; padding: 10px; background: var(--ui-raised); color: var(--ui-paper); font-size: 13px; }
+.release-tabs button.active { background: var(--ui-gold); color: var(--ui-ink); border-color: var(--ui-paper); }
+.release-content { padding: 24px 28px; }
+.release-hero { background: none; border: 0; border-radius: 0; padding: 0; }
+.release-hero > span { color: var(--ui-mint); font: 700 11px var(--ui-display); letter-spacing: 1px; }
+.release-hero h2 { font-size: clamp(26px, 4.5vw, 38px); line-height: 1.05; max-width: 570px; margin: 16px 0; }
+.release-hero p { color: var(--ui-muted); font-size: 14px; max-width: 540px; }
+.release-hero > button { margin-top: 10px; padding: 15px 24px; font-size: 15px; }
+.release-primary, .alpha9-primary, .npc-dialog button, .shop-item button, .alpha6-arcade-footer > button,
+.alpha6-challenge > button, .encounter-choices button { background: var(--ui-gold); color: var(--ui-ink); }
+.release-secondary, .alpha9-secondary, .npc-dialog button.secondary { background: var(--ui-raised); color: var(--ui-paper); }
+.release-stats { border-block: 1px dashed var(--ui-line); gap: 0; margin-top: 22px; }
+.release-stats > div { background: none; border: 0; border-radius: 0; padding: 16px 0; }
+.release-stats > div + div { border-left: 1px dashed var(--ui-line); padding-left: 20px; }
+.release-stats strong { color: var(--ui-gold); }
+.release-stats small { color: var(--ui-muted); font-size: 11px; }
+.release-footer { color: var(--ui-muted); font: 700 11px var(--ui-display); border-color: var(--ui-line); }
+.release-menu > .game-dialog-footer { display: none; }
+.release-goal, .release-setting, .release-about-grid p, .release-confirm,
+.release-message, .release-check { border-radius: 0; background: var(--ui-raised); }
+.release-goal { border-color: var(--ui-line); }
+.release-goal.done { border-color: var(--ui-mint); }
+.release-goal strong, .release-setting strong { font-size: 14px; }
+.release-goal p, .release-goal > small, .release-setting small, .release-muted, .release-about-grid span { font-size: 12px; color: var(--ui-muted); }
+.release-setting input { accent-color: var(--ui-gold); width: 22px; height: 22px; flex-basis: 22px; }
+.release-confirm { border-left: 4px solid var(--ui-red); }
+.release-danger { background: #873f38; }
+.release-danger-outline { color: #ffc1ac; }
+.release-ending { background: none; border: 4px double var(--ui-gold); padding: 22px; }
+.release-ending .release-kicker { color: var(--ui-mint); }
+.release-ending h2 { color: var(--ui-paper); }
+.release-seal { border-radius: 0; transform: rotate(-5deg); }
+
+/* Shared surfaces in inventory, dialogue, jobs and the arcade. */
+.game-dialog :is(.shop-item, .shop-balance, .shop-emoji, .shirt-options button span,
+.achievement-item, .achievement-summary, .wardrobe-grid button, .shirt-options button,
+.alpha6-rep-card, .alpha6-challenge, .alpha6-score, .alpha6-grid button,
+.encounter-rumor, .alpha9-welcome-grid > div, .alpha9-stats, .alpha9-grid, .alpha9-tile) {
+  border-radius: 0;
+}
+.game-dialog :is(.shop-item, .shop-balance, .achievement-item, .achievement-summary,
+.alpha6-rep-card, .alpha6-challenge, .alpha6-score, .encounter-rumor,
+.alpha9-welcome-grid > div, .alpha9-stats) { background: var(--ui-raised); border-color: var(--ui-line); }
+.game-dialog :is(.shop-details span, .shop-heading p, .shop-note, .progress-footnote,
+.achievement-info p, .alpha6-heading p, .alpha6-challenge-details p, .alpha6-note,
+.encounter-heading span, .alpha9-modal p, .alpha9-record) { color: var(--ui-muted); font-size: 13px; }
+.game-dialog :is(.panel-eyebrow, .npc-dialog-label, .progress-eyebrow, .alpha9-eyebrow,
+.alpha6-heading small, .encounter-heading small) { color: var(--ui-mint); font: 700 11px/1.5 var(--ui-display); letter-spacing: 1px; }
+.progress-head { background: var(--ui-ink); border-bottom: 3px solid var(--ui-gold); }
+.progress-head p { color: var(--ui-muted); font-size: 12px; }
+.progress-tabs button { background: var(--ui-raised); color: var(--ui-paper); }
+.progress-tabs button.selected { background: var(--ui-gold); color: var(--ui-ink); }
+.game-dialog .wardrobe-grid button { background: var(--ui-ink); border: 2px solid var(--ui-line); min-height: 132px; }
+.game-dialog .wardrobe-grid button.selected { border-color: var(--ui-gold); background: #3b473b; color: var(--ui-paper); }
+.game-dialog .wardrobe-grid button:disabled { opacity: .65; }
+.wardrobe-grid small, .shirt-options button small { font-size: 11px; }
+.wardrobe-grid strong { font-size: 12px; }
+.game-dialog .shirt-options button { background: var(--ui-raised); color: var(--ui-paper); }
+.game-dialog .shirt-options button.selected { border-color: var(--ui-gold); }
+.game-dialog .shirt-options button span { width: 26px; height: 26px; }
+.shop-emoji { background: var(--ui-ink); }
+.shop-details strong { font-size: 15px; }
+.achievement-item { opacity: 1; }
+.achievement-item.unlocked { border-left: 4px solid var(--ui-mint); }
+.achievement-info strong { font-size: 14px; }
+.npc-dialog h2, .encounter-heading h2 { padding-bottom: 12px; border-bottom: 3px solid var(--ui-gold); }
+.npc-dialog-actions { display: grid; }
+.encounter-choices button { font-size: 14px; padding: 15px; }
+.encounter-rumor { border-left: 3px solid var(--ui-gold); }
+.alpha6-challenge-details strong { font-size: 14px; }
+.alpha6-grid button { background: var(--ui-ink); }
+.alpha6-grid button.bird { background: var(--ui-gold); }
+.alpha6-grid .game-glyph { color: var(--ui-ink); width: 38px; height: 38px; }
+.alpha9-stats { color: var(--ui-muted); }
+.game-dialog .alpha9-grid { border-color: var(--ui-line); background: var(--ui-ink); }
+.alpha9-tile { background: #465d4e; }
+.alpha9-tile:nth-child(2n) { background: #536b58; }
+.alpha9-tile.is-player { background: var(--ui-gold); }
+.alpha9-tile.is-player .game-glyph { color: var(--ui-ink); }
+.alpha9-tile.is-boss { background: #8f4e43; }
+.alpha9-tile.is-boss .game-glyph { color: var(--ui-paper); }
+.game-dialog :is(.release-track, .achievement-track, .alpha6-track),
+.game-dialog :is(.release-track, .achievement-track, .alpha6-track) span,
+.game-shell .quest-progress, .game-shell .quest-progress span { border-radius: 0; }
+
+/* HUD: quiet corners, clear keys, lots of room for the city. */
+.game-shell .brand-logo { border-radius: 0; color: var(--ui-ink); background: var(--ui-gold); }
+.game-shell .branding h1 { font-size: 30px; text-shadow: 2px 2px 0 var(--ui-paper); }
+.game-shell .branding p { font: 700 10px var(--ui-display); letter-spacing: 1px; }
+.game-shell :is(.economy, .quest-panel, .alpha8-minimap, .alpha6-hud, .encounter-hud, .alpha9-guide, .center-message) {
+  background: var(--ui-panel);
+  border: 2px solid var(--ui-ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 #151c1b80;
+  color: var(--ui-paper);
+}
+.game-shell .economy { padding: 11px 15px; min-width: 188px; border-top: 3px solid var(--ui-gold); }
+.game-shell .economy .coin-icon { border-radius: 0; width: 30px; height: 30px; border: 2px solid var(--ui-gold); background: var(--ui-ink); color: var(--ui-gold); }
+.game-shell .economy strong { color: var(--ui-gold); }
+.game-shell .quest-panel { top: 105px; left: 28px; width: 274px; padding: 17px; border-top: 4px solid var(--ui-gold); }
+.game-shell .quest-panel h2 { font-size: 18px; letter-spacing: -.6px; }
+.game-shell .quest-panel p { font-size: 13px; color: var(--ui-muted); margin-bottom: 12px; }
+.game-shell .panel-eyebrow { font: 700 11px var(--ui-display); color: var(--ui-mint); letter-spacing: 1px; }
+.game-shell .quest-footer span { font-size: 11px; color: var(--ui-muted); }
+.game-shell .alpha6-hud { left: 28px; right: auto; top: 380px; width: 274px; padding: 11px 17px; }
+.game-shell .alpha6-hud small { font: 700 11px var(--ui-display); }
+.game-shell .encounter-hud { left: 28px; top: 474px; right: auto; padding: 9px 17px; width: 274px; font: 700 11px var(--ui-display); }
+.game-shell .alpha8-minimap { right: 28px; bottom: 89px; width: 195px; padding: 9px; font-family: var(--ui-display); }
+.alpha8-minimap svg { border-radius: 0; border: 2px solid var(--ui-line); }
+.alpha8-map-top strong { font-size: 11px; }
+.alpha8-map-top strong span { display: none; }
+.alpha8-map-top button { font-size: 10px; background: var(--ui-raised); }
+.alpha8-map-bottom { font-size: 10px; }
+.game-shell .release-menu-button { top: 154px; right: 28px; background: var(--ui-gold); color: var(--ui-ink); padding: 10px 16px; }
+.game-shell .alpha9-toolbar { top: 102px; right: 28px; bottom: auto; }
+.game-shell .alpha9-toolbar button { background: var(--ui-panel); color: var(--ui-paper); font-size: 12px; }
+.game-shell .alpha9-guide { left: 28px; right: auto; top: 105px; bottom: auto; width: 274px; max-height: calc(100dvh - 215px); overflow-y: auto; border-top: 4px solid var(--ui-mint); }
+.game-shell:has(.alpha9-guide) :is(.quest-panel, .alpha6-hud, .encounter-hud) { visibility: hidden; }
+.alpha9-guide-steps > div { border-radius: 0; background: var(--ui-raised); }
+.game-shell .bottom-bar { left: 28px; bottom: 25px; gap: 7px; max-width: calc(100vw - 280px); overflow-x: auto; padding: 5px 4px 7px 0; }
+.game-shell .bottom-bar button { flex-shrink: 0; background: var(--ui-panel); color: var(--ui-paper); font-size: 12px; padding: 10px; }
+.game-shell .bottom-bar button span { display: inline-block; color: var(--ui-gold); opacity: 1; font-size: 11px; margin-left: 5px; }
+.game-shell .jobs-counter { display: none; }
+.game-shell .center-message { bottom: 105px; max-width: min(500px, calc(100vw - 540px)); font: 700 12px/1.5 var(--ui-display); padding: 9px 12px; }
+.game-shell :is(.interaction, .encounter-prompt) { border: 2px solid var(--ui-ink); background: var(--ui-gold); color: var(--ui-ink); box-shadow: 3px 3px 0 var(--ui-ink); }
+.game-shell .event-banner { top: 25px; border-radius: 0; font-family: var(--ui-display); }
+.game-dialog.controls-panel { width: min(500px, calc(100vw - 32px)); padding: 24px; }
+.game-dialog.controls-panel p { font-size: 14px; }
+.game-dialog.controls-panel .controls-heading strong { font: 900 22px var(--ui-display); color: var(--ui-paper); }
+.npc-sound-panel { right: 28px; bottom: 27px; width: 195px; padding: 0; border: 2px solid var(--ui-ink); border-radius: 0; background: var(--ui-panel); box-shadow: 4px 4px 0 #151c1b80; font-family: var(--ui-display); color: var(--ui-paper); }
+.npc-sound-panel summary { cursor: pointer; padding: 12px; font-weight: 700; }
+.npc-sound-panel summary span { float: right; color: var(--ui-gold); }
+.npc-sound-panel[open] { padding: 0 12px 12px; }
+.npc-sound-panel[open] summary { margin-inline: -12px; }
+.npc-sound-panel small { color: var(--ui-muted); font-size: 11px; line-height: 1.4; }
+.npc-sound-actions button { background: var(--ui-gold); color: var(--ui-ink); }
+
+@keyframes dialog-arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+@media (max-height: 720px) and (min-width: 701px) {
+  /* These details remain available in Dailies and conversations. */
+  .game-shell :is(.alpha6-hud, .encounter-hud) { display: none; }
+}
+@media (max-width: 900px) {
+  .game-shell .center-message { max-width: calc(100vw - 280px); bottom: 91px; left: 28px; transform: none; }
+  .game-shell .alpha8-minimap { width: 170px; }
+  .npc-sound-panel { width: 170px; }
+  .game-shell .bottom-bar { max-width: calc(100vw - 230px); }
+}
+@media (max-width: 700px) {
+  .game-dialog { max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); box-shadow: 0 0 0 2px var(--ui-ink), 5px 5px 0 2px var(--ui-ink); }
+  .game-dialog.release-menu { width: calc(100vw - 24px); }
+  .release-header { padding: 16px; gap: 12px; }
+  .release-logo { display: none; }
+  .release-brand h1 { font-size: 36px; }
+  .release-tabs { padding: 12px; gap: 4px; }
+  .release-tabs button { padding: 9px 6px; font-size: 11px; }
+  .release-content { padding: 20px 16px; }
+  .release-footer { flex-wrap: wrap; gap: 8px; }
+  .game-dialog-footer { padding: 12px; font-size: 10px; }
+  .game-shell .game-header { top: 14px; left: 14px; right: 14px; }
+  .game-shell .branding h1 { font-size: 24px; }
+  .game-shell .branding p { font-size: 8px; letter-spacing: 0; }
+  .game-shell .economy { min-width: 0; padding: 8px; }
+  .game-shell .economy .coin-icon { display: none; }
+  .game-shell .economy strong { font-size: 20px; }
+  .game-shell .economy small { display: none; }
+  .game-shell .quest-panel { top: 87px; left: 14px; width: min(238px, calc(100vw - 130px)); padding: 12px; }
+  .game-shell .quest-panel h2 { font-size: 16px; }
+  .game-shell .quest-panel p { font-size: 12px; }
+  .game-shell .npc-discovery, .game-shell .npc-side-details { display: none; }
+  .game-shell .alpha6-hud, .game-shell .encounter-hud { display: none; }
+  .game-shell .release-menu-button { top: 87px; right: 14px; padding: 8px; font-size: 11px; }
+  .release-menu-button > span, .release-menu-button kbd { display: none; }
+  .game-shell .alpha9-toolbar { top: 134px; right: 14px; flex-direction: column; }
+  .game-shell .alpha9-toolbar button { font-size: 11px; padding: 8px; }
+  .alpha9-toolbar kbd { display: none; }
+  .game-shell .alpha8-minimap { width: 140px; right: 14px; bottom: 128px; }
+  .alpha8-map-top strong { font-size: 10px; }
+  .alpha8-map-bottom { font-size: 9px; }
+  .game-shell .alpha9-guide { left: 14px; top: 87px; width: min(274px, calc(100vw - 118px)); max-height: calc(100dvh - 224px); }
+  .game-shell .bottom-bar { left: 14px; bottom: 12px; max-width: calc(100vw - 28px); }
+  .game-shell .bottom-bar button { font-size: 11px; padding: 10px; }
+  .game-shell .center-message { left: 14px; bottom: 133px; max-width: calc(100vw - 180px); font-size: 11px; }
+  .game-shell .interaction { left: 14px; transform: none; bottom: 91px; max-width: calc(100vw - 188px); font-size: 11px; padding: 8px; }
+  .game-shell .encounter-prompt { left: 14px; transform: none; bottom: 280px; max-width: calc(100vw - 180px); font-size: 11px; }
+  .npc-sound-panel { width: 140px; right: 14px; bottom: 76px; }
+  .npc-sound-panel summary { padding: 10px; font-size: 11px; }
+  .npc-sound-actions { flex-direction: column; }
+  .game-shell .event-banner { top: auto; bottom: 280px; max-width: 85%; }
+  .game-dialog .alpha9-grid { width: min(320px, 100%); }
+  .alpha9-tile .game-glyph { width: 24px; height: 24px; }
+  .game-dialog .shop-item { flex-wrap: wrap; }
+  .game-dialog .shop-details { min-width: 150px; }
+  .game-dialog .shop-item > button { margin-left: auto; }
+}

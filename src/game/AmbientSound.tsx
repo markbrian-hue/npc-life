@@ -43,11 +43,12 @@ export function AmbientSound() {
   }
 
   return (
-    <div
+    <details
       className="npc-sound-panel"
       role="group"
       aria-label="Game audio controls"
     >
+      <summary>AUDIO <span>{on ? "ON" : "OFF"}</span></summary>
       <div className="npc-sound-actions">
         <button
           type="button"
@@ -56,7 +57,7 @@ export function AmbientSound() {
             void toggle();
           }}
         >
-          {on ? '🔊 Sound ON' : '🔇 Enable sound'}
+          {on ? 'Sound ON' : 'Enable sound'}
         </button>
 
         <button
@@ -86,6 +87,6 @@ export function AmbientSound() {
       </label>
 
       <small aria-live="polite">{message}</small>
-    </div>
+    </details>
   );
 }

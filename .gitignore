@@ -27,3 +27,6 @@ Thumbs.db
 # Local testing
 coverage/
 *.local
+
+# Optional browser regression captures
+qa-output/

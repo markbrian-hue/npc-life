@@ -80,17 +80,7 @@
 
 /* Shop overlay */
 
-.shop-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #10151bbd;
-  padding: 16px;
-  backdrop-filter: blur(5px);
-}
+
 
 .shop-modal {
   width: min(580px, 100%);
@@ -112,7 +102,7 @@
 }
 
 .shop-heading h2 {
-  font: 800 30px/1.1 'Space Grotesk', sans-serif;
+  font: 800 30px/1.1 var(--ui-display);
   margin: 7px 0 9px;
   letter-spacing: -1px;
 }

@@ -1,3 +1,5 @@
+import { GameGlyph } from './ui/GameGlyph';
+import { GameDialog } from './ui/GameDialog';
 
 import {
   DAILY_CHALLENGES,
@@ -23,25 +25,13 @@ export function DailyBoard({
   const rep = reputationInfo(reputation);
 
   return (
-    <div
-      className="alpha6-overlay"
-      onMouseDown={onClose}
-    >
-      <section
-        className="alpha6-board"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Daily challenges"
-        onMouseDown={(event) =>
-          event.stopPropagation()
-        }
-      >
+    <GameDialog id="daily" className="alpha6-board" label="Daily challenges" onClose={onClose}>
         <div className="alpha6-heading">
           <div>
             <small>
               NEW OBJECTIVES EVERY LOCAL DAY
             </small>
-            <h2>📋 DAILY NONSENSE</h2>
+            <h2>DAILY NONSENSE</h2>
             <p>
               Today: {daily.day}. Rewards require
               manual claiming.
@@ -94,7 +84,7 @@ export function DailyBoard({
                 key={challenge.id}
               >
                 <span className="alpha6-challenge-icon">
-                  {challenge.icon}
+                  {<GameGlyph name="case" />}
                 </span>
 
                 <div className="alpha6-challenge-details">
@@ -133,7 +123,6 @@ export function DailyBoard({
           Coins and reputation do not reset.
           Progress is saved in this browser only.
         </p>
-      </section>
-    </div>
+    </GameDialog>
   );
 }

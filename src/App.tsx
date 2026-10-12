@@ -1,3 +1,6 @@
+import { GameGlyph } from './game/ui/GameGlyph';
+import { GameDialog } from './game/ui/GameDialog';
+import { useGameUI, useMenuState, isTyping } from './game/ui/GameUI';
 
 import { Canvas } from '@react-three/fiber';
 import { useCallback, useEffect, useState } from 'react';
@@ -389,24 +392,25 @@ export default function App() {
     () => loadReputation(readNumber(JOBS_KEY))
   );
 
-  const [dailyOpen, setDailyOpen] = useState(false);
-  const [arcadeOpen, setArcadeOpen] = useState(false);
-
-  // New Alpha 0.7 dialog lock.
-  const [encounterOpen, setEncounterOpen] = useState(false);
+  const { menu, store } = useGameUI();
+  const [dailyOpen, setDailyOpen] = useMenuState('daily');
+  const [arcadeOpen, setArcadeOpen] = useMenuState('pigeon-panic');
 
   const [player, setPlayer] = useState<PlayerLocation>({
     x: 0,
     z: 0,
   });
 
-  const [showHelp, setShowHelp] = useState(true);
-  const [shopOpen, setShopOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showHelp, setShowHelp] = useMenuState('controls');
+  const [shopOpen, setShopOpen] = useMenuState('shop');
+  const [dialogOpen, setDialogOpen] = useMenuState('marty');
 
-  const [profile, setProfile] = useState<
-    'wardrobe' | 'achievements' | null
-  >(null);
+  const profile = menu === 'wardrobe' || menu === 'achievements' ? menu : null;
+  const setProfile = useCallback((next: 'wardrobe' | 'achievements' | null) => {
+    const current = store.getSnapshot();
+    if (next) store.open(next);
+    else if (current === 'wardrobe' || current === 'achievements') store.close(current);
+  }, [store]);
 
   const [dialogText, setDialogText] = useState(
     () => randomLine(CITIZEN_LINES)
@@ -542,13 +546,8 @@ export default function App() {
 
   const nearby = getNearby(player, quest);
 
-  const locked =
-    shopOpen ||
-    dialogOpen ||
-    profile !== null ||
-    dailyOpen ||
-    arcadeOpen ||
-    encounterOpen;
+  // Local controls stop; world simulation remains live for multiplayer.
+  const locked = menu !== null;
 
   const reputationTier = reputationInfo(reputation);
 
@@ -649,7 +648,7 @@ export default function App() {
   // Existing E interactions.
 
   const interact = useCallback(() => {
-    if (!nearby || locked) return;
+    if (!nearby || locked || store.getSnapshot() !== null) return;
 
     if (nearby.kind === 'arcade') {
       setArcadeOpen(true);
@@ -835,6 +834,10 @@ export default function App() {
       );
     }
   }, [
+    store,
+    setArcadeOpen,
+    setShopOpen,
+    setDialogOpen,
     nearby,
     locked,
     quest,
@@ -955,107 +958,20 @@ export default function App() {
     );
   }, []);
 
-  // Keyboard controls.
-
+  // All dialogs own their keyboard events; only the active world receives shortcuts.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (
-        event.repeat ||
-        (
-          event.target instanceof HTMLElement &&
-          event.target.closest(
-            'input, textarea, select, [contenteditable="true"]'
-          )
-        )
-      ) {
-        return;
-      }
-
-      if (event.code === 'Escape') {
-        setShopOpen(false);
-        setDialogOpen(false);
-        setProfile(null);
-        setDailyOpen(false);
-        setArcadeOpen(false);
-        return;
-      }
-
-      if (
-        shopOpen ||
-        dialogOpen ||
-        arcadeOpen ||
-        encounterOpen
-      ) {
-        return;
-      }
-
-      if (
-        dailyOpen &&
-        event.code !== 'KeyK'
-      ) {
-        return;
-      }
-
-      if (
-        profile &&
-        event.code !== 'KeyI' &&
-        event.code !== 'KeyJ'
-      ) {
-        return;
-      }
-
-      if (event.code === 'KeyI') {
-        setProfile(
-          (p) =>
-            p === 'wardrobe'
-              ? null
-              : 'wardrobe'
-        );
-        return;
-      }
-
-      if (event.code === 'KeyJ') {
-        setProfile(
-          (p) =>
-            p === 'achievements'
-              ? null
-              : 'achievements'
-        );
-        return;
-      }
-
-      if (event.code === 'KeyK') {
-        setDailyOpen(
-          (value) => !value
-        );
-        return;
-      }
-
-      if (profile || dailyOpen) return;
-
-      if (event.code === 'KeyE') interact();
-
-      if (event.code === 'KeyH') {
-        setShowHelp((old) => !old);
-      }
-
-      if (event.code === 'KeyB') wave();
+      if (event.repeat || isTyping(event.target) || store.getSnapshot() !== null) return;
+      if (event.code === 'KeyI') setProfile('wardrobe');
+      else if (event.code === 'KeyJ') setProfile('achievements');
+      else if (event.code === 'KeyK') setDailyOpen(true);
+      else if (event.code === 'KeyE') interact();
+      else if (event.code === 'KeyH') setShowHelp(old => !old);
+      else if (event.code === 'KeyB') wave();
     };
-
     window.addEventListener('keydown', onKey);
-
-    return () =>
-      window.removeEventListener('keydown', onKey);
-  }, [
-    interact,
-    shopOpen,
-    dialogOpen,
-    profile,
-    dailyOpen,
-    arcadeOpen,
-    encounterOpen,
-    wave,
-  ]);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [store, setProfile, setDailyOpen, setShowHelp, interact, wave]);
 
   const progress =
     quest.job === 'pigeon'
@@ -1113,14 +1029,7 @@ export default function App() {
       <CityEncounters
         player={player}
         reputation={reputation}
-        disabled={
-          shopOpen ||
-          dialogOpen ||
-          profile !== null ||
-          dailyOpen ||
-          arcadeOpen
-        }
-        onModalChange={setEncounterOpen}
+        disabled={locked}
         onReward={(
           earnedCoins,
           earnedReputation
@@ -1322,7 +1231,7 @@ export default function App() {
             setShowHelp((old) => !old)
           }
         >
-          ⓘ Controls <span>H</span>
+          Controls <span>H</span>
         </button>
 
         <span className="jobs-counter">
@@ -1337,7 +1246,7 @@ export default function App() {
             playGameSound('interact');
           }}
         >
-          👕 Wardrobe <span>I</span>
+          Wardrobe <span>I</span>
         </button>
 
         <button
@@ -1347,7 +1256,7 @@ export default function App() {
             playGameSound('interact');
           }}
         >
-          🏆 Journal <span>J</span>
+          Journal <span>J</span>
         </button>
 
         <button
@@ -1357,20 +1266,20 @@ export default function App() {
             playGameSound('interact');
           }}
         >
-          📋 Dailies <span>K</span>
+          Dailies <span>K</span>
         </button>
 
         <button
           className="emote-button"
           onClick={wave}
         >
-          👋 Wave <span>B</span>
+          Wave <span>B</span>
         </button>
       </div>
 
       {/* Help panel */}
       {showHelp && (
-        <section className="controls-panel">
+        <GameDialog id="controls" className="controls-panel" label="How to be an NPC" onClose={() => setShowHelp(false)}>
           <div className="controls-heading">
             <strong>HOW TO BE AN NPC</strong>
             <button
@@ -1428,7 +1337,7 @@ export default function App() {
             citizens for street encounters.
             Your rank: {cityRank(jobsDone)}.
           </p>
-        </section>
+        </GameDialog>
       )}
 
       {/* Daily challenges */}
@@ -1466,17 +1375,7 @@ export default function App() {
 
       {/* Marty dialogue */}
       {dialogOpen && (
-        <div
-          className="npc-dialog-backdrop"
-          onClick={() => setDialogOpen(false)}
-        >
-          <section
-            className="npc-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Talk to Marty"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <GameDialog id="marty" className="npc-dialog" label="Talk to Marty" onClose={() => setDialogOpen(false)}>
             <span className="npc-dialog-label">
               LOCAL CITIZEN • VERY EMPLOYED
             </span>
@@ -1508,23 +1407,12 @@ export default function App() {
                 Leave
               </button>
             </div>
-          </section>
-        </div>
+        </GameDialog>
       )}
 
       {/* Cosmetic shop */}
       {shopOpen && (
-        <div
-          className="shop-backdrop"
-          onClick={() => setShopOpen(false)}
-        >
-          <section
-            className="shop-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Stupid Shop"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <GameDialog id="shop" className="shop-modal" label="Stupid Shop" onClose={() => setShopOpen(false)}>
             <div className="shop-heading">
               <div>
                 <span className="panel-eyebrow">
@@ -1565,7 +1453,7 @@ export default function App() {
                     key={item.id}
                   >
                     <div className="shop-emoji">
-                      {item.emoji}
+                      {<GameGlyph name={item.id} />}
                     </div>
 
                     <div className="shop-details">
@@ -1599,8 +1487,7 @@ export default function App() {
               Purchases appear in your Wardrobe
               (I). Press ESC to leave.
             </p>
-          </section>
-        </div>
+        </GameDialog>
       )}
     </div>
   );

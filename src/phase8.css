@@ -19,7 +19,7 @@
   border-radius: 16px;
   box-shadow: 0 12px 32px #0005;
   padding: 12px;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--ui-body);
 }
 
 .alpha8-map-top,
@@ -50,7 +50,7 @@
   color: #f9e5a0;
   border-radius: 7px;
   padding: 4px 6px;
-  font: 800 9px 'DM Sans', sans-serif;
+  font: 800 9px var(--ui-body);
 }
 
 .alpha8-minimap svg {

@@ -1,3 +1,5 @@
+import { GameDialog } from './ui/GameDialog';
+import { useGameUI, useMenuState, isTyping } from './ui/GameUI';
 
 import {
   useEffect,
@@ -154,8 +156,8 @@ export function Alpha9Experience() {
       loadTour().status === 'started'
   );
 
-  const [gameOpen, setGameOpen] =
-    useState(false);
+  const { store } = useGameUI();
+  const [gameOpen, setGameOpen] = useMenuState('work-dodge');
 
   const previous =
     useRef<Position | null>(null);
@@ -268,6 +270,7 @@ export function Alpha9Experience() {
   const closeWelcome = (
     status: 'started' | 'skipped'
   ) => {
+    store.close('welcome');
     setTour(newTour(status));
 
     setGuideVisible(
@@ -282,114 +285,19 @@ export function Alpha9Experience() {
   };
 
   function openGame() {
-    // Avoid overlapping existing game modals.
-    if (
-      document.querySelector(
-        '.shop-backdrop, .npc-dialog-backdrop, .progress-backdrop, .alpha6-overlay, .encounter-backdrop'
-      )
-    ) {
-      return;
-    }
-
-    setGameOpen(true);
+    if (!store.open('work-dodge')) return;
     setGuideVisible(false);
   }
 
-  // New M shortcut for the mini-game.
   useEffect(() => {
-    const onKey = (
-      event: KeyboardEvent
-    ) => {
-      if (
-        event.code !== 'KeyM' ||
-        event.repeat ||
-        gameOpen ||
-        tour.status === 'new'
-      ) {
-        return;
-      }
-
-      if (
-        event.target instanceof HTMLElement &&
-        event.target.closest(
-          'input, textarea, select, [contenteditable="true"]'
-        )
-      ) {
-        return;
-      }
-
-      if (
-        document.querySelector(
-          '.shop-backdrop, .npc-dialog-backdrop, .progress-backdrop, .alpha6-overlay, .encounter-backdrop'
-        )
-      ) {
-        return;
-      }
-
+    const onKey = (event: KeyboardEvent) => {
+      if (event.code !== 'KeyM' || event.repeat || isTyping(event.target) || store.getSnapshot() !== null) return;
       event.preventDefault();
-      openGame();
+      if (store.open('work-dodge')) setGuideVisible(false);
     };
-
-    window.addEventListener(
-      'keydown',
-      onKey
-    );
-
-    return () =>
-      window.removeEventListener(
-        'keydown',
-        onKey
-      );
-  }, [
-    gameOpen,
-    tour.status,
-  ]);
-
-  // Block player movement while the welcome
-  // screen is displayed.
-  useEffect(() => {
-    if (tour.status !== 'new') return;
-
-    window.dispatchEvent(
-      new Event('blur')
-    );
-
-    const keys = new Set([
-      'KeyW',
-      'KeyA',
-      'KeyS',
-      'KeyD',
-      'Space',
-      'ArrowUp',
-      'ArrowDown',
-      'ArrowLeft',
-      'ArrowRight',
-    ]);
-
-    const swallow = (
-      event: KeyboardEvent
-    ) => {
-      if (
-        keys.has(event.code)
-      ) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    window.addEventListener(
-      'keydown',
-      swallow,
-      true
-    );
-
-    return () =>
-      window.removeEventListener(
-        'keydown',
-        swallow,
-        true
-      );
-  }, [tour.status]);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [store]);
 
   if (!mount) return null;
 
@@ -413,7 +321,7 @@ export function Alpha9Experience() {
             }
           }}
         >
-          🧭 Guide
+          Guide
         </button>
 
         <button
@@ -421,7 +329,7 @@ export function Alpha9Experience() {
           title="Play Unemployment Simulator (M)"
           onClick={openGame}
         >
-          💼 Mini-game <kbd>M</kbd>
+          Arcade <kbd>M</kbd>
         </button>
       </div>
 
@@ -443,15 +351,9 @@ export function Alpha9Experience() {
         )}
 
       {tour.status === 'new' && (
-        <div className="alpha9-backdrop">
-          <section
-            className="alpha9-modal alpha9-welcome"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Welcome to Idiot City"
-          >
+        <GameDialog id="welcome" className="alpha9-modal alpha9-welcome" label="Welcome to Idiot City" onClose={() => closeWelcome('skipped')}>
             <span className="alpha9-eyebrow">
-              NPC LIFE · ALPHA 0.9
+              IDIOT CITY / NEW RESIDENT INTAKE
             </span>
 
             <h2>
@@ -518,8 +420,7 @@ export function Alpha9Experience() {
                 Skip, I live here already
               </button>
             </div>
-          </section>
-        </div>
+        </GameDialog>
       )}
 
       {gameOpen && (
