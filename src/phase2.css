@@ -1,0 +1,302 @@
+
+/* NPC LIFE - Alpha 0.2 */
+
+.game-shell canvas {
+  touch-action: none;
+  cursor: grab;
+}
+
+.game-shell canvas:active {
+  cursor: grabbing;
+}
+
+/* City event notification */
+
+.event-banner {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #fff09d;
+  color: #25283c;
+  border: 3px solid #26304a;
+  box-shadow: 5px 5px 0 #26304a;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Additional minimap markers */
+
+.mini-pin {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #111a2e;
+  border: 1px solid #1a2231;
+  transform: translate(-50%, -50%);
+}
+
+.shop-pin {
+  left: 42.85%;
+  top: 46.4%;
+  background: #ffe38b;
+}
+
+.citizen-pin {
+  left: 57.1%;
+  top: 45.2%;
+  background: #e7bbff;
+}
+
+/* Emote button */
+
+.emote-button {
+  background: #f9ed92;
+  color: #18223b;
+  border: 1px solid #1c293e;
+  border-radius: 11px;
+  padding: 11px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 3px 0 #1c293e;
+}
+
+.emote-button span {
+  opacity: 0.6;
+  margin-left: 8px;
+  font-size: 10px;
+}
+
+/* Shop overlay */
+
+.shop-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #10151bbd;
+  padding: 16px;
+  backdrop-filter: blur(5px);
+}
+
+.shop-modal {
+  width: min(580px, 100%);
+  max-height: 90dvh;
+  overflow: auto;
+  background: #182231;
+  border: 2px solid #ffffff27;
+  border-radius: 23px;
+  padding: 25px;
+  box-shadow: 0 24px 90px #0009;
+}
+
+/* Shop header */
+
+.shop-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shop-heading h2 {
+  font: 800 30px/1.1 'Space Grotesk', sans-serif;
+  margin: 7px 0 9px;
+  letter-spacing: -1px;
+}
+
+.shop-heading p {
+  color: #aebccd;
+  font-size: 12px;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
+.shop-heading button {
+  background: #344359;
+  border: 1px solid #596a82;
+  color: white;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+/* Coin balance */
+
+.shop-balance {
+  background: #253246;
+  border-radius: 11px;
+  padding: 13px 15px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #acbacb;
+}
+
+.shop-balance strong {
+  font-size: 16px;
+  color: #ffe082;
+  letter-spacing: 0;
+}
+
+/* Shop items */
+
+.shop-items {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #223044;
+  border: 1px solid #ffffff13;
+  border-radius: 13px;
+  padding: 12px;
+}
+
+.shop-emoji {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 11px;
+  background: #394b64;
+  display: grid;
+  place-items: center;
+  font-size: 29px;
+}
+
+.shop-details {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.shop-details strong {
+  font-size: 13px;
+}
+
+.shop-details span {
+  font-size: 11px;
+  color: #afc0cf;
+  line-height: 1.35;
+}
+
+.shop-details small {
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffdf8b;
+}
+
+/* Purchase button */
+
+.shop-item button {
+  background: #f9e48e;
+  color: #1d2b41;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-weight: 900;
+  font-size: 12px;
+  min-width: 75px;
+}
+
+.shop-item button:disabled {
+  background: #4a5667;
+  color: #8997a8;
+  cursor: not-allowed;
+}
+
+.shop-note {
+  font-size: 11px;
+  color: #a5b3c7;
+  text-align: center;
+  margin: 16px 0 0;
+  line-height: 1.5;
+}
+
+/* Smaller screens */
+
+@media (max-width: 850px) {
+  .event-banner {
+    top: 85px;
+    font-size: 10px;
+    max-width: 75%;
+    white-space: normal;
+  }
+
+  .quest-panel {
+    top: 140px;
+  }
+}
+
+@media (max-width: 650px) {
+  .event-banner {
+    top: 75px;
+    max-width: 90%;
+    font-size: 9px;
+  }
+
+  .quest-panel {
+    top: 126px;
+  }
+
+  .shop-modal {
+    padding: 16px;
+  }
+
+  .shop-heading h2 {
+    font-size: 23px;
+  }
+
+  .shop-emoji {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+    font-size: 22px;
+  }
+
+  .shop-item {
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .shop-item button {
+    min-width: 60px;
+    padding: 9px;
+    font-size: 11px;
+  }
+
+  .emote-button {
+    padding: 11px 9px;
+  }
+
+  .emote-button span {
+    display: none;
+  }
+
+  .bottom-bar {
+    gap: 6px;
+  }
+}
