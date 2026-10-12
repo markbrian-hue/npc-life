@@ -4,28 +4,54 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import type { PlayerLocation } from './Player';
+import { blocked } from './world';
 import {
   STREET_NPCS,
   type StreetNpc,
 } from './alpha7';
 
-function shortestTurn(
+// NPC routes deliberately stay on clear sidewalk areas.
+const ROUTES: Record<
+  StreetNpc['id'],
+  readonly (readonly [number, number])[]
+> = {
+  nia: [
+    [-8, -25],
+    [-7.7, -23.5],
+    [-8.4, -24.1],
+    [-8, -26.2],
+  ],
+  gus: [
+    [17, -8],
+    [18.2, -8.3],
+    [19.1, -7.8],
+    [17.7, -7.3],
+  ],
+  dot: [
+    [7, 19],
+    [6.4, 20.3],
+    [7.2, 21],
+    [7.8, 19.5],
+  ],
+};
+
+function rotateToward(
   current: number,
-  goal: number,
+  target: number,
   delta: number
 ): number {
-  const angle = Math.atan2(
-    Math.sin(goal - current),
-    Math.cos(goal - current)
+  const diff = Math.atan2(
+    Math.sin(target - current),
+    Math.cos(target - current)
   );
 
   return (
     current +
-    angle * (1 - Math.exp(-6 * delta))
+    diff * (1 - Math.exp(-7 * delta))
   );
 }
 
-function NamedCitizen({
+function Citizen({
   npc,
   player,
   reputation,
@@ -35,75 +61,117 @@ function NamedCitizen({
   reputation: number;
 }) {
   const root = useRef<THREE.Group>(null);
+  const body = useRef<THREE.Group>(null);
+
   const leftLeg = useRef<THREE.Group>(null);
   const rightLeg = useRef<THREE.Group>(null);
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
 
-  const cycle = useRef(0);
-  const pace = useRef(0);
-  const phase = useRef<'walk' | 'pause'>('walk');
-  const pause = useRef(0);
+  const routeIndex = useRef(1);
+  const pauseTimer = useRef(0.4);
+  const walkClock = useRef(0);
+  const movingBlend = useRef(0);
 
   useFrame(({ clock }, rawDelta) => {
-    const delta = Math.min(rawDelta, 0.05);
     const actor = root.current;
 
     if (!actor) return;
 
+    const dt = Math.min(rawDelta, 0.05);
+
     const dx = player.x - actor.position.x;
     const dz = player.z - actor.position.z;
 
-    const near = Math.hypot(dx, dz) < 4.5;
+    const playerDistance = Math.hypot(dx, dz);
+    const watching = playerDistance < 3.8;
 
-    // Short pacing route near each character's post.
-    if (!near && phase.current === 'walk') {
-      pace.current += delta * 0.65;
+    const path = ROUTES[npc.id];
 
-      actor.position.x =
-        npc.x + Math.sin(pace.current) * 0.75;
+    let walking = false;
+    let intendedYaw = actor.rotation.y;
 
-      cycle.current += delta * 3.4;
+    // Pause and face the player when approached.
+    if (watching) {
+      intendedYaw = Math.atan2(dx, dz);
+    } else if (pauseTimer.current > 0) {
+      pauseTimer.current = Math.max(
+        0,
+        pauseTimer.current - dt
+      );
+    } else {
+      const [goalX, goalZ] =
+        path[routeIndex.current];
 
-      if (pace.current > Math.PI * 2) {
-        phase.current = 'pause';
-        pause.current = 2.2;
-        pace.current = 0;
-      }
-    } else if (phase.current === 'pause') {
-      pause.current -= delta;
+      const tx = goalX - actor.position.x;
+      const tz = goalZ - actor.position.z;
 
-      if (pause.current <= 0) {
-        phase.current = 'walk';
+      const distance = Math.hypot(tx, tz);
+
+      if (distance < 0.12) {
+        // Continue to the next point after an idle pause.
+        routeIndex.current =
+          (routeIndex.current + 1) % path.length;
+
+        pauseTimer.current =
+          0.8 + (routeIndex.current % 3) * 0.38;
+      } else {
+        const amount = Math.min(
+          distance,
+          1.22 * dt
+        );
+
+        const mx = tx / distance;
+        const mz = tz / distance;
+
+        const nx =
+          actor.position.x + mx * amount;
+
+        const nz =
+          actor.position.z + mz * amount;
+
+        // Avoid static world obstacles.
+        if (!blocked(nx, nz)) {
+          actor.position.set(nx, 0, nz);
+          intendedYaw = Math.atan2(mx, mz);
+          walking = true;
+
+          walkClock.current += dt * 6.5;
+        } else {
+          // Do not force NPCs through new geometry
+          // if the city layout changes.
+          routeIndex.current =
+            (routeIndex.current + 1) % path.length;
+
+          pauseTimer.current = 0.6;
+        }
       }
     }
 
-    // Face the player when they approach.
-    const targetYaw = near
-      ? Math.atan2(dx, dz)
-      : Math.cos(pace.current) >= 0
-        ? Math.PI / 2
-        : -Math.PI / 2;
-
-    actor.rotation.y = shortestTurn(
+    actor.rotation.y = rotateToward(
       actor.rotation.y,
-      targetYaw,
-      delta
+      intendedYaw,
+      dt
     );
 
-    const moving =
-      !near && phase.current === 'walk';
+    movingBlend.current = THREE.MathUtils.damp(
+      movingBlend.current,
+      walking ? 1 : 0,
+      9,
+      dt
+    );
 
-    const swing = moving
-      ? Math.sin(cycle.current) * 0.42
-      : 0;
+    const swing =
+      Math.sin(walkClock.current) *
+      0.48 *
+      movingBlend.current;
 
     if (leftLeg.current) {
       leftLeg.current.rotation.x = THREE.MathUtils.damp(
         leftLeg.current.rotation.x,
         swing,
-        8,
-        delta
+        12,
+        dt
       );
     }
 
@@ -111,8 +179,8 @@ function NamedCitizen({
       rightLeg.current.rotation.x = THREE.MathUtils.damp(
         rightLeg.current.rotation.x,
         -swing,
-        8,
-        delta
+        12,
+        dt
       );
     }
 
@@ -120,8 +188,8 @@ function NamedCitizen({
       leftArm.current.rotation.x = THREE.MathUtils.damp(
         leftArm.current.rotation.x,
         -swing * 0.7,
-        8,
-        delta
+        12,
+        dt
       );
     }
 
@@ -129,133 +197,144 @@ function NamedCitizen({
       rightArm.current.rotation.x = THREE.MathUtils.damp(
         rightArm.current.rotation.x,
         swing * 0.7,
-        8,
-        delta
+        12,
+        dt
       );
-
-      const wave =
-        near && Math.hypot(dx, dz) < 3.3;
 
       rightArm.current.rotation.z = THREE.MathUtils.damp(
         rightArm.current.rotation.z,
-        wave
-          ? 2 +
-              Math.sin(
-                clock.elapsedTime *
-                  (reputation > 100 ? 12 : 7)
-              ) *
-                0.14
+        playerDistance < 2.6
+          ? 1.85 +
+            Math.sin(
+              clock.elapsedTime *
+                (reputation >= 100 ? 11 : 7)
+            ) * 0.2
           : 0,
+        10,
+        dt
+      );
+    }
+
+    // Light idle breathing and walking bounce.
+    if (body.current) {
+      body.current.position.y = THREE.MathUtils.damp(
+        body.current.position.y,
+        walking
+          ? Math.abs(
+              Math.sin(walkClock.current)
+            ) * 0.065
+          : Math.sin(
+              clock.elapsedTime * 1.8 + npc.x
+            ) * 0.018,
         8,
-        delta
+        dt
       );
     }
   });
 
   return (
-    <group
-      ref={root}
-      position={[npc.x, 0, npc.z]}
-    >
-      {/* Body */}
-      <mesh castShadow position={[0, 1.15, 0]}>
-        <boxGeometry args={[0.9, 1.28, 0.52]} />
-        <meshStandardMaterial
-          color={npc.shirt}
-          roughness={0.92}
-        />
-      </mesh>
-
-      {/* Head */}
-      <mesh castShadow position={[0, 2.1, 0]}>
-        <sphereGeometry args={[0.49, 12, 9]} />
-        <meshStandardMaterial color="#eec49b" />
-      </mesh>
-
-      {/* Hair */}
-      <mesh castShadow position={[0, 2.47, -0.04]}>
-        <sphereGeometry
-          args={[
-            0.49,
-            12,
-            8,
-            0,
-            Math.PI * 2,
-            0,
-            Math.PI / 2,
-          ]}
-        />
-        <meshStandardMaterial
-          color={npc.hair}
-          roughness={1}
-        />
-      </mesh>
-
-      {/* Eyes */}
-      {[-0.19, 0.19].map((x) => (
-        <mesh
-          key={x}
-          position={[x, 2.15, 0.45]}
-        >
-          <sphereGeometry args={[0.055, 8, 7]} />
-          <meshBasicMaterial color="#242b36" />
+    <group ref={root} position={[npc.x, 0, npc.z]}>
+      <group ref={body}>
+        {/* Shirt */}
+        <mesh castShadow position={[0, 1.15, 0]}>
+          <boxGeometry args={[0.9, 1.28, 0.52]} />
+          <meshStandardMaterial
+            color={npc.shirt}
+            roughness={0.92}
+          />
         </mesh>
-      ))}
 
-      {/* Animated arms */}
-      {[-1, 1].map((side) => (
-        <group
-          key={`arm${side}`}
-          ref={
-            side === -1 ? leftArm : rightArm
-          }
-          position={[side * 0.56, 1.55, 0]}
-        >
+        {/* Head */}
+        <mesh castShadow position={[0, 2.1, 0]}>
+          <sphereGeometry args={[0.49, 12, 9]} />
+          <meshStandardMaterial color="#eec49b" />
+        </mesh>
+
+        {/* Hair */}
+        <mesh castShadow position={[0, 2.47, -0.04]}>
+          <sphereGeometry
+            args={[
+              0.49,
+              12,
+              8,
+              0,
+              Math.PI * 2,
+              0,
+              Math.PI / 2,
+            ]}
+          />
+          <meshStandardMaterial
+            color={npc.hair}
+            roughness={1}
+          />
+        </mesh>
+
+        {/* Eyes */}
+        {[-0.19, 0.19].map((x) => (
           <mesh
-            castShadow
-            position={[0, -0.47, 0]}
+            key={x}
+            position={[x, 2.15, 0.45]}
           >
-            <boxGeometry
-              args={[0.23, 0.94, 0.31]}
-            />
-            <meshStandardMaterial color="#eec49b" />
+            <sphereGeometry args={[0.055, 8, 7]} />
+            <meshBasicMaterial color="#242b36" />
           </mesh>
-        </group>
-      ))}
+        ))}
 
-      {/* Animated legs */}
-      {[-1, 1].map((side) => (
-        <group
-          key={`leg${side}`}
-          ref={
-            side === -1 ? leftLeg : rightLeg
-          }
-          position={[side * 0.23, 0.72, 0]}
+        {/* Arms */}
+        {[-1, 1].map((side) => (
+          <group
+            key={`arm${side}`}
+            ref={
+              side === -1
+                ? leftArm
+                : rightArm
+            }
+            position={[side * 0.56, 1.55, 0]}
+          >
+            <mesh
+              castShadow
+              position={[0, -0.47, 0]}
+            >
+              <boxGeometry args={[0.23, 0.94, 0.31]} />
+              <meshStandardMaterial color="#eec49b" />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Legs */}
+        {[-1, 1].map((side) => (
+          <group
+            key={`leg${side}`}
+            ref={
+              side === -1
+                ? leftLeg
+                : rightLeg
+            }
+            position={[side * 0.23, 0.72, 0]}
+          >
+            <mesh
+              castShadow
+              position={[0, -0.34, 0]}
+            >
+              <boxGeometry args={[0.32, 0.68, 0.42]} />
+              <meshStandardMaterial color={npc.pants} />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Interaction marker */}
+        <mesh
+          position={[0, 3.1, 0]}
+          rotation={[0, 0, Math.PI]}
         >
-          <mesh
-            castShadow
-            position={[0, -0.34, 0]}
-          >
-            <boxGeometry
-              args={[0.32, 0.68, 0.42]}
-            />
-            <meshStandardMaterial color={npc.pants} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Interaction marker */}
-      <mesh
-        position={[0, 3.1, 0]}
-        rotation={[0, 0, Math.PI]}
-      >
-        <coneGeometry args={[0.23, 0.53, 6]} />
-        <meshStandardMaterial
-          color="#fce184"
-          emissive="#ac7a23"
-          emissiveIntensity={0.28}
-        />
-      </mesh>
+          <coneGeometry args={[0.23, 0.53, 6]} />
+          <meshStandardMaterial
+            color="#fce184"
+            emissive="#ac7a23"
+            emissiveIntensity={0.28}
+          />
+        </mesh>
+      </group>
     </group>
   );
 }
@@ -270,7 +349,7 @@ export function ReactiveCitizens({
   return (
     <>
       {STREET_NPCS.map((npc) => (
-        <NamedCitizen
+        <Citizen
           key={npc.id}
           npc={npc}
           player={player}

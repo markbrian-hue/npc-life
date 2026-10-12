@@ -1,0 +1,137 @@
+
+/* NPC LIFE Alpha 0.8 — camera and world polish */
+
+/* Hide the old decorative minimap.
+   App.tsx remains unchanged. */
+.game-shell .minimap {
+  display: none;
+}
+
+.alpha8-minimap {
+  position: absolute;
+  right: 26px;
+  bottom: 70px;
+  width: 224px;
+  z-index: 7;
+  background: #111b2aef;
+  color: #f7f7f4;
+  border: 1px solid #ffffff36;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px #0005;
+  padding: 12px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.alpha8-map-top,
+.alpha8-map-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.alpha8-map-top {
+  margin-bottom: 9px;
+}
+
+.alpha8-map-top strong {
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.alpha8-map-top strong span {
+  color: #85e9a7;
+  font-size: 9px;
+}
+
+.alpha8-map-top button {
+  background: #34445c;
+  border: 1px solid #ffffff27;
+  color: #f9e5a0;
+  border-radius: 7px;
+  padding: 4px 6px;
+  font: 800 9px 'DM Sans', sans-serif;
+}
+
+.alpha8-minimap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.alpha8-map-bottom {
+  margin-top: 8px;
+  color: #c0d2e4;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.alpha8-map-bottom span:last-child {
+  color: #f6d78a;
+}
+
+/* Separate original E and new F prompts. */
+.game-shell .interaction {
+  bottom: 169px;
+  z-index: 9;
+}
+
+.game-shell .encounter-prompt {
+  bottom: 225px;
+  z-index: 9;
+}
+
+/* Make keyboard navigation easier to see. */
+.game-shell .interaction:focus-visible,
+.game-shell .encounter-prompt:focus-visible,
+.alpha8-map-top button:focus-visible {
+  outline: 3px solid #fff2a5;
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .alpha8-minimap {
+    right: 14px;
+    bottom: 65px;
+    width: 180px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 650px) {
+  .alpha8-minimap {
+    width: 132px;
+    padding: 7px;
+    bottom: 92px;
+    right: 9px;
+  }
+
+  .alpha8-map-top strong {
+    font-size: 8px;
+  }
+
+  .alpha8-map-top button {
+    font-size: 8px;
+    padding: 3px 4px;
+  }
+
+  .alpha8-map-bottom {
+    font-size: 8px;
+  }
+
+  .game-shell .interaction {
+    bottom: 172px;
+    max-width: 91vw;
+    white-space: normal;
+    font-size: 11px;
+  }
+
+  .game-shell .encounter-prompt {
+    bottom: 225px;
+    max-width: 91vw;
+    white-space: normal;
+    font-size: 11px;
+  }
+}
