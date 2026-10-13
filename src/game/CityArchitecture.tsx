@@ -7,7 +7,7 @@ import {cityMaps,interiorTexture,worldMapping} from './cityMaterials';
 type Piece={x:number;y:number;z:number;w:number;h:number;d:number;rotation:number;color:string};
 const SIGNS=['CIVIC RECORDS','JUNIPER COFFEE','LAST CHANCE LOFTS','CORNER PROVISIONS','PAPERWORK & SONS','NPC MARKET','ORDINARY RESIDENCES','THE UNEMPLOYED INN'];
 function pieces(buildings=BUILDINGS){const batches:Record<string,Piece[]>={brick:[],concrete:[],masonry:[],trim:[],glass:[],dark:[],metal:[],wood:[]};
- buildings.forEach((b,i)=>{const rotation=b.rotation||0,c=Math.cos(rotation),s=Math.sin(rotation),home=b.kind==='bungalow',warehouse=b.kind==='warehouse',tower=b.kind==='tower',row=b.kind==='brownstone',modern=tower||(!row&&!home&&!warehouse&&i%4===1);
+ buildings.forEach((b,i)=>{const rotation=b.rotation||0,c=Math.cos(rotation),s=Math.sin(rotation),home=b.kind==='bungalow',warehouse=b.kind==='warehouse',tower=b.kind==='tower',row=b.kind==='brownstone'||b.kind==='prewar',modern=tower||(!row&&!home&&!warehouse&&i%4===1);
   const add=(kind:string,x:number,y:number,z:number,w:number,h:number,d:number,color:string,yaw=0)=>batches[kind].push({x:b.x+c*x+s*z,y,z:b.z-s*x+c*z,w,h,d,rotation:rotation+yaw,color});
   const kind=row?'brick':warehouse||modern?'concrete':i%3===0?'brick':'masonry',wall=tower||row?b.color:['#ded5c3','#ced6d4','#dac7b3','#bfb5a7'][i%4],trim=row?'#cfb39d':modern?'#646f72':'#c9c5b8';
   add(kind,0,b.h/2,0,b.w,b.h,b.d,wall);
