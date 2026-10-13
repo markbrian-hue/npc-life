@@ -166,7 +166,7 @@ try {
   async function walkSegment(x, z) {
     let held = [];
     try {
-      for (let step = 0; step < 65; step++) {
+      for (let step = 0; step < 130; step++) {
         const here = await position();
         const dx = x - here.x, dz = z - here.z;
         if (Math.hypot(dx, dz) < .65) return;
@@ -179,7 +179,7 @@ try {
         for (const key of held) if (!next.includes(key)) await page.keyboard.up(key);
         for (const key of next) if (!held.includes(key)) await page.keyboard.down(key);
         held = next;
-        await page.waitForTimeout(250);
+        await page.waitForTimeout(Math.hypot(dx,dz)>2?200:70);
       }
       throw new Error(`Could not walk to ${x},${z}; at ${JSON.stringify(await position())}`);
     } finally {

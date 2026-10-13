@@ -1,5 +1,6 @@
+import {useGameUI} from './ui/GameUI';
 import {residentBlocked} from './pedestrianBodies';
-import {freshPlayer,stepPlayer,PLAYER_STEP,surfaceAt} from '../../shared/playerPhysics.mjs';
+import {freshPlayer,stepPlayer,PLAYER_STEP,surfaceAt,groundHeight} from '../../shared/playerPhysics.mjs';
 import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound, updateEngineSound } from './gameAudio';
@@ -45,6 +46,7 @@ export function Player({
   cityEvent,
   inputLocked,
 }: Props) {
+  const {store}=useGameUI();
   const actor = useRef<THREE.Group>(null);
   const model = useRef<THREE.Group>(null);
   const leftLeg = useRef<THREE.Group>(null);
@@ -151,7 +153,7 @@ export function Player({
     };
 
     const wheel = (event: WheelEvent) => {
-      if (inputLocked) return;
+      if (inputLocked||store.getSnapshot()!==null) return;
 
       event.preventDefault();
 
@@ -167,7 +169,7 @@ export function Player({
     };
 
     const keyDown = (event: KeyboardEvent) => {
-      if (inputLocked) return;
+      if (inputLocked||store.getSnapshot()!==null) return;
 
       if (
         event.target instanceof HTMLElement &&
@@ -206,12 +208,15 @@ export function Player({
     };
 
     const blur = () => {
+      physics.current.vx=physics.current.vz=0;physicsTime.current=0;velocity.current.set(0,0);
       keys.current.clear();
       jumpBuffer.current = 0;
       release();
     };
 
+    const unsubscribe=store.subscribe(()=>{if(store.getSnapshot()!==null)blur();});
     if (inputLocked) {
+      physics.current.vx=physics.current.vz=0;physicsTime.current=0;
       keys.current.clear();
       jumpBuffer.current = 0;
       velocity.current.set(0, 0);
@@ -232,7 +237,7 @@ export function Player({
     window.addEventListener('blur', blur);
 
     return () => {
-      release();
+      unsubscribe();release();
 
       canvas.removeEventListener('pointerdown', down);
       canvas.removeEventListener('pointermove', move);
@@ -245,17 +250,18 @@ export function Player({
       window.removeEventListener('keyup', keyUp);
       window.removeEventListener('blur', blur);
     };
-  }, [gl, inputLocked]);
+  }, [gl, inputLocked,store]);
 
   useFrame(({ clock }, rawDelta) => {
     const dt = Math.min(rawDelta, 0.05);
+    const worldLocked=inputLocked||store.getSnapshot()!==null;
     const pressed = keys.current;
     const fleet=vehicles.runtime.current;
     const car=fleet.cars.find(c=>c.id===fleet.ownedId);
     if (model.current) model.current.visible=!car;
     const movementBlocked=(x:number,z:number)=>blocked(x,z)||pedestrianBlocked(x,z,fleet.cars)||residentBlocked(x,z,position.current.x,position.current.z);
 
-    const side = inputLocked || car
+    const side = worldLocked || car
       ? 0
       : Number(
           pressed.has('KeyD') ||
@@ -266,7 +272,7 @@ export function Player({
           pressed.has('ArrowLeft')
         );
 
-    const forward = inputLocked || car
+    const forward = worldLocked || car
       ? 0
       : Number(
           pressed.has('KeyW') ||
@@ -278,7 +284,7 @@ export function Player({
         );
 
     const running =
-      !inputLocked &&
+      !worldLocked &&
       (
         pressed.has('ShiftLeft') ||
         pressed.has('ShiftRight')
@@ -308,7 +314,7 @@ export function Player({
 
     const v=velocity.current;
     const physicsState=physics.current;
-    if(inputLocked||car||sitting.current){physicsState.x=position.current.x;physicsState.z=position.current.z;physicsState.y=position.current.y;physicsState.vx=physicsState.vz=physicsState.vy=0;v.set(0,0);physicsTime.current=0;jumpBuffer.current=0;}
+    if(worldLocked||car||sitting.current){physicsState.x=position.current.x;physicsState.z=position.current.z;physicsState.y=position.current.y;physicsState.vx=physicsState.vz=physicsState.vy=0;v.set(0,0);physicsTime.current=0;jumpBuffer.current=0;}
     else {
       // Relocation and safe vehicle exits preserve the public event API.
       if(Math.hypot(physicsState.x-position.current.x,physicsState.z-position.current.z)>1){Object.assign(physicsState,freshPlayer(position.current.x,position.current.z));}
@@ -409,7 +415,7 @@ export function Player({
     }
 
     if(sitting.current&&!car){const seat=sitting.current;position.current.set(seat.x,-.4,seat.z);if(actor.current)actor.current.rotation.y=seat.rotation;if(leftLeg.current)leftLeg.current.rotation.x=-Math.PI/2;if(rightLeg.current)rightLeg.current.rotation.x=-Math.PI/2;velocity.current.set(0,0);jumpBuffer.current=0;}
-    if(car){position.current.set(car.x,0,car.z);velocity.current.set(0,0);jumpBuffer.current=0;upwardSpeed.current=0;grounded.current=true;if(actor.current)actor.current.rotation.y=car.heading+Math.PI/2;if(dragging.current===null&&Math.abs(car.speed)>.5){const wanted=car.heading-Math.PI/2;orbit.current.yaw+=Math.atan2(Math.sin(wanted-orbit.current.yaw),Math.cos(wanted-orbit.current.yaw))*(1-Math.exp(-2.5*dt));}}
+    if(car){position.current.set(car.x,groundHeight(car.x,car.z),car.z);velocity.current.set(0,0);jumpBuffer.current=0;upwardSpeed.current=0;grounded.current=true;if(actor.current)actor.current.rotation.y=car.heading+Math.PI/2;if(dragging.current===null&&Math.abs(car.speed)>.5){const wanted=car.heading-Math.PI/2;orbit.current.yaw+=Math.atan2(Math.sin(wanted-orbit.current.yaw),Math.cos(wanted-orbit.current.yaw))*(1-Math.exp(-2.5*dt));}}
     if (actor.current) {
       actor.current.position.copy(position.current);
     }

@@ -17,3 +17,12 @@ test('motorcycles lean into turns and balance upright after stopping',()=>{const
 test('long and narrow hulls stop before static geometry without tunnelling',()=>{for(const model of ['bus','hyper','scooter']){const c={...vehicleState(model),id:model,x:-25,z:0,heading:0,speed:35};for(let i=0;i<100;i++)stepVehicle(c,drive,.1,[c]);assert.equal(carBlocked(c,[c]),false);assert.equal(c.speed,0);}});
 test('player has buffered jumps, stable landing and collision sliding',()=>{let s=freshPlayer(SPAWN.x,SPAWN.z);stepPlayer(s,{x:0,z:0,jump:true},PLAYER_STEP,blocked);assert.equal(s.grounded,false);let apex=s.y;for(let i=0;i<240;i++){stepPlayer(s,{x:0,z:0,jump:false},PLAYER_STEP,blocked);apex=Math.max(apex,s.y);}assert.ok(apex>1);assert.equal(s.grounded,true);assert.equal(s.y,groundHeight(s.x,s.z));s=freshPlayer(-13,0);for(let i=0;i<300;i++)stepPlayer(s,{x:6,z:0},PLAYER_STEP,blocked);assert.equal(blocked(s.x,s.z),false);assert.ok(s.x< -3);});
 test('pavement ramps and surface footstep classes share world geometry',()=>{assert.equal(surfaceAt(-50,0),'road');assert.equal(surfaceAt(-50,5),'pavement');assert.ok(groundHeight(-50,5)>.03);assert.equal(groundHeight(-50,0),0);});
+
+test('shared motorcycles enforce exclusive ownership and reject forged local-unlock spawns',async()=>{
+ const {createGameServer}=await import('../server/multiplayer.mjs');const server=createGameServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;
+ const post=async(path,data,token)=>{const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(data)});return {status:r.status,...await r.json()};};
+ try{const a=await post('/api/join',{name:'Rider'}),b=await post('/api/join',{name:'Other',code:a.code});await new Promise(r=>setTimeout(r,90));for(const p of [a,b])assert.equal((await post('/api/move',{x:-82,z:-59,y:0,heading:0},p.token)).status,200);
+ const entered=await post('/api/vehicle',{action:'enter',id:'club-scooter'},a.token);assert.equal(entered.status,200);assert.equal(entered.cars.find(c=>c.id==='club-scooter').model,'scooter');assert.equal((await post('/api/vehicle',{action:'enter',id:'club-scooter'},b.token)).status,409);
+ assert.equal((await post('/api/vehicle',{action:'spawn',model:'hyper',coins:999999,owned:['hyper']},b.token)).status,400);assert.equal(a.cars.length,11);
+ }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+});

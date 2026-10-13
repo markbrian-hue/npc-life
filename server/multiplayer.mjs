@@ -1,3 +1,4 @@
+import {groundHeight} from '../shared/playerPhysics.mjs';
 import {environmentAt} from '../shared/livingCity.mjs';
 import { WORLD_RADIUS, SPAWN, blocked } from '../shared/world.mjs';
 import { createFleet, stepTraffic, stepVehicle, neutralControls, exitPosition } from '../shared/vehicles.mjs';
@@ -21,7 +22,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
       const driver=room.players.get(car.driver);
       if(car.traffic){stepTraffic(car,dt,room.cars,[...room.players.values()].filter(p=>!p.vehicleId));continue;}
       stepVehicle(car,driver && time-driver.lastMove<750 ? driver.controls : neutralControls(),dt,room.cars,environmentAt((time-room.started)/1000,room.seed).rain);
-      if (driver) Object.assign(driver,{x:car.x,z:car.z,y:0,heading:car.heading+Math.PI/2});
+      if (driver) Object.assign(driver,{x:car.x,z:car.z,y:groundHeight(car.x,car.z),heading:car.heading+Math.PI/2});
     }
   }, 1000/60);
   physics.unref();
@@ -86,7 +87,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
             const car=room.cars.find(c=>c.id===input.id);
             if (!car || car.driver || player.vehicleId || Math.abs(car.speed)>.65 || Math.hypot(player.x-car.x,player.z-car.z)>4) return reply(res,409,{error:'Walk beside an unoccupied, stopped car.'});
             car.driver=player.id; player.vehicleId=car.id; player.controls=neutralControls();
-            Object.assign(player,{x:car.x,z:car.z,y:0,heading:car.heading+Math.PI/2});
+            Object.assign(player,{x:car.x,z:car.z,y:groundHeight(car.x,car.z),heading:car.heading+Math.PI/2});
             broadcast(room); return reply(res,200,{...snapshot(room)});
           }
           if (input.action === 'exit') {

@@ -1,3 +1,4 @@
+import {groundHeight} from '../../shared/playerPhysics.mjs';
 import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound } from './gameAudio';
@@ -81,7 +82,7 @@ export type Vehicles = ReturnType<typeof useVehicles>;
 function MovingCar({id,vehicles,environment}:{id:string;vehicles:Vehicles;environment:MutableRefObject<LivingRuntime>}) {
   const group=useRef<Group>(null), driver=useRef<Group>(null);
   const car=vehicles.runtime.current.cars.find(c=>c.id===id)!;
-  useFrame(()=>{const c=vehicles.runtime.current.cars.find(c=>c.id===id);if(!c||!group.current)return;const p=vehicles.runtime.current.networked?c:vehicleRenderPose(c);group.current.position.set(p.x,0,p.z);group.current.rotation.y=p.heading;if(driver.current)driver.current.visible=!!c.driver&&vehicleSpec(c).category!=='Motorcycles';});
+  useFrame(()=>{const c=vehicles.runtime.current.cars.find(c=>c.id===id);if(!c||!group.current)return;const p=vehicles.runtime.current.networked?c:vehicleRenderPose(c);group.current.position.set(p.x,groundHeight(p.x,p.z),p.z);group.current.rotation.y=p.heading;if(driver.current)driver.current.visible=!!c.driver&&vehicleSpec(c).category!=='Motorcycles';});
   return <group ref={group}>
     <VehicleModel model={car.model} color={car.color} rim={car.rim} environment={environment} motion={()=>vehicles.runtime.current.cars.find(c=>c.id===id)!} />
     <group ref={driver} position={[-.15,.1,-.4]} rotation={[0,Math.PI/2,0]} scale={Math.min(.49,vehicleSpec(car).height/2.6)}><Character shirt="#d1aa65" /></group>
