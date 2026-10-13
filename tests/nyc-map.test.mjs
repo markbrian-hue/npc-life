@@ -40,7 +40,7 @@ test('NYC blocks have real building collision and roofs, while existing sites re
 });
 test('Manhattan plazas, street crossings, water and trees are deterministic and aligned',()=>{
  assert.equal(NYC_PUBLIC_SPACES.length,3);
- assert.equal(NYC_DISTRICTS.length,4);
+ assert.ok(NYC_DISTRICTS.length>=5);
  assert.ok(NYC_CROSSINGS.length>=12);
  for(const cross of NYC_CROSSINGS)assert.equal(roadAt(cross.x,cross.z),true,cross.id);
  for(const p of NYC_PUBLIC_SPACES){
