@@ -74,7 +74,8 @@ export const PIGEONS = [
 export const GARY = { x: 8, z: 25 };
 export const BUS_STOP = { x: 24, z: 7.4, rotation: Math.PI };
 
-export const FOUNTAIN = { x: 0, z: 0 };
+// Save-compatible discovery target now sits beside a safe corner, not in traffic.
+export const CIVIC_CROSSING = { x: -7.5, z: 7.5 };
 
 export const PARKED_CARS = [
   { id: 'sedan-1', name: 'Civic Sedan', x: 8.4, z: 33, color: '#7d9b93', rotation: Math.PI / 2 },
