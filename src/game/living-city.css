@@ -12,3 +12,20 @@
 @media(max-height:600px) and (min-width:701px){.living-hud{top:72px}.game-shell :is(.revival-tracker,.shift-tracker,.quest-panel,.alpha9-guide){top:205px;max-height:calc(100dvh - 300px);overflow:auto}.game-shell .food-prompt{bottom:135px}}
 @media(prefers-reduced-motion:reduce){.living-dialog{animation:none}}
 .barista-choices{display:flex;gap:10px;flex-wrap:wrap}.barista-choices button{flex:1;min-width:150px}
+/* Reserve complete lanes for controls and objectives, including low-need notices. */
+.game-shell .living-hud{max-height:150px;overflow:auto}
+.game-shell :is(.revival-tracker,.shift-tracker,.quest-panel,.alpha9-guide){top:260px}
+.game-shell .alpha9-toolbar{top:158px}
+.game-shell .release-menu-button{top:207px}
+.game-shell .food-bag-access{top:258px}
+.game-shell .alpha8-minimap{bottom:140px}
+.game-shell .resident-access{bottom:85px;right:28px}
+@media(max-width:700px){
+ .game-shell .living-hud{max-height:110px}
+ .game-shell .room-control,.game-shell .release-menu-button,.game-shell .food-bag-access{top:200px}
+ .game-shell .alpha9-toolbar{top:245px;bottom:auto;right:10px;flex-direction:row}
+ .game-shell :is(.revival-tracker,.shift-tracker,.quest-panel,.alpha9-guide){top:290px;max-height:calc(100dvh - 475px)}
+ .game-shell .alpha8-minimap{top:290px!important;bottom:auto!important}
+ .game-shell .resident-access{bottom:109px;right:10px}
+}
+@media(max-height:600px) and (min-width:701px){.game-shell :is(.revival-tracker,.shift-tracker,.quest-panel,.alpha9-guide){top:235px}}

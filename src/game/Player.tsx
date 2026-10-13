@@ -342,7 +342,7 @@ export function Player({
     }
 
     const actualSpeed = v.length();
-    living.current.activity={moving:actualSpeed>.2,running:running&&actualSpeed>.2,resting:!!sitting.current&&!car};
+    living.current.activity={moving:actualSpeed>.2,running:running&&actualSpeed>.2,resting:!!sitting.current&&!car,driving:!!car};
     updateEngineSound(car?.speed||0,!!car);
     if(car&&previousCarSpeed.current>3&&Math.abs(car.speed)<.2)playGameSound('impact');previousCarSpeed.current=Math.abs(car?.speed||0);
     footstep.current+=actualSpeed*dt;if(!car&&grounded.current&&footstep.current>2){footstep.current=0;playGameSound('step');}

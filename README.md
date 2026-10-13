@@ -1,3 +1,9 @@
+## Living City & Survival update
+
+The development branch `feat/living-city-survival-weather` builds on the career-and-bulletin gameplay source. It adds player needs, a food bag, four functional food businesses, six weather states, day/night lighting, shared room time, local resident routines, six new shifts and bounded city events. Press **G** to order, **O** to eat, **L** for work, and **T** to rest at benches. **F** retains NPC conversations.
+
+See [controls, tuning, save compatibility, QA and limitations](docs/living-city-survival-weather.md).
+
 # NPC LIFE — The City of Idiots
 
 A retro multiplayer browser comedy sandbox. The festival is cancelled, four districts are broken, and the city has hired the least qualified person available: you.

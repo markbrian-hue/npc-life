@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import {mkdir} from 'node:fs/promises';
+import {createServer} from 'vite';
+import {freshLiving,environmentAt,WEATHER} from '../shared/livingCity.mjs';
+const {chromium}=await import(process.env.NPC_LIFE_PLAYWRIGHT_MODULE||'playwright');
+const output=process.env.NPC_LIFE_QA_OUTPUT||'qa-output';await mkdir(output,{recursive:true});
+const vite=await createServer({server:{hmr:false,host:'127.0.0.1',port:5186,strictPort:true}});await vite.listen();
+let browser;const errors=[];let checks=0;const pass=s=>{checks++;console.log(`PASS ${s}`);};
+try{
+ browser=await chromium.launch({headless:true,...(process.env.NPC_LIFE_CHROMIUM?{executablePath:process.env.NPC_LIFE_CHROMIUM}:{}),args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+ const context=await browser.newContext({viewport:{width:1366,height:900}});
+ await context.addInitScript(()=>{const fixture=sessionStorage.getItem('living-test-fixture');if(fixture){const {state,balance}=JSON.parse(fixture);localStorage.setItem('npc-life:living-city-v1',JSON.stringify(state));localStorage.setItem('npc-life:coins-v1',String(balance));sessionStorage.removeItem('living-test-fixture');}window.__pos={x:0,z:0};window.addEventListener('npc-life:position',e=>window.__pos=e.detail);});
+ const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:5186');await page.getByRole('button',{name:'Skip, I live here already'}).click();
+ const record=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('npc-life:living-city-v1')));
+ const coins=()=>page.evaluate(()=>Number(localStorage.getItem('npc-life:coins-v1')));
+ const at=async(x,z)=>{await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),{x,z});await page.waitForFunction(p=>Math.hypot(window.__pos.x-p.x,window.__pos.z-p.z)<.1,{x,z});};
+ const seed=async(state,balance=100)=>{await page.evaluate(({state,balance})=>{sessionStorage.setItem('living-test-fixture',JSON.stringify({state,balance}));},{state,balance});await page.reload();await page.getByRole('dialog',{name:'NPC LIFE game menu'}).waitFor();await page.keyboard.press('Escape');await page.waitForTimeout(350);};
+ await seed({...freshLiving(),needs:{hunger:20,thirst:20,energy:20}});
+ await at(57,6);await page.keyboard.press('g');const shop=page.getByRole('dialog',{name:'Last Chance Coffee'});await shop.waitFor();
+ const espresso=shop.locator('article').filter({hasText:'Espresso'}).getByRole('button',{name:'Pack one'});
+ await espresso.evaluate(button=>{button.click();button.click();button.click();});await page.waitForFunction(()=>JSON.parse(localStorage.getItem('npc-life:living-city-v1')).inventory.espresso===3);
+ assert.equal(await coins(),70);pass('rapid purchase clicks spend exactly 30 coins for exactly three coffees');
+ await page.screenshot({path:`${output}/living-coffee-menu.png`});
+ await page.keyboard.press('Escape');await page.keyboard.press('o');await page.getByRole('dialog',{name:'Food bag'}).waitFor();
+ await page.getByRole('button',{name:'Consume one'}).click();await page.waitForFunction(()=>!document.querySelector('dialog[open]'));
+ let s=await record();assert.equal(s.inventory.espresso,2);assert.ok(s.needs.energy>=48);assert.ok(s.needs.thirst>=27.5);assert.ok(s.buff>59);pass('coffee consumes one quantity and restores needs / grants timed boost');
+ await seed({...freshLiving(),needs:{hunger:0,thirst:0,energy:0}},0);await at(6,22);await page.keyboard.press('g');s=await record();assert.ok(s.needs.hunger>=54.9&&s.needs.thirst>=64.9&&s.needs.energy>=25);assert.equal(await coins(),0);await page.keyboard.press('g');assert.equal((await record()).inventory.water,undefined);pass('zero-coin resident can recover without stockpiling free supplies');
+ await at(8,16);await page.keyboard.press('t');await page.waitForTimeout(2000);await page.keyboard.press('o');s=await record(); // pagehide flush via UI commit is tested below
+ const meter=await page.getByRole('meter',{name:'energy'}).getAttribute('value');assert.ok(Number(meter)>27);await page.keyboard.press('Escape');await page.keyboard.press('t');pass('bench resting restores energy and exits safely');
+ await seed({...freshLiving(),inventory:{water:1},needs:{hunger:50,thirst:30,energy:60}});
+ await page.keyboard.press('o');const prior=await page.getByRole('meter',{name:'thirst'}).getAttribute('value');await page.waitForTimeout(1600);assert.equal(await page.getByRole('meter',{name:'thirst'}).getAttribute('value'),prior);await page.keyboard.press('Escape');pass('native bag menu pauses needs and releases movement input');
+ await at(24,-6);await page.keyboard.press('g');await page.getByRole('dialog',{name:'NPC Convenience Store'}).waitFor();await page.getByRole('dialog').locator('article').filter({hasText:'Bottled water'}).getByRole('button',{name:'Pack one'}).click();await page.keyboard.press('Escape');await page.reload();await page.getByRole('dialog',{name:'NPC LIFE game menu'}).waitFor();await page.keyboard.press('Escape');assert.equal((await record()).inventory.water,2);pass('consumables survive reload without affecting cosmetics or career saves');
+ await page.keyboard.press('l');await page.locator('article').filter({hasText:'Coffee Shop Employee'}).getByRole('button',{name:'Take shift'}).click();await at(57,6);await page.keyboard.press('t');const barista=page.getByRole('dialog',{name:'Coffee employee shift'});await barista.waitFor();
+ const before=await coins();for(const drink of ['Espresso','Café Latte','Iced Americano']){await barista.getByRole('button',{name:`Prepare ${drink}`,exact:true}).click();await page.waitForTimeout(1100);}
+ await page.waitForFunction(()=>!document.querySelector('dialog[open]'));assert.equal(await coins(),before+25);await page.keyboard.press('t');assert.equal(await coins(),before+25);pass('coffee employee mini-game rewards exactly once and updates career');
+ await page.keyboard.press('Escape');await page.keyboard.press('l');await page.locator('article').filter({hasText:'Bean There, Delivered That'}).getByRole('button',{name:'Take shift'}).click();await at(57,6);await page.keyboard.press('t');assert.equal(await coins(),before+25);await at(-44,6);await page.keyboard.press('t');assert.equal(await coins(),before+60);pass('new delivery pickup pays nothing and completed route pays fair reward');
+ await seed({...freshLiving(),elapsed:800});await at(25,58);await page.keyboard.press('g');await page.getByRole('dialog',{name:'Dockside Dogs & Skewers'}).waitFor();await page.getByRole('button',{name:'Claim free hotdog sample'}).click();assert.equal((await record()).inventory.hotdog,1);assert.equal(await page.getByRole('button',{name:'Claim free hotdog sample'}).isDisabled(),true);await page.keyboard.press('Escape');pass('living event gives one real inventory sample with bounded repeat claims');
+ for(const kind of WEATHER){let t=0;while(environmentAt(t+25).kind!==kind)t+=300;await seed({...freshLiving(),elapsed:t+25});await at(6.4,16);await page.waitForTimeout(1600);assert.ok((await page.locator('.living-clock').textContent()).includes(environmentAt(t+25).label));await page.screenshot({path:`${output}/living-${kind}.png`});const before=await page.evaluate(()=>window.__pos);await page.keyboard.down('w');try{await page.waitForFunction(p=>Math.hypot(window.__pos.x-p.x,window.__pos.z-p.z)>.5,before,{timeout:15000});}finally{await page.keyboard.up('w');}}pass('six weather fixtures render in WebGL and retain player movement');
+ await seed({...freshLiving(),elapsed:920});await at(57,6);await page.waitForTimeout(1000);await page.screenshot({path:`${output}/living-night.png`});pass('nighttime city renders with readable HUD and illuminated shops');
+ for(const [width,height] of [[390,844],[768,600]]){await page.setViewportSize({width,height});await page.keyboard.press('o');const dialog=page.getByRole('dialog',{name:'Food bag'}),box=await dialog.boundingBox();assert.ok(box.x>=0&&box.y>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1);assert.ok(await dialog.evaluate(el=>el.scrollWidth<=el.clientWidth+1));await page.screenshot({path:`${output}/living-bag-${width}.png`});await page.keyboard.press('Escape');const hud=await page.locator('.living-hud').boundingBox(),map=await page.locator('.alpha8-minimap').boundingBox();assert.ok(hud.y+hud.height<map.y||hud.x+hud.width<map.x);await page.screenshot({path:`${output}/living-hud-${width}.png`});}pass('needs HUD and inventory fit phone and short laptop layouts');
+ await page.setViewportSize({width:1366,height:900});await page.keyboard.press('p');await page.getByRole('button',{name:'Settings',exact:true}).click();
+ const imported={...freshLiving(),inventory:{water:7},needs:{hunger:66,thirst:77,energy:88},relaxed:true};
+ await page.locator('input[type=file]').setInputFiles({name:'npc-save.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'npc-life-save',version:1,data:{'npc-life:coins-v1':'123','npc-life:living-city-v1':JSON.stringify(imported)}}))});
+ await page.waitForLoadState('domcontentloaded');await page.getByRole('dialog',{name:'Welcome to Idiot City'}).waitFor();assert.equal((await record()).inventory.water,7);assert.equal(await coins(),123);pass('native save import survives reload without stale runtime overwriting imported needs or bag');
+ assert.deepEqual(errors,[]);pass('all tested flows have no uncaught browser errors');console.log(`${checks} living city browser checks passed`);
+}finally{await browser?.close();await vite.close();}

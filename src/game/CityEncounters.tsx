@@ -248,7 +248,7 @@ export function CityEncounters({
             </p>
 
             <p className="encounter-rumor">
-              ON THE STREET: {rumor}<br/>{environment.current.env.rain>.25?'Rain brings better-paid delivery shifts. Check L. Umbrella insurance remains a scam.':environment.current.env.minute>1200?'The convenience store is always open. Free benches restore energy.':'F opens food menus, O opens your bag. The bureau offers free meals and water when needs are low.'}
+              ON THE STREET: {rumor}<br/>{environment.current.env.rain>.25?'Rain brings better-paid delivery shifts. Check L. Umbrella insurance remains a scam.':environment.current.env.minute>1200?'The convenience store is always open. Free benches restore energy.':'G opens food menus, O opens your bag. The bureau offers free meals and water when needs are low.'}
             </p>
 
             <p className="encounter-question">

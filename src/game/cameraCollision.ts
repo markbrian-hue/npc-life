@@ -21,7 +21,6 @@ const PADDING = 0.30;
 
 // Create collision boxes once instead of every frame.
 const CAMERA_STRUCTURES = [
-  ...BUSINESSES.map(b=>({...kioskPosition(b),w:5.4,d:2.7,h:3.2})),
   ...BUILDINGS.map(b => ({...b, w: Math.abs(Math.cos(b.rotation || 0))*b.w + Math.abs(Math.sin(b.rotation || 0))*b.d, d: Math.abs(Math.sin(b.rotation || 0))*b.w + Math.abs(Math.cos(b.rotation || 0))*b.d})),
   ...[48, 60, 72].map(x => ({ x, z: 10, w: 5.4, d: 3.4, h: 3.8 })),
   ...[16, 22, 28].map(x => ({ x, z: -82, w: 3, d: 3, h: 4.8 })),
@@ -34,6 +33,15 @@ const BUILDING_BOXES: Bounds[] = CAMERA_STRUCTURES.map((building) => ({
   maxY: building.h + 0.85,
   minZ: building.z - building.d / 2 - PADDING,
   maxZ: building.z + building.d / 2 + PADDING,
+}));
+// Kiosks have open space above their counters. Use actual body and roof slabs
+// so the camera can pass above the counter instead of hitting a phantom wall.
+BUILDING_BOXES.push(...BUSINESSES.flatMap(shop=>{
+  const p=kioskPosition(shop);
+  return [
+    {minX:p.x-2.1,maxX:p.x+2.1,minY:0,maxY:2.15,minZ:p.z-.95,maxZ:p.z+.95},
+    {minX:p.x-2.65,maxX:p.x+2.65,minY:4.05,maxY:4.4,minZ:p.z-3.1,maxZ:p.z+2.9},
+  ];
 }));
 
 /**

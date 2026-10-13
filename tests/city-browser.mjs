@@ -6,7 +6,7 @@ import { createGameServer } from '../server/multiplayer.mjs';
 const { chromium } = await import(process.env.NPC_LIFE_PLAYWRIGHT_MODULE || 'playwright');
 const output = process.env.NPC_LIFE_QA_OUTPUT || 'qa-output'; await mkdir(output, { recursive: true });
 const game = createGameServer(); await new Promise(r => game.listen(3001, '127.0.0.1', r));
-const vite = await createServer({ server: { host: '127.0.0.1', port: 5182, strictPort: true } }); await vite.listen();
+const vite = await createServer({ server: { hmr: false, host: '127.0.0.1', port: 5182, strictPort: true } }); await vite.listen();
 let browser;
 const errors = [];
 try {

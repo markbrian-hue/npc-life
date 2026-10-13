@@ -154,3 +154,9 @@ Current world bounds are ±136 (previous City Revival bounds: ±88). Grove Stree
 - The city browser test driver now plans collision-aware routes around the fountain and parked cars. Run `npm run test:browser` and `npm run test:city` on a machine with Playwright/Chromium available.
 
 Manual follow-up: walk from arrivals to the sedan east of Gary, enter with R, accelerate/steer/brake, stop and exit; repeat in a shared room with a second browser, verify exclusive ownership and remote car motion, open a menu while driving, leave while seated, tour Grove and check character/prop appearance.
+
+## Living City & Survival verification
+
+The Living City update extends the advanced career source. See `docs/living-city-survival-weather.md` for controls, compatibility, tuning and intentional limitations. The current update was exercised in Chromium using software WebGL; prior sections above describe older commits and their browser constraints.
+
+`npm ci`, 43 Node regression tests, TypeScript, the production build and whitespace checks pass. Existing UI/encounter checks (19), resident/driving checks (9), and new living-city browser checks (14) pass. New fixtures cover all six weather states, nighttime rendering, exact purchase/consume counts, zero-coin recovery, new shifts, samples, phone/laptop panels and real save import/reload. Captured audio initialization does not establish speaker audibility or hardware performance.

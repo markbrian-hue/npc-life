@@ -8,7 +8,7 @@ import { createServer } from 'vite';
 const { chromium } = await import(process.env.NPC_LIFE_PLAYWRIGHT_MODULE || 'playwright');
 const output = resolve(process.env.NPC_LIFE_QA_OUTPUT || 'qa-output');
 await mkdir(output, { recursive: true });
-const server = await createServer({ server: { host: '127.0.0.1', port: 5181, strictPort: true } });
+const server = await createServer({ server: { hmr: false, host: '127.0.0.1', port: 5181, strictPort: true } });
 await server.listen();
 let browser;
 const launchOptions = {
@@ -221,6 +221,7 @@ try {
   pass('Pigeon Panic plays and repeat wins do not duplicate the daily payout');
 
   await walkTo(7, 19);
+  await page.getByRole('button', { name: /Talk to Dot/ }).waitFor();
   await page.keyboard.press('f');
   await page.getByRole('dialog', { name: 'Talk to Dot' }).waitFor();
   await page.locator('.encounter-choices button').first().click();

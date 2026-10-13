@@ -12,10 +12,12 @@ const PALETTES:Record<string,string>={sunny:'#b9d9e5',cloudy:'#a9b6bb','light-ra
 export function LivingEnvironment({runtime,quality}:{runtime:MutableRefObject<LivingRuntime>;quality:string}) {
  const {scene}=useThree(),sun=useRef<DirectionalLight>(null),hemi=useRef<HemisphereLight>(null);
  const player=useRef({x:0,z:0}),target=useMemo(()=>new Object3D(),[]);
+ const reducedMotion=useRef(false);
  const sky=useMemo(()=>new Color(),[]),weatherColor=useMemo(()=>new Color(),[]),nightColor=useMemo(()=>new Color('#26374b'),[]);
  const materials=useRef<{material:MeshStandardMaterial;kind:string;base:Color}[]>([]);
  const lightning=useRef(0),nextThunder=useRef(25),audioTick=useRef(0),stormAge=useRef(0);
  useEffect(()=>{
+  reducedMotion.current=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const background=scene.background,fog=scene.fog;scene.background=new Color();scene.fog=new Fog('#aabdc9',85,190);
   scene.traverse(obj=>{const mesh=obj as Mesh;if(mesh.material instanceof MeshStandardMaterial&&mesh.userData.environment){materials.current.push({material:mesh.material,kind:mesh.userData.environment,base:mesh.material.color.clone()});}});
   const move=(e:Event)=>{player.current=(e as CustomEvent).detail;};window.addEventListener('npc-life:position',move);
@@ -24,7 +26,7 @@ export function LivingEnvironment({runtime,quality}:{runtime:MutableRefObject<Li
  useFrame((_,raw)=>{
   const dt=Math.min(raw,.1),e=runtime.current.env,n=e.night;
   sky.set(PALETTES[e.previous]);weatherColor.set(PALETTES[e.kind]);sky.lerp(weatherColor,e.mix).lerp(nightColor,n*.82);
-  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.contains('npc-reduce-motion');
+  const reduced=reducedMotion.current||document.documentElement.classList.contains('npc-reduce-motion');
   if(e.kind==='thunderstorm'&&e.mix>.5){stormAge.current+=dt;if(stormAge.current>nextThunder.current){stormAge.current=0;nextThunder.current=28+(e.cycle%4)*9;if(!reduced)lightning.current=.35;playGameSound('thunder');}}else stormAge.current=0;
   lightning.current=Math.max(0,lightning.current-dt);const flash=lightning.current>0?.25:0;
   (scene.background as Color)?.copy(sky);const fog=scene.fog as Fog;fog.color.copy(sky);
@@ -66,11 +68,12 @@ function Business({shop,runtime}:{shop:typeof BUSINESSES[number];runtime:Mutable
  return <group position={[position.x,0,position.z]} rotation={[0,shop.z<0?Math.PI:0,0]}>
   <mesh castShadow position={[0,1,0]}><boxGeometry args={[3.8,2,1.6]}/><meshStandardMaterial color={shop.color}/></mesh>
   <mesh position={[0,1.25,-.84]}><boxGeometry args={[2.9,.65,.1]}/><meshStandardMaterial ref={lamp} color="#e6d6af" emissive="#f5c778"/></mesh>
-  <mesh castShadow position={[0,2.85,-.2]}><boxGeometry args={[5,.18,5.8]}/><meshStandardMaterial color={shop.color}/></mesh>
+  <mesh castShadow position={[0,4.2,-.2]}><boxGeometry args={[5,.18,5.8]}/><meshStandardMaterial color={shop.color}/></mesh>
+  {[-2.4,2.4].map(x=><mesh key={x} position={[x,2.1,.7]}><boxGeometry args={[.1,4.2,.1]}/><meshStandardMaterial color={shop.color}/></mesh>)}
   <mesh position={[0,.8,-1.1]}><boxGeometry args={[3.8,.16,.6]}/><meshStandardMaterial color="#eee0b9"/></mesh>
-  <group position={[0,3.25,-.5]} rotation={[0,Math.PI,0]}><WorldSign text={shop.name.toUpperCase()} color={shop.color} width={7}/></group>
+  <group position={[0,4.65,-.5]} rotation={[0,Math.PI,0]}><WorldSign text={shop.name.toUpperCase()} color={shop.color} width={7}/></group>
   <group position={[2.2,0,0]}><Character shirt={shop.color} style={2}/></group>
-  <group position={[0,2.1,-1.7]} rotation={[0,Math.PI,0]}><WorldSign text="F / ORDER HERE" width={2.8}/></group>
+  <group position={[0,2.1,-1.7]} rotation={[0,Math.PI,0]}><WorldSign text="G / ORDER HERE" width={2.8}/></group>
  </group>;
 }
 export function FoodBusinesses({runtime}:{runtime:MutableRefObject<LivingRuntime>}){return <>{BUSINESSES.map(shop=><Business key={shop.id} shop={shop} runtime={runtime}/>)}</>;}

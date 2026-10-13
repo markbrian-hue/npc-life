@@ -122,3 +122,16 @@ test('resident unlocks round-trip through backup and invalid records cannot eras
   await assert.rejects(importSave(file({[key]:JSON.stringify({...resident,wins:-1})})));assert.equal(localStorage.getItem('npc-life:coins-v1'),'150');
   await importSave(file({'npc-life:coins-v1':'150',[key]:JSON.stringify(resident)}));const saved=JSON.parse(localStorage.getItem(key));assert.equal(saved.completed.milk,3);assert.deepEqual(saved.upgrades,['club']);assert.equal(saved.wins,2);
 });
+
+test('living city backups preserve needs, quantities and preferences; malformed data cannot erase old progress',async()=>{
+ const key='npc-life:living-city-v1';globalThis.localStorage=storage({'npc-life:coins-v1':'99'});
+ await assert.rejects(importSave(file({[key]:JSON.stringify({inventory:{water:-2}})})));assert.equal(localStorage.getItem('npc-life:coins-v1'),'99');
+ await importSave(file({'npc-life:coins-v1':'99',[key]:JSON.stringify({needs:{hunger:42,thirst:33,energy:55},inventory:{water:2},relaxed:true,quality:'low'})}));
+ const value=JSON.parse(localStorage.getItem(key));assert.equal(value.needs.hunger,42);assert.equal(value.inventory.water,2);assert.equal(value.relaxed,true);
+});
+
+test('kiosk camera preserves open headroom instead of hitting a phantom wall',async()=>{
+ const {safeCameraDistance}=await source('src/game/cameraCollision.ts');
+ const direction={x:Math.sin(.6)*Math.cos(.65),y:Math.sin(.65),z:Math.cos(.6)*Math.cos(.65)};
+ assert.ok(safeCameraDistance({x:57,y:1.7,z:6},direction,13)>2);
+});

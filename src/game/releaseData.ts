@@ -179,6 +179,7 @@ export function setSettings(value: ReleaseSettings): void {
 }
 
 export function exportSave(): void {
+  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('npc-life:flush-save'));
   const data: Record<string, string> = {};
 
   for (const key of RELEASE_KEYS) {
@@ -443,6 +444,7 @@ export async function importSave(file: File): Promise<void> {
     for (const [key, value] of Object.entries(validated)) {
       localStorage.setItem(key, value);
     }
+    if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('npc-life:save-replaced'));
   } catch (error) {
     for (const key of RELEASE_KEYS) {
       const prior = before.get(key);
@@ -462,4 +464,5 @@ export function resetSave(): void {
   for (const key of RELEASE_KEYS) {
     localStorage.removeItem(key);
   }
+  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('npc-life:save-replaced'));
 }

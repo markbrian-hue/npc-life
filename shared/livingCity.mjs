@@ -64,7 +64,7 @@ export const isOpen=(shop,minute)=>shop.open===0&&shop.close===24||minute/60>=sh
 export function stepNeeds(needs,seconds,{moving=false,running=false,resting=false,working=false,hot=false,relaxed=false,paused=false}={}) {
  if(paused)return needs;
  const dt=Math.max(0,Math.min(seconds,2)),rate=relaxed?.35:1,work=working?1.15:1;
- return {hunger:clampNeed(needs.hunger-dt*rate*(moving?.021:.014)*work),thirst:clampNeed(needs.thirst-dt*rate*(moving?.03:.018)*(hot?1.3:1)*work),energy:clampNeed(needs.energy+dt*(resting?1.3:running&&moving?-.45*rate:working?-.045*rate:needs.hunger<20?.03:.12))};
+ return {hunger:clampNeed(needs.hunger-dt*rate*(moving?.021:.014)*work),thirst:clampNeed(needs.thirst-dt*rate*(moving?.03:.018)*(hot?1.3:1)*work),energy:clampNeed(needs.energy+dt*(resting?1.3:running&&moving?-.45*rate:working?-.045*rate:needs.hunger<20||needs.thirst<20?.03:.12))};
 }
 export function purchaseItem(state,balance,shopId,itemId,environment) {
  const shop=BUSINESSES.find(s=>s.id===shopId),item=ITEM_BY_ID[itemId];
@@ -85,10 +85,16 @@ export function eventAt(env) {
  const slot=Math.floor(env.seconds/600),age=env.seconds%600;
  if(age<180||age>=300)return null;
  const id=['discount','sample','announcement'][slot%3];
- return {id,slot,title:{discount:'Coffee amnesty: 2 coins off all café items',sample:'Dockside free sample: one hotdog per resident',announcement:'Civic announcement: free emergency meals are a human right (even for NPCs)'}[id]};
+ return {id,slot,title:{discount:'Coffee amnesty: 2 coins off all café items',sample:'Dockside free sample: one hotdog per resident',announcement:'Civic feast: bureau meals restore 75 food & water for residents in need'}[id]};
 }
 export function claimSample(state,env) {
  const event=eventAt(env);if(event?.id!=='sample'||state.sampleCycle===event.slot||Object.values(state.inventory).reduce((a,b)=>a+b,0)>=60)return null;
  return {...state,sampleCycle:event.slot,inventory:{...state.inventory,hotdog:(state.inventory.hotdog||0)+1}};
 }
 export function jobAvailable(job,env){return !job.weather||env.rain>=.3 ? !job.hours||env.minute>=job.hours[0]*60&&env.minute<job.hours[1]*60 : false;}
+/** Free immediate recovery, never a tradable or stockpilable reward. */
+export function communityMeal(state,env) {
+ const n=state.needs;if(n.hunger>=45&&n.thirst>=45)return null;
+ const feast=eventAt(env)?.id==='announcement';
+ return {...state,needs:{hunger:Math.max(feast?75:55,n.hunger),thirst:Math.max(feast?75:65,n.thirst),energy:Math.max(25,n.energy)}};
+}
