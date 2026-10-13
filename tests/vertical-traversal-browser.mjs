@@ -29,7 +29,13 @@ try{
  assert.ok(scene?.found&&scene.instances>20,'instanced ladder geometry present');
  console.log('PASS ladder visuals exist in actual R3F scene');
  await page.keyboard.down('e');
- await page.waitForFunction(p=>window.__npcPosition.y>p.roof-.15,ladder,{timeout:30000});
+ try{
+  await page.waitForFunction(p=>window.__npcPosition.y>p.roof-.15,ladder,{timeout:30000});
+ }catch(error){
+  const debug=await page.evaluate(()=>({position:window.__npcPosition,dialogs:[...document.querySelectorAll('[role="dialog"]')].map(x=>x.getAttribute('aria-label')),focus:document.activeElement?.tagName}));
+  console.error('TRAVERSAL DEBUG',JSON.stringify({ladder,debug,errors}));
+  throw error;
+ }
  await page.waitForFunction(p=>Math.abs(window.__npcPosition.y-p.roof)<.12&&Math.hypot(window.__npcPosition.x-p.landing.x,window.__npcPosition.z-p.landing.z)<.5,ladder,{timeout:12000});
  await page.keyboard.up('e');
  console.log('PASS climb + timed mantle reaches authored roof in real browser');
