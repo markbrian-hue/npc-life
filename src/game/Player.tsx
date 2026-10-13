@@ -518,6 +518,8 @@ export function Player({
             y: Math.max(0,position.current.y),
             driving: !!car,
             cameraYaw: orbit.current.yaw,
+             locomotion:physics.current.ladder?'climb':physics.current.mantle?'mantle':physics.current.grounded?'ground':'air',
+             support:physics.current.support,
           },
         })
       );
