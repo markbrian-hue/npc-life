@@ -22,7 +22,13 @@ export const BOROUGH_PARCELS = [
 export function styleBoroughBuilding(b,i=0){
  // A building is styled only after existing footprint and road-clearance filtering.
  // The height change automatically updates the same player/vehicle/camera colliders.
- if(b.kind==='bungalow'||b.kind==='warehouse')return b;
+ if(b.kind==='bungalow'){
+  // Preserve every Juniper/Grove home's exact footprint while replacing
+  // suburban single-storey art with Brooklyn-inspired brick townhouses.
+  return {...b,kind:'brownstone',borough:'brooklyn',h:10.8+(i%3)*1.3,
+   color:['#a98272','#bb9784','#a87566','#b5a090'][i%4],roof:'#675a58'};
+ }
+ if(b.kind==='warehouse')return b;
  if(b.borough)return b;
  if(b.z<=-113&&b.z>=-196&&b.x>=-42&&b.x<=110){
   const height=24+(i%5)*5;
