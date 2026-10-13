@@ -513,92 +513,6 @@ function ShopStand() {
   );
 }
 
-function Clouds() {
-  const clouds = useRef<
-    (THREE.Group | null)[]
-  >([]);
-
-  useFrame(({ clock }) => {
-    clouds.current.forEach(
-      (cloud, index) => {
-        if (!cloud) return;
-
-        cloud.position.x =
-          (
-            (
-              clock.elapsedTime *
-                (0.35 + index * 0.08) +
-              index * 32 +
-              65
-            ) %
-            138
-          ) - 69;
-      }
-    );
-  });
-
-  return (
-    <>
-      {[
-        [-43, 35, -28],
-        [0, 39, 21],
-        [38, 36, -42],
-        [-9, 42, 45],
-      ].map((position, index) => (
-        <group
-          key={index}
-          ref={(node) => {
-            clouds.current[index] = node;
-          }}
-          position={
-            position as [
-              number,
-              number,
-              number
-            ]
-          }
-        >
-          <mesh scale={[3.5, 0.8, 1.3]}>
-            <sphereGeometry
-              args={[1, 10, 7]}
-            />
-            <meshBasicMaterial
-              color="#f5f7f5"
-            />
-          </mesh>
-
-          <mesh
-            position={[
-              -2.05,
-              -0.12,
-              0.18,
-            ]}
-            scale={[1.9, 0.6, 1.05]}
-          >
-            <sphereGeometry
-              args={[1, 9, 7]}
-            />
-            <meshBasicMaterial
-              color="#f5f7f5"
-            />
-          </mesh>
-
-          <mesh
-            position={[2.02, -0.18, -0.08]}
-            scale={[1.7, 0.55, 1.1]}
-          >
-            <sphereGeometry
-              args={[1, 9, 7]}
-            />
-            <meshBasicMaterial
-              color="#f5f7f5"
-            />
-          </mesh>
-        </group>
-      ))}
-    </>
-  );
-}
 
 function GiantDuck() {
   const duck = useRef<THREE.Group>(null);
@@ -731,7 +645,6 @@ export function CityExtras({
         />
       ))}
 
-      <Clouds />
 
       {cityEvent === 'duck-invasion' && (
         <GiantDuck />

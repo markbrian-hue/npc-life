@@ -103,7 +103,7 @@ export function LivingCityUI({city,player}:{city:LivingCity;player:Pos}) {
   <GameDialog id="living-settings" label="Living city settings" className="living-dialog" onClose={()=>store.close('living-settings')}>
    <header><h2>Your ordinary life.</h2><button aria-label="Close living city settings" onClick={()=>store.close('living-settings')}>×</button></header>
    <label><input type="checkbox" checked={view.relaxed} onChange={e=>city.commit({...city.runtime.current.record,relaxed:e.target.checked})}/> Relaxed needs · 65% slower hunger, thirst and activity costs</label>
-   <label>Weather quality <select value={view.quality} onChange={e=>city.commit({...city.runtime.current.record,quality:e.target.value})}><option value="low">Low · 100 rain drops</option><option value="medium">Medium · 300 rain drops</option><option value="high">High · 600 rain drops</option></select></label>
+   <label>Graphics quality <select value={view.quality} onChange={e=>city.commit({...city.runtime.current.record,quality:e.target.value})}><option value="low">Low · lighter rendering</option><option value="medium">Medium · balanced</option><option value="high">High · ambient occlusion + bloom</option></select></label>
    <p>{env.label} · next forecast in {Math.ceil(env.remaining)} seconds. A full city day takes 24 minutes. Weather settles over 20 seconds and lasts five minutes.</p>
    <p>Needs pause in menus and hidden tabs. Free benches restore energy. Walking remains available even at zero needs; low energy slows sprinting.</p>
    <p>Living city work uses your existing career and bulletin (L). Discounts change real prices; samples go into your bag. Rooms share time and weather; wallets and progress remain personal.</p>

@@ -1,6 +1,6 @@
 # Development contract
 
-The current milestone is documented in [World rebuild & gameplay foundation](world-foundation.md). Older sections below describe historical milestones and their validation, not the current verification status.
+The current milestone is documented in [Cinematic city art](cinematic-city-art.md), built on the verified [terrain-responsive suspension](terrain-responsive-suspension.md) update. Older sections below describe historical milestones and their validation, not the current verification status.
 
 ## City Revival / multiplayer slice — 12 October 2026
 

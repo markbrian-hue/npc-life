@@ -1,3 +1,4 @@
+import {VehiclePreview} from './VehiclePreview';
 import {useEffect,useRef,useState} from 'react';
 import {VEHICLE_CATALOG,VEHICLE_BY_ID,GARAGES,GARAGE_KEY,DEFAULT_PAINTS,loadGarage,buyVehicle} from '../../shared/vehicleCatalog.mjs';
 import {garageSpawn} from '../../shared/vehicles.mjs';
@@ -26,15 +27,17 @@ export function useGarage(player:Pos,coins:number,rep:number,chapters:number,veh
  return {record,message,category,setCategory,ownedOnly,setOwnedOnly,near,purchase,paint,rim,spawn,rep,chapters,coins,networked:vehicles.runtime.current.networked};
 }
 export function GarageUI({garage}:{garage:ReturnType<typeof useGarage>}){
- const {store}=useGameUI();const list=VEHICLE_CATALOG.filter(v=>garage.ownedOnly?garage.record.owned.includes(v.id):v.category===garage.category);
+ const {store}=useGameUI(),[preview,setPreview]=useState('hatch'),previewHost=useRef<HTMLDivElement>(null);const list=VEHICLE_CATALOG.filter(v=>garage.ownedOnly?garage.record.owned.includes(v.id):v.category===garage.category);const selected=list.find(v=>v.id===preview)||list[0];
+ const inspect=(id:string)=>{setPreview(id);previewHost.current?.scrollIntoView({block:'start'});previewHost.current?.focus({preventScroll:true});};
  return <>
   <GameDialog id="garage" label="Motor Club dealership" className="garage-dialog" onClose={()=>store.close('garage')}>
    <header><div><small>JUNIPER MOTOR CLUB / DISPATCH MOTOR POOL</small><h2>A better way to avoid walking.</h2></div><button onClick={()=>store.close('garage')} aria-label="Close garage">×</button></header>
    <p role="status">{garage.message}</p><p>◆ {garage.coins} coins · {garage.rep} REP · {garage.chapters} career promotions · {garage.record.owned.length} owned</p>
    <nav aria-label="Vehicle categories">{['Everyday','Performance','Premium','Motorcycles','City service'].map(c=><button key={c} aria-pressed={!garage.ownedOnly&&garage.category===c} onClick={()=>{garage.setOwnedOnly(false);garage.setCategory(c);}}>{c}</button>)}<button aria-pressed={garage.ownedOnly} onClick={()=>garage.setOwnedOnly(true)}>My garage</button></nav>
+   {selected&&<div ref={previewHost} tabIndex={-1}><VehiclePreview model={selected.id} color={garage.record.paints[selected.id]||DEFAULT_PAINTS[0]} rim={garage.record.rims[selected.id]||'alloy'}/></div>}
    {!list.length&&<p>Your garage is empty. Start with a Pocket Commuter scooter (70 coins), or a Mica hatchback (120). Free public vehicles are still available around the city.</p>}
    <div className="garage-grid">{list.map(v=>{const owned=garage.record.owned.includes(v.id),eligible=garage.rep>=v.rep&&garage.chapters>=v.chapters;return <article key={v.id}>
-    <div className={`vehicle-silhouette ${v.category==='Motorcycles'?'two-wheel':v.body}`} style={{'--paint':garage.record.paints[v.id]||DEFAULT_PAINTS[0]} as React.CSSProperties}><i/><span/><b/><b/></div>
+    <button className="inspect-model" aria-label={`Inspect ${v.name}`} aria-pressed={selected?.id===v.id} onClick={()=>inspect(v.id)}>Inspect in 3D ↗</button>
     <h3>{v.name}</h3><small>{v.category} · {v.mass.toLocaleString()} kg</small>
     <dl><div><dt>Top speed</dt><dd>{Math.round(v.maxSpeed*3.6)} km/h</dd></div><div><dt>Acceleration</dt><dd>{v.power} m/s²</dd></div><div><dt>Braking</dt><dd>{v.brake} m/s²</dd></div><div><dt>Handling</dt><dd>{v.wheelbase<2?'Agile / two wheels':v.mass>2000?'Heavy / stable':v.power>6?'Sport / responsive':'Balanced'}</dd></div></dl>
     <p>{v.rep} REP{v.chapters?` + ${v.chapters} promotions`:''} · ◆ {v.price}</p>
