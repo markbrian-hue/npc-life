@@ -4,6 +4,7 @@ import {NYC_EXPANSION_ROADS,NYC_BLOCK_CANDIDATES,NYC_PUBLIC_SPACES,NYC_DISTRICTS
 import {ROAD_SEGMENTS,BUILDINGS,NYC_SIGN_POSTS,WORLD_RADIUS,SPAWN,ACTIVITY_SITES,blocked,roadAt,roadOverlap,footprint,validateWorld,TREES} from '../shared/world.mjs';
 import {platformsAt,ROOFTOP_LADDERS} from '../shared/verticalTraversal.mjs';
 import {walkingRoute} from './pathing.mjs';
+import {createFleet,stepTraffic,nycTrafficPose,NYC_TRAFFIC_LENGTH,carBlocked} from '../shared/vehicles.mjs';
 
 test('connected northern Manhattan grid genuinely increases playable world size',()=>{
  assert.equal(WORLD_RADIUS,340);
@@ -53,4 +54,21 @@ test('Manhattan plazas, street crossings, water and trees are deterministic and 
  const newLadders=ROOFTOP_LADDERS.filter(l=>l.building.z<-214);
  assert.ok(newLadders.length>=3,'elevated exploration can reach the new blocks');
  for(const ladder of newLadders)assert.equal(blocked(ladder.landing.x,ladder.landing.z,.42,ladder.roof),false);
+});
+
+test('five new NYC taxis circle the actual connected road grid without deleting old traffic',()=>{
+ const fleet=createFleet(),cars=fleet.filter(c=>c.traffic),uptown=cars.filter(c=>c.route==='nyc');
+ assert.equal(uptown.length,5,'bustling new city circuit');
+ assert.equal(cars.filter(c=>c.route!=='nyc').length,3,'original traffic preserved');
+ assert.ok(NYC_TRAFFIC_LENGTH>450,'road grid traffic must cover a real neighborhood');
+ for(let distance=0;distance<NYC_TRAFFIC_LENGTH;distance+=1.5){
+  const p=nycTrafficPose(distance);
+  assert.equal(roadAt(p.x,p.z,.15),true,'route never cuts across a building block');
+  assert.equal(carBlocked({...uptown[0],...p},[]),false,'lane center clear for vehicle');
+ }
+ const car=uptown[0],before=car.distance;
+ for(let i=0;i<180;i++)stepTraffic(car,1/60,fleet,[]);
+ assert.ok(car.distance>before+3,'taxi advances along new city street');
+ const p=nycTrafficPose(car.distance);
+ assert.ok(Math.hypot(p.x-car.x,p.z-car.z)<.15,'taxi follows authored route');
 });
