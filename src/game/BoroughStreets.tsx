@@ -70,7 +70,7 @@ const rows=BUILDINGS.filter(b=>b.kind==='brownstone').slice(0,9);
 export const BoroughStreets=memo(function BoroughStreets(){
  return <group name="nyc-borough-streetscape">
   {towers.map((building,i)=><SkylineBillboard key={'tower-'+i} building={building} index={i}/>)}
-  {rows.map((building,i)=><BoroughBanner key={'row-'+i} building={building} index={i}/>)
-  <group name="borough-pedestrian-signals">{SIGNAL_POSTS.map((post,i)=><CrossingSignal key={post.id} post={post} index={i}/>)}</group>}
+  {rows.map((building,i)=><BoroughBanner key={'row-'+i} building={building} index={i}/>)}
+  <group name="borough-pedestrian-signals">{SIGNAL_POSTS.map((post,i)=><CrossingSignal key={post.id} post={post} index={i}/>)}</group>
  </group>;
 });
