@@ -1,3 +1,5 @@
+import {residentBlocked} from './pedestrianBodies';
+import {freshPlayer,stepPlayer,PLAYER_STEP,surfaceAt} from '../../shared/playerPhysics.mjs';
 import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound, updateEngineSound } from './gameAudio';
@@ -61,6 +63,7 @@ export function Player({
   const jumpBuffer = useRef(0);
   const coyote = useRef(0.1);
 
+  const physics=useRef(freshPlayer(SPAWN.x,SPAWN.z)),physicsTime=useRef(0);
   const walkCycle = useRef(0);
   const footstep=useRef(0), previousCarSpeed=useRef(0);
   const walkBlend = useRef(0);
@@ -88,7 +91,7 @@ export function Player({
   const { camera, gl } = useThree();
 
   useEffect(() => {
-    const relocate=(event:Event)=>{sitting.current=null;window.dispatchEvent(new CustomEvent('npc-life:stood'));const p=(event as CustomEvent).detail;position.current.set(p.x,0,p.z);velocity.current.set(0,0);upwardSpeed.current=0;grounded.current=true;keys.current.clear();};
+    const relocate=(event:Event)=>{sitting.current=null;window.dispatchEvent(new CustomEvent('npc-life:stood'));const p=(event as CustomEvent).detail;position.current.set(p.x,0,p.z);Object.assign(physics.current,freshPlayer(p.x,p.z));physicsTime.current=0;velocity.current.set(0,0);upwardSpeed.current=0;grounded.current=true;keys.current.clear();};
     const rest=(event:Event)=>{const p=(event as CustomEvent).detail;if(p){sitting.current={...p,exit:{x:position.current.x,z:position.current.z}};keys.current.clear();velocity.current.set(0,0);}else if(sitting.current){position.current.set(sitting.current.exit.x,0,sitting.current.exit.z);sitting.current=null;window.dispatchEvent(new CustomEvent('npc-life:stood'));}};
     const coffee=()=>{coffeeUntil.current=performance.now()+60000;};
     window.addEventListener('npc-life:rest',rest);window.addEventListener('npc-life:coffee',coffee);
@@ -250,7 +253,7 @@ export function Player({
     const fleet=vehicles.runtime.current;
     const car=fleet.cars.find(c=>c.id===fleet.ownedId);
     if (model.current) model.current.visible=!car;
-    const movementBlocked=(x:number,z:number)=>blocked(x,z)||pedestrianBlocked(x,z,fleet.cars);
+    const movementBlocked=(x:number,z:number)=>blocked(x,z)||pedestrianBlocked(x,z,fleet.cars)||residentBlocked(x,z,position.current.x,position.current.z);
 
     const side = inputLocked || car
       ? 0
@@ -303,105 +306,23 @@ export function Player({
         ) / length * speed
       : 0;
 
-    const response =
-      1 - Math.exp(-(length ? 11 : 15) * dt);
-
-    const v = velocity.current;
-
-    v.x += (targetX - v.x) * response;
-    v.y += (targetZ - v.y) * response;
-
-    if (
-      inputLocked || car ||
-      (!length && v.lengthSq() < 0.0009)
-    ) {
-      v.set(0, 0);
+    const v=velocity.current;
+    const physicsState=physics.current;
+    if(inputLocked||car||sitting.current){physicsState.x=position.current.x;physicsState.z=position.current.z;physicsState.y=position.current.y;physicsState.vx=physicsState.vz=physicsState.vy=0;v.set(0,0);physicsTime.current=0;jumpBuffer.current=0;}
+    else {
+      // Relocation and safe vehicle exits preserve the public event API.
+      if(Math.hypot(physicsState.x-position.current.x,physicsState.z-position.current.z)>1){Object.assign(physicsState,freshPlayer(position.current.x,position.current.z));}
+      physicsTime.current+=Math.min(rawDelta,.25);
+      let jump=jumpBuffer.current>0,consumed=false;
+      while(physicsTime.current+1e-9>=PLAYER_STEP){stepPlayer(physicsState,{x:targetX,z:targetZ,jump,lowGravity:cityEvent==='low-gravity'},PLAYER_STEP,movementBlocked);jump=false;consumed=true;physicsTime.current=Math.max(0,physicsTime.current-PLAYER_STEP);}
+      if(consumed)jumpBuffer.current=0;position.current.set(physicsState.x,physicsState.y,physicsState.z);v.set(physicsState.vx,physicsState.vz);grounded.current=physicsState.grounded;
     }
-
-    // Maintain the existing wall and prop collisions.
-    if (
-      !movementBlocked(
-        position.current.x + v.x * dt,
-        position.current.z
-      )
-    ) {
-      position.current.x += v.x * dt;
-    } else {
-      v.x = 0;
-    }
-
-    if (
-      !movementBlocked(
-        position.current.x,
-        position.current.z + v.y * dt
-      )
-    ) {
-      position.current.z += v.y * dt;
-    } else {
-      v.y = 0;
-    }
-
-    const actualSpeed = v.length();
+    const actualSpeed=v.length();
     living.current.activity={moving:actualSpeed>.2,running:running&&actualSpeed>.2,resting:!!sitting.current&&!car,driving:!!car};
-    updateEngineSound(car?.speed||0,!!car);
+    updateEngineSound(car?.speed||0,!!car,car?.rpm||900);
     if(car&&previousCarSpeed.current>3&&Math.abs(car.speed)<.2)playGameSound('impact');previousCarSpeed.current=Math.abs(car?.speed||0);
-    footstep.current+=actualSpeed*dt;if(!car&&grounded.current&&footstep.current>2){footstep.current=0;playGameSound('step');}
-
-    // Character rotation.
-    if (actualSpeed > 0.15 && actor.current) {
-      const target = Math.atan2(v.x, v.y);
-
-      const diff = Math.atan2(
-        Math.sin(target - actor.current.rotation.y),
-        Math.cos(target - actor.current.rotation.y)
-      );
-
-      actor.current.rotation.y +=
-        diff * (1 - Math.exp(-12 * dt));
-    }
-
-    // Jump buffering and gravity.
-    jumpBuffer.current = Math.max(
-      0,
-      jumpBuffer.current - dt
-    );
-
-    coyote.current = grounded.current
-      ? 0.1
-      : Math.max(0, coyote.current - dt);
-
-    if (
-      !inputLocked && !car &&
-      jumpBuffer.current > 0 &&
-      coyote.current > 0
-    ) {
-      upwardSpeed.current =
-        cityEvent === 'low-gravity'
-          ? 9
-          : 4.8;
-
-      grounded.current = false;
-      coyote.current = 0;
-      jumpBuffer.current = 0;
-    }
-
-    if (!grounded.current) {
-      upwardSpeed.current -=
-        (
-          cityEvent === 'low-gravity'
-            ? 6
-            : 9.81
-        ) * dt;
-
-      position.current.y +=
-        upwardSpeed.current * dt;
-
-      if (position.current.y <= 0) {
-        position.current.y = 0;
-        upwardSpeed.current = 0;
-        grounded.current = true;
-      }
-    }
+    footstep.current+=actualSpeed*dt;if(!car&&grounded.current&&footstep.current>2){footstep.current=0;playGameSound(surfaceAt(position.current.x,position.current.z)==='grass'?'grass-step':surfaceAt(position.current.x,position.current.z)==='gravel'?'gravel-step':'step');}
+    if(actualSpeed>.15&&actor.current){const target=Math.atan2(v.x,v.y),diff=Math.atan2(Math.sin(target-actor.current.rotation.y),Math.cos(target-actor.current.rotation.y));actor.current.rotation.y+=diff*(1-Math.exp(-12*dt));}
 
     // Character walking animation.
     walkBlend.current = THREE.MathUtils.damp(
@@ -478,7 +399,7 @@ export function Player({
       model.current.position.y = THREE.MathUtils.damp(
         model.current.position.y,
         grounded.current
-          ? Math.abs(Math.sin(walkCycle.current)) *
+          ? -physics.current.landed + Math.abs(Math.sin(walkCycle.current)) *
             0.045 *
             walkBlend.current
           : 0,
@@ -522,7 +443,7 @@ export function Player({
     );
 
     const cameraYaw = orbitYaw.current;
-    const pitch = orbitPitch.current;
+    const pitch = car?Math.min(orbitPitch.current,.5):orbitPitch.current;
 
     cameraDirection.current.set(
       Math.sin(cameraYaw) * Math.cos(pitch),
@@ -534,7 +455,7 @@ export function Player({
     const allowed = safeCameraDistance(
       focus.current,
       cameraDirection.current,
-      orbit.current.zoom
+      car?Math.max(orbit.current.zoom,car.model==='bus'?16:12)+Math.min(4,Math.abs(car.speed)*.12):orbit.current.zoom
     );
 
     // Pull in immediately before a wall.
@@ -601,7 +522,7 @@ export function Player({
         <ConsumedProp living={living}/>
         {/* Cosmetic accessories */}
         {equipped !== 'none' && (
-          <group position={[0, 2.95, 0]}>
+          <group position={[0, 2.124, 0]} scale={.72}>
             {equipped === 'cone' && (
               <mesh castShadow>
                 <coneGeometry args={[0.5, 1.25, 5]} />
@@ -731,5 +652,5 @@ export function Player({
 function ConsumedProp({living}:{living:MutableRefObject<LivingRuntime>}) {
   const ref=useRef<THREE.Group>(null);
   useFrame(()=>{if(ref.current)ref.current.visible=!!living.current.consuming;});
-  return <group ref={ref} visible={false} position={[.55,2.05,.5]}><mesh rotation={[0,0,.2]}><cylinderGeometry args={[.12,.09,.3,8]}/><meshStandardMaterial color="#e8c383"/></mesh></group>;
+  return <group ref={ref} visible={false} position={[.4,1.5,.36]}><mesh rotation={[0,0,.2]}><cylinderGeometry args={[.12,.09,.3,8]}/><meshStandardMaterial color="#e8c383"/></mesh></group>;
 }

@@ -1,3 +1,4 @@
+import {useGarage,GarageUI} from './game/Garage';
 import {LivingResidents} from './game/LivingResidents';
 import {environmentAt} from '../shared/livingCity.mjs';
 import {useLivingCity, LivingCityUI} from './game/LivingCity';
@@ -451,6 +452,7 @@ export default function App() {
     wallet.current-=price;setCoins(n=>n-price);return true;
   },setToast);
 
+  const garage=useGarage(player,coins,reputation,life.record.chapters.length,vehicles,(price)=>{if(wallet.current<price)return false;wallet.current-=price;setCoins(n=>n-price);return true;});
   environment.current=city.env;
 
   // Save existing progression without migrating or resetting it.
@@ -1067,6 +1069,7 @@ export default function App() {
       <VehicleHUD vehicles={vehicles} />
       <ResidentLifeUI life={life} />
       <LivingCityUI city={city} player={player} />
+      <GarageUI garage={garage}/>
 
       {/* New Alpha 0.7 interaction layer */}
       <CityEncounters
@@ -1220,6 +1223,8 @@ export default function App() {
           Controls <span>H</span>
         </button>
 
+        <button onClick={()=>store.open('garage')}>Garage <span>U</span></button>
+
         <span className="jobs-counter">
           JOBS COMPLETED{' '}
           <strong>{jobsDone}</strong>
@@ -1288,7 +1293,7 @@ export default function App() {
           <p>
             <kbd>SPACE</kbd> Jump on foot / brake in a car
           </p>
-          <p><kbd>G</kbd> Food shop / free bureau meal · <kbd>O</kbd> Food bag</p>
+          <p><kbd>G</kbd> Food shop / free bureau meal · <kbd>O</kbd> Food bag · <kbd>U</kbd> Garage</p>
           <p><kbd>F</kbd> Talk to street residents · clock gear for needs/graphics settings</p>
           <p><kbd>R</kbd> Enter a parked car / exit when stopped</p>
           <p><kbd>W/S</kbd> Accelerate/reverse · <kbd>A/D</kbd> Steer</p>

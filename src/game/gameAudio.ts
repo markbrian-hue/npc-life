@@ -1,6 +1,6 @@
 
 export type GameSound =
-  | 'eat' | 'drink' | 'thunder'
+  | 'eat' | 'drink' | 'thunder' | 'grass-step' | 'gravel-step'
   | 'step' | 'horn' | 'impact'
   | 'interact'
   | 'talk'
@@ -24,7 +24,7 @@ let sfxGain: GainNode | null=null, ambienceGain: GainNode | null=null;
 let motor: OscillatorNode | null=null, motorGain: GainNode | null=null;
 let sfxVolume=.8, ambienceVolume=.45;
 export function setAudioChannel(channel:'sfx'|'ambience',value:number){const v=Math.max(0,Math.min(1,value));if(channel==='sfx'){sfxVolume=v;if(sfxGain)sfxGain.gain.value=v;}else{ambienceVolume=v;if(ambienceGain)ambienceGain.gain.value=v;}}
-export function updateEngineSound(speed:number,driving:boolean){if(!context||!motor||!motorGain)return;motor.frequency.setTargetAtTime(45+Math.abs(speed)*4,context.currentTime,.15);motorGain.gain.setTargetAtTime(driving?.025+Math.abs(speed)*.001:0,context.currentTime,.12);}
+export function updateEngineSound(speed:number,driving:boolean,rpm=900){if(!context||!motor||!motorGain)return;motor.frequency.setTargetAtTime(35+Math.max(0,rpm)*.025,context.currentTime,.15);motorGain.gain.setTargetAtTime(driving?.025+Math.abs(speed)*.001:0,context.currentTime,.12);}
 
 function tone(
   frequency: number,
@@ -76,6 +76,8 @@ export function playGameSound(sound: GameSound): void {
     case 'eat': tone(140,.09,.06,0,'triangle',80);tone(170,.09,.04,.2,'triangle',100);break;
     case 'drink': tone(420,.22,.035,0,'sine',140);break;
     case 'thunder': tone(48,1.8,.14,.35,'sawtooth',24,true);tone(62,1.4,.07,.55,'triangle',28,true);break;
+    case 'grass-step': tone(75,.065,.015,0,'triangle',45);break;
+    case 'gravel-step': tone(160,.07,.018,0,'sawtooth',80);break;
     case 'step': tone(100,.055,.026,0,'triangle',65); break;
     case 'horn': tone(280,.28,.06,0,'sawtooth'); tone(355,.28,.04,0,'triangle'); break;
     case 'impact': tone(90,.18,.075,0,'triangle',25); break;
