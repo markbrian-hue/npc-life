@@ -1,5 +1,5 @@
 import {EXPLORER_SITES} from './exploration.mjs';
-import {BOROUGH_PARCELS,styleBoroughBuilding} from './boroughPlan.mjs';
+import {BOROUGH_PARCELS,BOROUGH_SIGNAL_CANDIDATES,styleBoroughBuilding} from './boroughPlan.mjs';
 import {BUSINESSES,kioskPosition} from './livingCity.mjs';
 import { placeCandidates, footprint, overlaps, roadOverlap, roadAt, streetFacing, PARKING_BAYS, ACTIVITY_SITES, ACTIVITY_ZONES, ROAD_SEGMENTS, roadBounds, PARK_PATHS } from './cityPlan.mjs';
 export * from './cityPlan.mjs';
@@ -116,6 +116,9 @@ const TREE_CANDIDATES = [
 const protectedSpaces = [...BUILDINGS,...PARKING_BAYS,...PARK_PATHS,...ACTIVITY_ZONES];
 export const TREES = placeCandidates(TREE_CANDIDATES.map(([x,z])=>({x,z,w:4,d:4})),protectedSpaces,{roadClearance:2.5,gap:1}).map(({x,z})=>({x,z}));
 
+export const SIGNAL_POSTS = placeCandidates(BOROUGH_SIGNAL_CANDIDATES,
+ [...BUILDINGS,...PARKING_BAYS,...ACTIVITY_ZONES,...TREES.map(t=>({...t,w:2,d:2}))],
+ {roadClearance:.35,gap:.45});
 export const DISTRICT_COLLIDERS = [
   ...EXPLORER_SITES.map(p=>({x:p.x+1.9,z:p.z-.5,halfX:.08,halfZ:.08})),
   {x:184,z:52,halfX:10,halfZ:.08},
@@ -134,6 +137,7 @@ export const DISTRICT_COLLIDERS = [
 ];
 
 const roadProps = [
+  ...SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:3.4})),
   ...BUSINESSES.map(b=>({...kioskPosition(b),halfX:2.65,halfZ:1.5})),
   ...DISTRICT_COLLIDERS,
   {x:10.5,z:10.5,halfX:.75,halfZ:.75},
@@ -188,6 +192,7 @@ export function validateWorld() {
   for(const b of BUILDINGS){if(roadOverlap(footprint(b),1.8))issues.push('Building overlaps road/sidewalk');}
   for(let i=0;i<BUILDINGS.length;i++)for(let j=i+1;j<BUILDINGS.length;j++)if(overlaps(footprint(BUILDINGS[i]),footprint(BUILDINGS[j]),.2))issues.push('Overlapping buildings');
   for(const t of TREES)if(roadOverlap({...t,w:4,d:4},2)||BUILDINGS.some(b=>overlaps({...t,w:4,d:4},footprint(b),.4)))issues.push('Tree outside planting zone');
+  for(const p of SIGNAL_POSTS)if(roadOverlap(footprint(p),.3)||BUILDINGS.some(b=>overlaps(footprint(p),footprint(b),.1)))issues.push('Signal in road or building');
   if(blocked(SPAWN.x,SPAWN.z)||onRoad(SPAWN.x,SPAWN.z))issues.push('Unsafe spawn');
   for(const p of ACTIVITY_SITES)if(blocked(p.x,p.z))issues.push(`Blocked activity: ${p.id}`);
   return issues;
