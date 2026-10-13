@@ -32,20 +32,25 @@ export const NYC_DISTRICTS=[
 const palette=['#9caeb8','#8a9eaa','#a9afaa','#c1b4a4','#a49b90','#9ba6b7','#b0a79b'];
 const roof=['#4a555c','#515962','#555b5a','#71645f'];
 const blockXs=[-123,-75,-25,25,82,142,191,239];
-export const NYC_BLOCK_CANDIDATES=blockXs.flatMap((x,column)=>
- [-241,-285,-320].flatMap((z,row)=>
-  [-8,8].flatMap((offset,i)=>(row===2?[0]:[-7,7]).map((dz,j)=>{
+export const NYC_BLOCK_CANDIDATES=[];
+for(const [column,x] of blockXs.entries()){
+ for(const [row,z] of [-241,-285,-320].entries()){
+  for(const [i,offset] of [-8,8].entries()){
+   for(const [j,dz] of (row===2?[0]:[-7,7]).entries()){
     const index=column*20+row*5+i*2+j;
     const brooklyn=column>=6,prewar=column<=1,financial=column===5;
-    const kind=brooklyn?'brownstone':prewar?'brownstone':'tower';
-    return {x:x+offset,z:z+dz,w:10.8,d:11.8,
+    const kind=brooklyn||prewar?'brownstone':'tower';
+    NYC_BLOCK_CANDIDATES.push({
+      x:x+offset,z:z+dz,w:10.8,d:11.8,
       h:brooklyn?10+(index%3)*2:prewar?16+(index%4)*3:financial?35+(index%5)*7:28+(index%7)*7,
       color:brooklyn?['#a87968','#b58f7e','#c09c85'][index%3]:palette[index%palette.length],
       roof:roof[index%roof.length],rotation:0,kind,
       borough:brooklyn?'brooklyn':prewar?'uptown':financial?'financial':'theater'
-    };
-  }))
-);
+    });
+   }
+  }
+ }
+}
 // Street crossings line up with the actual road centerlines (never a vehicle spawn pad).
 export const NYC_CROSSINGS = [
  ...[-219,-263,-307].flatMap((z,row)=>[-100,0,50,168,261].map((x,col)=>({
