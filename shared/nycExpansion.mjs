@@ -22,6 +22,7 @@ export const NYC_PUBLIC_SPACES=[
  {id:'east-promenade',name:'East River Promenade',x:285,z:-265,w:12,d:86,kind:'waterfront',color:'#8ca8a1'},
 ];
 export const NYC_DISTRICTS=[
+ {id:'civic',name:'LOWER MANHATTAN',x:15,z:-42,w:155,d:135,color:'#988982'},
  {id:'uptown',name:'UPTOWN',x:-83,z:-308,w:130,d:52,color:'#a89f89'},
  {id:'theater',name:'THEATER DISTRICT',x:25,z:-253,w:130,d:72,color:'#836d9f'},
  {id:'financial',name:'FINANCIAL DISTRICT',x:153,z:-282,w:85,d:96,color:'#66798b'},
