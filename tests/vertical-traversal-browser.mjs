@@ -73,8 +73,25 @@ try{
  assert.ok(urban.plaza&&urban.park,'public districts have real terrain');
  assert.ok(urban.marquees>=4,'larger skyline has original commercial billboards');
  console.log('PASS playable Midtown relocation, actual 3D megacity, river, plaza and skyline');
+ const streetScene=await page.evaluate(async()=>{
+  const url=performance.getEntriesByType('resource').find(r=>r.name.includes('/@react-three_fiber.js?'))?.name;
+  const {_roots}=await import(url);
+  const scene=[..._roots.values()][0].store.getState().scene;
+  return {signals:!!scene.getObjectByName('nyc-street-intersection-signals'),
+   poles:scene.getObjectByName('nyc-signal-poles')?.count||0,
+   uptown:!!scene.getObjectByName('nyc-urban-zone:upper-grid'),
+   oldIsland:!!scene.getObjectByName('fountain-green-island')};
+ });
+ assert.ok(streetScene.signals&&streetScene.poles>=5,'NYC traffic signals are visible 3D objects');
+ assert.ok(streetScene.uptown,'further-north city is actually paved in engine');
+ assert.equal(streetScene.oldIsland,false,'deleted fountain island is not rendered');
+ for(const crossing of [{x:0,z:0},{x:0,z:-432}]){
+  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),crossing);
+  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.5,crossing,{timeout:30000});
+ }
+ console.log('PASS original fountain replaced by accessible Broadway crossing and driveable northern grid');
  assert.deepEqual(errors,[],'no browser runtime exceptions');
- console.log('5 actual-browser city and traversal checks passed');
+ console.log('6 actual-browser city and traversal checks passed');
 }finally{
  await browser?.close();
  await vite.close();
