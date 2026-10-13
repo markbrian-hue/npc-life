@@ -1,3 +1,4 @@
+import {NYC_EXPANSION_ROADS} from './nycExpansion.mjs';
 // Coordinates are meters. Every rendered road, map and placement rule uses this plan.
 export const ROAD_SEGMENTS = [
   { id:'west-avenue', kind:'avenue', axis:'x', x:-65,z:0,length:110,width:8.5 },
@@ -17,6 +18,7 @@ export const ROAD_SEGMENTS = [
   { id:'eastbank-south',kind:'collector',axis:'x',x:142,z:46,length:52,width:8.5 },
   { id:'eastbank-north',kind:'collector',axis:'x',x:142,z:-128,length:52,width:8.5 },
   { id:'bypass-south-link', kind:'collector', axis:'x', x:105,z:46,length:22,width:8.5 },
+  ...NYC_EXPANSION_ROADS,
 ];
 export const ROUND_ROADS = [
   {id:'fountain',x:0,z:0,inner:5.8,outer:12},

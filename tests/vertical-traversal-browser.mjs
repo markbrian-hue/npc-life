@@ -53,8 +53,28 @@ try{
  assert.ok(Math.abs(after.y-ladder.roof)<.12,'stable rooftop support');
  assert.ok(Math.hypot(after.x-before.x,after.z-before.z)<.15,'no unexplained horizontal drift');
  console.log('PASS player stands stably on roof');
+ const destination={x:0,z:-263};
+ await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),destination);
+ await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.5,destination,{timeout:30000});
+ const urban=await page.evaluate(async()=>{
+  const url=performance.getEntriesByType('resource').find(r=>r.name.includes('/@react-three_fiber.js?'))?.name;
+  const {_roots}=await import(url);
+  const scene=[..._roots.values()][0].store.getState().scene;
+  const root=scene.getObjectByName('nyc-expanded-world');
+  let marquees=0;
+  root?.traverse(o=>{if(o.name.startsWith('nyc-marquee:'))marquees++;});
+  return {world:!!root,ground:!!scene.getObjectByName('nyc-urban-ground'),
+   downtown:!!scene.getObjectByName('nyc-lower-manhattan-ground'),
+   river:!!scene.getObjectByName('nyc-east-river'),
+   plaza:!!scene.getObjectByName('nyc-public-space:neon-plaza'),
+   park:!!scene.getObjectByName('nyc-public-space:liberty-park'),marquees};
+ });
+ assert.ok(urban.world&&urban.ground&&urban.downtown&&urban.river,'expanded map actually mounts in R3F');
+ assert.ok(urban.plaza&&urban.park,'public districts have real terrain');
+ assert.ok(urban.marquees>=4,'larger skyline has original commercial billboards');
+ console.log('PASS playable Midtown relocation, actual 3D megacity, river, plaza and skyline');
  assert.deepEqual(errors,[],'no browser runtime exceptions');
- console.log('4 actual-browser city and traversal checks passed');
+ console.log('5 actual-browser city and traversal checks passed');
 }finally{
  await browser?.close();
  await vite.close();

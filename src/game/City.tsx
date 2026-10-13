@@ -1,4 +1,5 @@
 import {StreetDetail} from './StreetDetail';
+import {NYCExpansionWorld} from './NYCExpansionWorld';
 import {RooftopAccess} from './RooftopAccess';
 import {BoroughStreets} from './BoroughStreets';
 import {CityArchitecture} from './CityArchitecture';
@@ -79,6 +80,7 @@ export const City = memo(function City({ caught,quality='medium' }: { caught: nu
 
       <CityInfrastructure />
       <StreetDetail/>
+      <NYCExpansionWorld/>
 
       <CityArchitecture/>
       <RooftopAccess/>

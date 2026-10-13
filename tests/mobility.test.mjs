@@ -23,6 +23,6 @@ test('shared motorcycles enforce exclusive ownership and reject forged local-unl
  const post=async(path,data,token)=>{const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(data)});return {status:r.status,...await r.json()};};
  try{const a=await post('/api/join',{name:'Rider'}),b=await post('/api/join',{name:'Other',code:a.code});await new Promise(r=>setTimeout(r,90));for(const p of [a,b])assert.equal((await post('/api/move',{x:-82,z:-59,y:0,heading:0},p.token)).status,200);
  const entered=await post('/api/vehicle',{action:'enter',id:'club-scooter'},a.token);assert.equal(entered.status,200);assert.equal(entered.cars.find(c=>c.id==='club-scooter').model,'scooter');assert.equal((await post('/api/vehicle',{action:'enter',id:'club-scooter'},b.token)).status,409);
- assert.equal((await post('/api/vehicle',{action:'spawn',model:'hyper',coins:999999,owned:['hyper']},b.token)).status,400);assert.equal(a.cars.length,11);
+ assert.equal((await post('/api/vehicle',{action:'spawn',model:'hyper',coins:999999,owned:['hyper']},b.token)).status,400);assert.equal(a.cars.length,createFleet().length);
  }finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
 });

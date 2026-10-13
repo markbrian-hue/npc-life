@@ -29,6 +29,16 @@ export function styleBoroughBuilding(b,i=0){
   return {...b,kind:'tower',borough:'midtown',h:height,
    color:['#9aafbb','#a9b7b9','#829ba7','#a1a8af'][i%4],roof:'#415661'};
  }
+ // The starter civic square becomes a recognizable lower Manhattan streetscape,
+ // while original footprints, storefront interaction sites and missions remain fixed.
+ if(Math.abs(b.x)<=36&&Math.abs(b.z)<=23){
+  return {...b,kind:'prewar',borough:'civic',h:15+(i%3)*3,
+   color:['#ad8c79','#a99183','#bdafa0','#a88376'][i%4],roof:'#625956'};
+ }
+ if(b.x>=45&&b.x<=76&&Math.abs(b.z)<=29){
+  return {...b,kind:'tower',borough:'civic',h:25+(i%4)*4,
+   color:['#91a6ae','#a4afb1','#9aa4b0'][i%3],roof:'#515d65'};
+ }
  if(b.x>=130&&b.x<=201&&b.z>=-120&&b.z<=58){
   return {...b,kind:'brownstone',borough:'brownstone',
    h:11+(i%3)*2,color:['#b88e7b','#bd9a86','#a67c6e','#c6a18e'][i%4],roof:'#795d54'};

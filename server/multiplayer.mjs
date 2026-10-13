@@ -101,7 +101,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
         }
         if (url.pathname === '/api/move'  && req.method === 'POST') {
           const input = await body(req);
-          if (![input.x, input.y, input.z, input.heading].every(Number.isFinite) || Math.abs(input.x) > WORLD_RADIUS || Math.abs(input.z) > WORLD_RADIUS || input.y < 0 || input.y > 30 || Math.abs(input.heading) > 1000) return reply(res, 400, { error: 'Invalid position.' });
+          if (![input.x, input.y, input.z, input.heading].every(Number.isFinite) || Math.abs(input.x) > WORLD_RADIUS || Math.abs(input.z) > WORLD_RADIUS || input.y < 0 || input.y > 128 || Math.abs(input.heading) > 1000) return reply(res, 400, { error: 'Invalid position.' });
           player.lastSeen = now();
           if (now() - player.lastMove < 70) return reply(res, 429, { error: 'Movement rate exceeded.' });
           // Presence relay only; personal progression is never accepted by this server.
