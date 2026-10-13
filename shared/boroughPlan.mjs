@@ -36,3 +36,23 @@ export function styleBoroughBuilding(b,i=0){
  return b;
 }
 export const boroughAt=(x,z)=>BOROUGHS.find(d=>Math.abs(x-d.x)<d.w/2&&Math.abs(z-d.z)<d.d/2)||null;
+
+// Crossings are authored on the existing connector roads; asphalt and map routing
+// continue to come from cityPlan, so this adds markings, not an overlapping road.
+export const BOROUGH_CROSSINGS=[
+ {id:'neon-west',x:-13,z:-150,axis:'x',width:8.5},
+ {id:'neon-east',x:73,z:-150,axis:'x',width:8.5},
+ {id:'eastbank-north',x:168,z:-66,axis:'z',width:8.5},
+ {id:'eastbank-central',x:168,z:20,axis:'z',width:8.5},
+ {id:'eastbank-market',x:144,z:0,axis:'x',width:8.5}
+];
+export const BOROUGH_SIGNAL_CANDIDATES=BOROUGH_CROSSINGS.flatMap(c=>
+ [-1,1].map((side)=>({
+  id:c.id+':'+side,
+  x:c.x+(c.axis==='z'?side*(c.width/2+2.45):2.8*side),
+  z:c.z+(c.axis==='x'?side*(c.width/2+2.45):2.8*side),
+  w:.35,d:.35,
+  rotation:0,
+  boroughSignal:true
+ }))
+);
