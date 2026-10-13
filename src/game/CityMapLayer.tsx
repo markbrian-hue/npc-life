@@ -1,5 +1,6 @@
 import {memo} from 'react';
 import {BOROUGHS} from '../../shared/boroughPlan.mjs';
+import {NYC_PUBLIC_SPACES,NYC_DISTRICTS,NYC_RIVER} from '../../shared/nycExpansion.mjs';
 import {GARAGES} from '../../shared/vehicleCatalog.mjs';
 import {BUSINESSES} from '../../shared/livingCity.mjs';
 import { ROAD_SEGMENTS, ROUND_ROADS, PARKING_BAYS, PARK_PATHS, ACTIVITY_SITES, BUILDINGS, WORLD_RADIUS, roadBounds } from './world';
@@ -9,6 +10,9 @@ export const CityMapLayer=memo(function CityMapLayer({size,details=false}:{size:
   return <>
     <rect width={size} height={size} fill="#91a27c"/>
     <rect y={s(75)} width={size} height={size-s(75)} fill="#578f9b"/>
+    {rect({x:61.5,z:-271.5,w:434,d:135},'#898f8b','nyc-base')}
+    {rect(NYC_RIVER,'#578f9b','east-river')}
+    {NYC_PUBLIC_SPACES.map(p=>rect(p,p.color,p.id))}
     {rect({x:0,z:83,w:20,d:20},'#a89676','pier')}
     {PARK_PATHS.map((p,i)=>rect(p,'#c6baa0',`path${i}`))}
     {ROAD_SEGMENTS.map(r=>rect(roadBounds(r,2.1),'#b9b5a6',`pave${r.id}`))}
@@ -17,6 +21,7 @@ export const CityMapLayer=memo(function CityMapLayer({size,details=false}:{size:
     {ROUND_ROADS.map(r=><g key={r.id}><circle cx={s(r.x)} cy={s(r.z)} r={r.outer*u} fill="#566663"/><circle cx={s(r.x)} cy={s(r.z)} r={r.inner*u} fill="#91a27c"/></g>)}
     {PARKING_BAYS.map(p=>rect(p,'#b1b6a3',p.id))}
     {BUILDINGS.map((b,i)=><rect key={i} transform={`rotate(${-(b.rotation||0)*180/Math.PI} ${s(b.x)} ${s(b.z)})`} x={s(b.x-b.w/2)} y={s(b.z-b.d/2)} width={b.w*u} height={b.d*u} fill={b.roof} stroke="#d0c5a5" strokeWidth={.7}/>)}
+    {details&&NYC_DISTRICTS.map(d=><text key={d.id} x={s(d.x)} y={s(d.z)} fill="#ffffff" stroke="#1f2934" strokeWidth={2} paintOrder="stroke" fontSize={size/52} textAnchor="middle">{d.name}</text>)}
     {BOROUGHS.map(d=><text key={d.id} x={s(d.x)} y={s(d.z)} fill="#fff6e5" stroke="#253340" strokeWidth={2} paintOrder="stroke" fontWeight={800} fontSize={size/49} textAnchor="middle">{d.name}</text>)}
     <text x={s(-92)} y={s(-113)} fill="#f8efd4" fontSize={size/35} textAnchor="middle">JUNIPER CLOSE</text>
     <text x={s(-44)} y={s(-192)} fill="#f8efd4" fontSize={size/36} textAnchor="middle">NORTHGATE</text>
