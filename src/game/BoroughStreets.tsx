@@ -1,7 +1,7 @@
 import {memo,useRef} from 'react';
 import {useFrame} from '@react-three/fiber';
 import {MeshStandardMaterial,type Group} from 'three';
-import {BUILDINGS} from './world';
+import {BUILDINGS,SIGNAL_POSTS} from './world';
 import {WorldSign} from './DistrictWorld';
 
 // New York-inspired signage is authored around *existing* building faces.
@@ -51,11 +51,26 @@ function BoroughBanner({building,index}:{building:typeof BUILDINGS[number];index
   </mesh>)}
  </group>;
 }
+function CrossingSignal({post,index}:{post:typeof SIGNAL_POSTS[number];index:number}){
+ const stop=useRef<MeshStandardMaterial>(null),walk=useRef<MeshStandardMaterial>(null);
+ useFrame(({clock})=>{
+  const active=Math.sin(clock.elapsedTime*.37+index*.55)>0;
+  if(stop.current)stop.current.emissiveIntensity=active?.08:2.7;
+  if(walk.current)walk.current.emissiveIntensity=active?2.7:.08;
+ });
+ return <group name={'pedestrian-signal:'+post.id} position={[post.x,0,post.z]}>
+  <mesh position={[0,1.55,0]}><cylinderGeometry args={[.07,.09,3.1,6]}/><meshStandardMaterial color="#5d6a6a" metalness={.65} roughness={.44}/></mesh>
+  <mesh position={[0,3.05,0]} castShadow><boxGeometry args={[.46,.73,.32]}/><meshStandardMaterial color="#212b31" roughness={.52}/></mesh>
+  <mesh position={[0,3.2,.165]}><boxGeometry args={[.24,.23,.015]}/><meshStandardMaterial ref={stop} color="#a63f43" emissive="#ff3b40" emissiveIntensity={2.7}/></mesh>
+  <mesh position={[0,2.88,.165]}><boxGeometry args={[.24,.23,.015]}/><meshStandardMaterial ref={walk} color="#479b71" emissive="#54fa95" emissiveIntensity={.08}/></mesh>
+ </group>;
+}
 const towers=BUILDINGS.filter(b=>b.kind==='tower'&&b.h>=24).slice(0,7);
 const rows=BUILDINGS.filter(b=>b.kind==='brownstone').slice(0,9);
 export const BoroughStreets=memo(function BoroughStreets(){
  return <group name="nyc-borough-streetscape">
   {towers.map((building,i)=><SkylineBillboard key={'tower-'+i} building={building} index={i}/>)}
-  {rows.map((building,i)=><BoroughBanner key={'row-'+i} building={building} index={i}/>)}
+  {rows.map((building,i)=><BoroughBanner key={'row-'+i} building={building} index={i}/>)
+  <group name="borough-pedestrian-signals">{SIGNAL_POSTS.map((post,i)=><CrossingSignal key={post.id} post={post} index={i}/>)}</group>}
  </group>;
 });
