@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { CanvasTexture, DoubleSide, NearestFilter, type Group } from 'three';
+import { CanvasTexture, DoubleSide, LinearFilter, SRGBColorSpace, type Group } from 'three';
 import { DISTRICTS, MISSIONS, currentTask, type Campaign } from './campaign';
 import { StreetLamp } from './CityProps';
 
@@ -12,7 +12,7 @@ export function WorldSign({ text, color = '#edbe56', width = 5 }: { text: string
     ctx.strokeStyle = color; ctx.lineWidth = 8; ctx.strokeRect(4, 4, 504, 88);
     ctx.fillStyle = color; ctx.font = 'bold 30px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(text.toUpperCase(), 256, 49, 480);
-    const map = new CanvasTexture(canvas); map.magFilter = NearestFilter; return map;
+    const map = new CanvasTexture(canvas); map.magFilter = LinearFilter; map.colorSpace=SRGBColorSpace; return map;
   }, [text, color]);
   useEffect(() => () => texture.dispose(), [texture]);
   return <mesh><planeGeometry args={[width, width * 96 / 512]} /><meshBasicMaterial map={texture} side={DoubleSide} toneMapped={false} /></mesh>;
@@ -21,6 +21,7 @@ function Block({ at, size, color }: { at: [number, number, number]; size: [numbe
   return <mesh position={at} castShadow receiveShadow><boxGeometry args={size} /><meshStandardMaterial color={color} roughness={0.9} /></mesh>;
 }
 export function StreetBoard({text,width=4,height=2.6,color}:{text:string;width?:number;height?:number;color?:string}) {
+  if(text==='YIELD')return <group><mesh position={[0,1.1,-.035]} castShadow><cylinderGeometry args={[.035,.035,2.2,10]}/><meshStandardMaterial color="#9badaf" metalness={.7} roughness={.4}/></mesh>{[[.55,'#e9e5d9',0],[.49,'#a94035',.008],[.37,'#ece7d9',.016]].map(([r,color,z],i)=><mesh key={i} position={[0,2.18,Number(z)]} rotation={[0,0,-Math.PI/2]}><circleGeometry args={[Number(r),3]}/><meshStandardMaterial color={String(color)} side={DoubleSide} roughness={.6}/></mesh>)}</group>;
   return <>
     {[-1,1].map(side=><Block key={side} at={[side*width*.36,height/2,-.04]} size={[.12,height,.12]} color="#536358"/>)}
     <group position={[0,height,0]}><WorldSign text={text} width={width} color={color}/></group>

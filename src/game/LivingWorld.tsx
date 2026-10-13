@@ -1,3 +1,5 @@
+import {StreetLighting} from './StreetLighting';
+import {Atmosphere} from './Atmosphere';
 import {WeatherDetail} from './WeatherDetail';
 import {useEffect,useMemo,useRef,type MutableRefObject} from 'react';
 import {useFrame,useThree} from '@react-three/fiber';
@@ -25,26 +27,26 @@ export function LivingEnvironment({runtime,quality}:{runtime:MutableRefObject<Li
   return()=>{scene.background=background;scene.fog=fog;materials.current=[];window.removeEventListener('npc-life:position',move);updateWeatherAudio(0,0);};
  },[scene]);
  useFrame((_,raw)=>{
-  const dt=Math.min(raw,.1),e=runtime.current.env,n=e.night;
+  const dt=Math.min(raw,.1),e=runtime.current.env,n=1-MathUtils.smoothstep(e.daylight,0,.18);
   sky.set(PALETTES[e.previous]);weatherColor.set(PALETTES[e.kind]);sky.lerp(weatherColor,e.mix).lerp(nightColor,n*.82);
   const reduced=reducedMotion.current||document.documentElement.classList.contains('npc-reduce-motion');
   if(e.kind==='thunderstorm'&&e.mix>.5){stormAge.current+=dt;if(stormAge.current>nextThunder.current){stormAge.current=0;nextThunder.current=28+(e.cycle%4)*9;if(!reduced)lightning.current=.35;playGameSound('thunder');}}else stormAge.current=0;
   lightning.current=Math.max(0,lightning.current-dt);const flash=lightning.current>0?.25:0;
   (scene.background as Color)?.copy(sky);const fog=scene.fog as Fog;fog.color.copy(sky);
-  const visibility=(k:string)=>k==='fog'?65:k==='heavy-rain'||k==='thunderstorm'?115:190;
-  fog.far=visibility(e.previous)+(visibility(e.kind)-visibility(e.previous))*e.mix;fog.near=fog.far*.38;
+  const visibility=(k:string)=>k==='fog'?75:k==='heavy-rain'||k==='thunderstorm'?170:340;
+  fog.far=visibility(e.previous)+(visibility(e.kind)-visibility(e.previous))*e.mix;fog.near=fog.far*.18;
   const angle=(e.minute-360)/1440*Math.PI*2,x=Math.round(player.current.x*16)/16,z=Math.round(player.current.z*16)/16;
   target.position.set(x,0,z);
-  if(sun.current){sun.current.position.set(x+Math.cos(angle)*40,Math.max(15,Math.sin(angle)*50),z+18);sun.current.intensity=(.25+e.daylight*2.05)*(1-e.rain*.55)+flash*5;sun.current.color.set(e.daylight<.35?'#ffc897':'#ffecd0');}
-  if(hemi.current)hemi.current.intensity=.65+e.daylight*.85+flash;
-  for(const {material,kind,base} of materials.current){if(kind==='window'||kind==='lamp'){material.emissive.set('#fbd893');material.emissiveIntensity=.08+n*(kind==='lamp'?1.5:.55);}if(kind==='road'){material.roughness=.98-e.rain*.65;material.color.copy(base).multiplyScalar(1-e.rain*.18);}}
+  if(sun.current){sun.current.position.set(x+Math.cos(angle)*40,Math.max(15,Math.sin(angle)*50),z+18);sun.current.intensity=(.1+e.daylight*2.65)*(1-e.rain*.8)+flash*5;sun.current.color.set(e.daylight<.35?'#ffd0a2':'#fff2dd');}
+  if(hemi.current)hemi.current.intensity=.16+e.daylight*.38+flash;
+  for(const {material,kind,base} of materials.current){if(kind==='window'||kind==='lamp'){material.emissive.set('#fbd893');material.emissiveIntensity=.08+n*(kind==='lamp'?1.5:.55);}if(kind==='road'){material.roughness=.94-e.rain*.73;material.metalness=e.rain*.18;material.color.copy(base).multiplyScalar(1-e.rain*.18);}}
   audioTick.current+=dt;if(audioTick.current>1){audioTick.current=0;updateWeatherAudio(document.hidden?0:e.rain,n);}
  });
- return <><primitive object={target}/><hemisphereLight ref={hemi} args={['#ffefd0','#657e73',1.5]}/><ambientLight intensity={.25}/>
-  <directionalLight ref={sun} target={target} castShadow={quality!=='low'} position={[25,40,18]} intensity={2.3} shadow-mapSize={[1024,1024]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-bias={-.0002}/>
+ return <><Atmosphere runtime={runtime} quality={quality}/><primitive object={target}/><hemisphereLight ref={hemi} args={['#c1d7ed','#6c695d',.9]}/><ambientLight intensity={.025}/>
+  <directionalLight ref={sun} target={target} castShadow={quality!=='low'} position={[25,40,18]} intensity={2.3} shadow-mapSize={quality==='high'?[2048,2048]:[1024,1024]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-bias={-.00015} shadow-normalBias={.035} shadow-radius={3}/>
   <Rain runtime={runtime} quality={quality}/>
   <WeatherDetail runtime={runtime}/>
-  <NightPools runtime={runtime}/>
+  <NightPools runtime={runtime}/><StreetLighting runtime={runtime} quality={quality}/>
   {[[-12,25],[38,7],[60,5],[-57,-10],[24,58]].map(([x,z],i)=><Puddle key={i} x={x} z={z} runtime={runtime}/>)}
  </>;
 }

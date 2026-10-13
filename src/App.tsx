@@ -1,3 +1,4 @@
+import {CinematicEffects} from './game/CinematicEffects';
 import {useGarage,GarageUI} from './game/Garage';
 import {LivingResidents} from './game/LivingResidents';
 import {environmentAt} from '../shared/livingCity.mjs';
@@ -1027,13 +1028,14 @@ export default function App() {
         dpr={[1, city.view.quality==='high'?1.75:city.view.quality==='low'?1:1.5]}
         camera={{
           position: [9, 10, 13],
-          fov: 60,
+          fov: 55,
           near: 0.1,
-          far: 230,
+          far: 650,
         }}
-        gl={{ antialias: true }}
+        gl={{ antialias: true, toneMappingExposure: .78 }}
       >
         <City caught={quest.caught} />
+        <CinematicEffects quality={city.view.quality}/>
         <LivingEnvironment runtime={city.runtime} quality={city.view.quality} />
         <FoodBusinesses runtime={city.runtime} />
         <LivingResidents runtime={city.runtime} />

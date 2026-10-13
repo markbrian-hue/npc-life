@@ -73,8 +73,8 @@ export function Player({
 
   const orbit = useRef({
     yaw: 0.6,
-    pitch: 0.65,
-    zoom: 13,
+    pitch: 0.24,
+    zoom: 8.5,
   });
 
   const dragging = useRef<number | null>(null);
@@ -141,7 +141,7 @@ export function Player({
       orbit.current.pitch = THREE.MathUtils.clamp(
         orbit.current.pitch -
           event.movementY * 0.0035,
-        0.2,
+        0.12,
         1.3
       );
     };

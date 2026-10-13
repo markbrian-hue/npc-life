@@ -1,3 +1,20 @@
+## Cinematic city art
+
+The latest milestone is on `feat/cinematic-city-art`, built on the verified terrain-responsive suspension branch. It rebuilds the cars with curved bodywork and reflective materials, fixes the asphalt/sidewalk layering, adds textured modular architecture and leaf foliage, and introduces an atmospheric sky, wet-road reflections, real local night lighting and optional AO/bloom. Press **U** to inspect the actual vehicles in the dealership's 3D preview, including locked premium models.
+
+See [completed scope, rendering settings, compatibility and remaining work](docs/cinematic-city-art.md). The city still uses original procedural art; full rigid-body physics and shared personal garages remain further milestones. Existing saves and progression are preserved.
+
+To check out this update from an existing clean clone:
+
+```bash
+git fetch origin
+git switch --track origin/feat/cinematic-city-art
+npm ci
+npm run dev:multi
+```
+
+If that branch already exists locally, use `git switch feat/cinematic-city-art` followed by `git pull --ff-only`. Keep any local changes committed or stashed before switching branches.
+
 ## City Mobility & Visual Foundation
 
 The next milestone is on `feat/city-mobility-and-visual-foundation`, built from Living City. It adds 30 original vehicle designs (including seven motorcycles), a saved dealership/garage, fixed-step vehicle/player movement, class handling, wet-road traction, instanced city facades, street textures and richer weather detail. Press **U** for the garage. Personal collection is solo-only; rooms retain exclusive server-controlled public vehicles and motorcycles.
@@ -108,6 +125,9 @@ npm run build
 npm run test:browser
 npm run test:city
 npm run test:foundation
+npm run test:mobility
+npm run test:suspension
+npm run test:art
 ```
 
 The browser suites require optional Playwright tooling; see [development notes](docs/development.md). Core tests use the existing toolchain. The large Three.js bundle warning remains; software-rendered QA is not a hardware performance benchmark.

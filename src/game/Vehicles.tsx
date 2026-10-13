@@ -2,9 +2,9 @@ import {groundHeight} from '../../shared/playerPhysics.mjs';
 import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound } from './gameAudio';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { MathUtils, type Group } from 'three';
+import { MathUtils, Object3D, type SpotLight, type Group } from 'three';
 import { createFleet, exitPosition, neutralControls, stepTraffic, stepVehicle, vehicleRenderPose, vehicleSpec } from '../../shared/vehicles.mjs';
 import type { Multiplayer } from './Multiplayer';
 import { SPAWN } from './world';
@@ -99,10 +99,16 @@ export function VehiclesWorld({vehicles,environment}:{vehicles:Vehicles;environm
       }
     }else for(const car of r.cars){if(car.traffic)stepTraffic(car,dt,r.cars,[r.player]);else stepVehicle(car,car.id===r.ownedId?r.controls:neutralControls(),dt,r.cars,environment.current.env.rain);}
   },-2);
-  return <>{vehicles.runtime.current.cars.map(car=><MovingCar key={car.id+car.model+car.color+car.rim} id={car.id} vehicles={vehicles} environment={environment}/>)}</>;
+  return <><DrivingLights vehicles={vehicles} environment={environment}/>{vehicles.runtime.current.cars.map(car=><MovingCar key={car.id+car.model+car.color+car.rim} id={car.id} vehicles={vehicles} environment={environment}/>)}</>;
 }
 export function VehicleHUD({vehicles}:{vehicles:Vehicles}) {
   const {status,message}=vehicles;
   if(!status.name&&!status.near&&!message)return null;
   return <aside className="vehicle-hud" role="status">{status.name?<><b>{status.name}</b><strong>{status.speed} <small>KM/H</small></strong><span>W/S accelerate · A/D steer · SPACE brake · V horn · R exit</span></>:<><b>{status.near||'MOTOR POOL'}</b><span>{status.near?'R · Get in and drive':''}</span></>}{message&&<span>{message}</span>}</aside>;
+}
+
+function DrivingLights({vehicles,environment}:{vehicles:Vehicles;environment:MutableRefObject<LivingRuntime>}){
+ const lights=useRef<(SpotLight|null)[]>([]),targets=useMemo(()=>[new Object3D(),new Object3D()],[]);
+ useFrame(()=>{const r=vehicles.runtime.current,c=r.cars.find(c=>c.id===r.ownedId),e=environment.current.env;for(let i=0;i<2;i++){const light=lights.current[i];if(!light)continue;const on=!!c&&(e.daylight<.23||e.rain>.45);light.intensity=on?65:0;light.visible=on;if(c){const v=vehicleSpec(c),f=Math.cos(c.heading),s=Math.sin(c.heading),side=(i?1:-1)*v.width*.31;light.position.set(c.x+f*v.length*.48+s*side,groundHeight(c.x,c.z)+.66,c.z-s*v.length*.48+f*side);targets[i].position.set(c.x+f*22+s*side,.02,c.z-s*22+f*side);}}});
+ return <>{targets.map((t,i)=><group key={i}><primitive object={t}/><spotLight ref={l=>{lights.current[i]=l;}} target={t} color="#e5efff" angle={.48} penumbra={.7} distance={36} decay={2} intensity={0}/></group>)}</>;
 }
