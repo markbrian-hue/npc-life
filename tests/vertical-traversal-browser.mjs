@@ -25,10 +25,17 @@ try{
   const {_roots}=await import(url);
   const root=[..._roots.values()][0];
   const object=root.store.getState().scene.getObjectByName('roof-access-ladders');
-  return {found:!!object,instances:object?.count??0};
+  const borough=root.store.getState().scene.getObjectByName('nyc-borough-streetscape');
+  let billboards=0,streetfronts=0,screens=0;
+  borough?.traverse(o=>{if(o.name.startsWith('borough-billboard:'))billboards++;if(o.name.startsWith('borough-storefront:'))streetfronts++;if(o.userData?.cityScreen)screens++;});
+  return {found:!!object,instances:object?.count??0,borough:!!borough,billboards,streetfronts,screens};
  });
  assert.ok(scene?.found&&scene.instances>20,'instanced ladder geometry present');
  console.log('PASS ladder visuals exist in actual R3F scene');
+ assert.ok(scene.borough,'borough streetscape mounted in existing scene');
+ assert.ok(scene.billboards>=3 && scene.screens>=3,'original Midtown screens mounted');
+ assert.ok(scene.streetfronts>=3,'brownstone storefront details mounted');
+ console.log('PASS Midtown billboards and Eastbank storefronts render as live R3F objects');
  await page.keyboard.down('e');
  try{
   await page.waitForFunction(p=>window.__npcPosition.y>p.roof-.15,ladder,{timeout:90000});
@@ -47,7 +54,7 @@ try{
  assert.ok(Math.hypot(after.x-before.x,after.z-before.z)<.15,'no unexplained horizontal drift');
  console.log('PASS player stands stably on roof');
  assert.deepEqual(errors,[],'no browser runtime exceptions');
- console.log('3 actual-browser traversal checks passed');
+ console.log('4 actual-browser city and traversal checks passed');
 }finally{
  await browser?.close();
  await vite.close();
