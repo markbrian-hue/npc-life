@@ -65,5 +65,8 @@ export const NYC_STREET_SIGNS=[
  {x:168,z:-219,name:'EAST RIVER DRIVE'},
  {x:261,z:-307,name:'BROOKLYN ROW'},
 ];
+export const NYC_SIGN_POST_CANDIDATES=NYC_STREET_SIGNS.map((s,i)=>({
+ id:'nyc-wayfinding-'+i,x:s.x+7.4,z:s.z+7.4,w:.32,d:.32,rotation:0,name:s.name
+}));
 export const NYC_RIVER={x:318,z:-266,w:44,d:148};
 export function inNYCExpansion(x,z){return z<=-205&&z>=-340&&x>=-155&&x<=290;}
