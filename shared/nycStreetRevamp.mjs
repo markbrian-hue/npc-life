@@ -81,7 +81,7 @@ export function generateStreetInfill(roads){
    candidates.push({x,z,w:r.axis==='z'?9.5:11,d:r.axis==='z'?12:9.5,
     h:kind==='brownstone'?10+index%5*1.7:kind==='tower'?23+index%8*4:13+index%6*2.8,
     kind,color:facade[index%facade.length],roof:'#505c61',rotation:0,
-    borough:west?'west-end':east?'eastbank':office?'midtown':'civic'});
+    borough:west?'west-end':east?'eastbank':office?'midtown':'civic',source:'street-infill'});
   }
  }
  return candidates;
