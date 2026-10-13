@@ -1,3 +1,4 @@
+import {jobAvailable} from './livingCity.mjs';
 import { CAREER_DISTRICTS, CAREER_CHAPTERS, DAILY_BULLETIN, freshBulletin, currentBulletin, careerDayStamp } from './career.mjs';
 export const LIFE_KEY='npc-life:resident-life-v1';
 export const UPGRADES=[
@@ -27,6 +28,15 @@ JOBS.push(
   [stop(6,22,'Collect inspection forms'),stop(-44,-8,'Inspect park sidewalk'),stop(21,6,'Inspect bus stop'),stop(6,22,'Submit review')],
   [stop(6,22,'Collect inspection forms'),stop(57,6,'Inspect market sidewalk'),stop(8,-82,'Inspect depot sidewalk'),stop(6,22,'Submit review')]
  ]}
+);
+// Connected living-city assignments preserve the existing progression and rewards.
+JOBS.push(
+ {id:'barista',title:'Coffee Shop Employee',subtitle:'Walk to Last Chance Coffee, read three customer tickets, and serve the right drinks.',coins:25,rep:8,minimum:0,licence:false,seconds:180,stops:[stop(57,6,'Serve customers · T at café counter')]},
+ {id:'coffee-delivery',title:'Bean There, Delivered That',subtitle:'Pick up real café cargo, then deliver to the park. The cup has places to be.',coins:35,rep:10,minimum:0,licence:false,seconds:180,stops:[stop(57,6,'Collect coffee order from Beanjamin'),stop(-44,6,'Hand coffee to the park attendant')]},
+ {id:'food-courier',title:'Meals on Questionable Wheels',subtitle:'Patty needs a courier. Dispatch needs breakfast. You need coins.',coins:50,rep:14,minimum:15,licence:false,seconds:240,stops:[stop(36,6,'Pick up diner meals'),stop(8,-82,'Deliver to hungry dispatch workers')]},
+ {id:'rain-delivery',title:'Rainy Day Hero (Mostly Damp)',subtitle:'Rain-only café delivery. Extra pay for soggy shoes. Finish even if rain clears.',coins:65,rep:18,minimum:25,licence:false,seconds:240,weather:true,stops:[stop(57,6,'Collect waterproof coffee order'),stop(6,68,'Deliver to dock staff')]},
+ {id:'rain-cleaner',title:'Department of Puddle Affairs',subtitle:'Rain-only street cleanup. Collect storm debris and recycle it.',coins:55,rep:15,minimum:10,licence:false,seconds:0,weather:true,stops:[stop(8,-82,'Collect cleanup kit'),stop(36,6,'Clear market debris'),stop(25,58,'Clear dock debris'),stop(8,-82,'Return debris for recycling')]},
+ {id:'morning-paper',title:'Morning News Nobody Requested',subtitle:'Available 05:00–11:00. Deliver the bulletin to Juniper residents.',coins:45,rep:12,minimum:0,licence:false,seconds:0,hours:[5,11],stops:[stop(6,22,'Collect morning newspapers'),stop(-82,-71,'Deliver Motor Club paper'),stop(-92,-77,'Deliver residential papers')]}
 );
 export function shiftStops(job,active){return job.routes?.[active?.variant||0]||job.stops;}
 
@@ -59,8 +69,10 @@ export function validateLife(value){
 }
 export function loadLife(){try{return validateLife(JSON.parse(localStorage.getItem(LIFE_KEY)||'null'));}catch{return freshLife();}}
 export function lifeAchievements(s){const total=Object.values(s.completed).reduce((a,b)=>a+b,0);return LIFE_ACHIEVEMENTS.filter(a=>({first:total>=1,regular:total>=10,bench:s.benches.length>=3,court:s.wins>0,secret:s.secret})[a.id]);}
-export function canStart(job,rep,state){return rep>=job.minimum&&(!job.licence||state.upgrades.includes('club'));}
-export function startShift(id,rep,state,now){const job=JOBS.find(j=>j.id===id);if(!job||!canStart(job,rep,state))return null;return {id,stage:0,variant:job.routes?(state.completed[id]||0)%job.routes.length:0,started:now,deadline:job.seconds?now+job.seconds*1000:0};}
+/** @param {ReturnType<import('./livingCity.mjs').environmentAt>|null} environment */
+export function canStart(job,rep,state,environment=null){return (!environment||jobAvailable(job,environment))&&rep>=job.minimum&&(!job.licence||state.upgrades.includes('club'));}
+/** @param {ReturnType<import('./livingCity.mjs').environmentAt>|null} environment */
+export function startShift(id,rep,state,now,environment=null){const job=JOBS.find(j=>j.id===id);if(!job||!canStart(job,rep,state,environment))return null;return {id,stage:0,variant:job.routes?(state.completed[id]||0)%job.routes.length:0,started:now,deadline:job.seconds?now+job.seconds*1000:0};}
 export function advanceShift(active,position,{driving=false,speed=0,now=0}={}){
   if(!active)return {active:null,status:'idle'};
   const job=JOBS.find(j=>j.id===active.id),point=job&&shiftStops(job,active)[active.stage];
@@ -71,4 +83,4 @@ export function advanceShift(active,position,{driving=false,speed=0,now=0}={}){
   if(!point.drive&&driving)return {active,status:'on-foot'};
   return active.stage+1===shiftStops(job,active).length?{active:null,status:'complete'}:{active:{...active,stage:active.stage+1},status:'advanced'};
 }
-export function shiftReward(id,state){const j=JOBS.find(j=>j.id===id);return {coins:j.coins+(state.upgrades.includes('bag')&&['milk','courier'].includes(id)?10:0),rep:j.rep};}
+export function shiftReward(id,state){const j=JOBS.find(j=>j.id===id);return {coins:j.coins+(state.upgrades.includes('bag')&&['milk','courier','coffee-delivery','food-courier','rain-delivery','lunch'].includes(id)?10:0),rep:j.rep};}

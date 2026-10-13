@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { ROAD_SEGMENTS, ROUND_ROADS, PARKING_BAYS, PARK_PATHS, WORLD_RADIUS, roadBounds, inBox } from './world';
 import { StreetBoard } from './DistrictWorld';
 function Surface({x,z,w,d,y,color}:{x:number;z:number;w:number;d:number;y:number;color:string}) {
-  return <mesh receiveShadow position={[x,y,z]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[w,d]}/><meshStandardMaterial color={color} roughness={.98}/></mesh>;
+  return <mesh userData={{environment:color==='#626b69'||color==='#4f595d'?'road':''}} receiveShadow position={[x,y,z]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[w,d]}/><meshStandardMaterial color={color} roughness={.98}/></mesh>;
 }
 export const CityInfrastructure=memo(function CityInfrastructure(){
   return <>

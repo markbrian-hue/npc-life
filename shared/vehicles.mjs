@@ -18,7 +18,7 @@ export function exitPosition(car, fleet) {
   return null;
 }
 /** Bicycle steering, traction-dependent speed, braking before reversing; server and solo use the same integrator. */
-export function stepVehicle(car, input, seconds, fleet = []) {
+export function stepVehicle(car, input, seconds, fleet = [], wetness = 0) {
   if(Math.abs(car.speed)<.001 && !input.throttle && !input.steer){car.speed=0;car.braking=!!input.brake;return car;}
   let remaining=Math.min(Math.max(seconds,0),.25);
   while(remaining>1e-7) {
@@ -28,10 +28,10 @@ export function stepVehicle(car, input, seconds, fleet = []) {
     car.steer += (steer*.48/(1+Math.abs(car.speed)*.045)-car.steer)*(1-Math.exp(-9*dt));
     car.braking=!!input.brake || throttle*car.speed<-.2;
     const resistance=.65 + Math.abs(car.speed)*.035;
-    const deceleration=car.braking ? 13 : resistance;
+    const deceleration=car.braking ? 13*(1-Math.min(1,Math.max(0,wetness))*.1) : resistance;
     if (Math.abs(car.speed)>0) car.speed=Math.sign(car.speed)*Math.max(0,Math.abs(car.speed)-deceleration*dt);
     if (!car.braking) car.speed += throttle*(throttle>0?5.2:3.1)*dt;
-    const limit=onRoad(car.x,car.z)?23:7;
+    const limit=onRoad(car.x,car.z)?23*(1-Math.min(1,Math.max(0,wetness))*.08):7;
     car.speed=Math.max(-5.5, Math.min(limit,car.speed));
     const heading=car.heading + car.speed/2.78*Math.tan(car.steer)*dt;
     const next={...car,heading,x:car.x+Math.cos(heading)*car.speed*dt,z:car.z-Math.sin(heading)*car.speed*dt};

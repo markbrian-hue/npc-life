@@ -1,3 +1,5 @@
+import type {LivingRuntime} from './LivingCity';
+import type {MutableRefObject} from 'react';
 import { playGameSound, updateEngineSound } from './gameAudio';
 import type { Vehicles } from './Vehicles';
 import { pedestrianBlocked } from '../../shared/vehicles.mjs';
@@ -21,6 +23,7 @@ export type CityEvent =
   | 'duck-invasion';
 
 type Props = {
+  living: MutableRefObject<LivingRuntime>;
   vehicles: Vehicles;
   onMove: (position: PlayerLocation) => void;
   equipped: string;
@@ -31,6 +34,7 @@ type Props = {
 };
 
 export function Player({
+  living,
   onMove,
   vehicles,
   equipped,
@@ -277,7 +281,10 @@ export function Player({
         pressed.has('ShiftRight')
       );
 
-    const speed = running ? (performance.now()<coffeeUntil.current ? 10.6 : 9.2) : 5.6;
+    const caffeinated=living.current.record.buff>0;
+    const tired=living.current.record.needs.energy<15;
+    const hungry=living.current.record.needs.hunger<20;
+    const speed = running ? (tired?6.4:caffeinated?10.6:9.2)*(hungry?.94:1) : 5.6;
     const length = Math.hypot(side, forward);
     const yaw = orbit.current.yaw;
 
@@ -335,6 +342,7 @@ export function Player({
     }
 
     const actualSpeed = v.length();
+    living.current.activity={moving:actualSpeed>.2,running:running&&actualSpeed>.2,resting:!!sitting.current&&!car};
     updateEngineSound(car?.speed||0,!!car);
     if(car&&previousCarSpeed.current>3&&Math.abs(car.speed)<.2)playGameSound('impact');previousCarSpeed.current=Math.abs(car?.speed||0);
     footstep.current+=actualSpeed*dt;if(!car&&grounded.current&&footstep.current>2){footstep.current=0;playGameSound('step');}
@@ -450,7 +458,7 @@ export function Player({
     if (rightArm.current) {
       rightArm.current.rotation.x = THREE.MathUtils.damp(
         rightArm.current.rotation.x,
-        emote ? -0.35 : swing,
+        living.current.consuming ? -1.9 : emote ? -0.35 : swing,
         12,
         dt
       );
@@ -590,6 +598,7 @@ export function Player({
       <group ref={model}>
         <Character shirt={shirtColor} leftArmRef={leftArm} rightArmRef={rightArm} leftLegRef={leftLeg} rightLegRef={rightLeg} />
 
+        <ConsumedProp living={living}/>
         {/* Cosmetic accessories */}
         {equipped !== 'none' && (
           <group position={[0, 2.95, 0]}>
@@ -717,4 +726,10 @@ export function Player({
       </group>
     </group>
   );
+}
+
+function ConsumedProp({living}:{living:MutableRefObject<LivingRuntime>}) {
+  const ref=useRef<THREE.Group>(null);
+  useFrame(()=>{if(ref.current)ref.current.visible=!!living.current.consuming;});
+  return <group ref={ref} visible={false} position={[.55,2.05,.5]}><mesh rotation={[0,0,.2]}><cylinderGeometry args={[.12,.09,.3,8]}/><meshStandardMaterial color="#e8c383"/></mesh></group>;
 }

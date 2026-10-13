@@ -1,4 +1,5 @@
 export type MenuId =
+  | 'barista' | 'food-shop' | 'food-bag' | 'living-settings'
   | 'resident-phone' | 'basketball' | 'city-journal' | 'multiplayer' | 'controls' | 'welcome' | 'release' | 'shop' | 'marty' | 'encounter'
   | 'wardrobe' | 'achievements' | 'daily' | 'pigeon-panic' | 'work-dodge';
 

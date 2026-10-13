@@ -1,3 +1,4 @@
+import {BUSINESSES,kioskPosition} from '../../shared/livingCity.mjs';
 
 import { BUILDINGS } from './world';
 
@@ -20,6 +21,7 @@ const PADDING = 0.30;
 
 // Create collision boxes once instead of every frame.
 const CAMERA_STRUCTURES = [
+  ...BUSINESSES.map(b=>({...kioskPosition(b),w:5.4,d:2.7,h:3.2})),
   ...BUILDINGS.map(b => ({...b, w: Math.abs(Math.cos(b.rotation || 0))*b.w + Math.abs(Math.sin(b.rotation || 0))*b.d, d: Math.abs(Math.sin(b.rotation || 0))*b.w + Math.abs(Math.cos(b.rotation || 0))*b.d})),
   ...[48, 60, 72].map(x => ({ x, z: 10, w: 5.4, d: 3.4, h: 3.8 })),
   ...[16, 22, 28].map(x => ({ x, z: -82, w: 3, d: 3, h: 4.8 })),

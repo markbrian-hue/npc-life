@@ -107,7 +107,7 @@ function Building({
               />
             </mesh>
 
-            <mesh position={[0, 0, 0.075]}>
+            <mesh userData={{environment:'window'}} position={[0, 0, 0.075]}>
               <boxGeometry args={[1.65, 1.47, 0.035]} />
               <meshStandardMaterial
                 color={index % 2 ? '#8caab4' : '#97bac5'}
@@ -192,41 +192,10 @@ function GaryNPC() {
   );
 }
 
-function LocalSun() {
-  const light = useRef<DirectionalLight>(null);
-  const target = useMemo(() => new Object3D(), []);
-  const player = useRef({ x: 0, z: 0 });
-  useEffect(() => {
-    const update = (event: Event) => { player.current = (event as CustomEvent<{ x: number; z: number }>).detail; };
-    window.addEventListener('npc-life:position', update);
-    return () => window.removeEventListener('npc-life:position', update);
-  }, []);
-  useFrame(() => {
-    // Quantize the local shadow camera: sharper nearby shadows without rendering
-    // every distant neighborhood into a giant shadow map each frame.
-    const x = Math.round(player.current.x * 16) / 16;
-    const z = Math.round(player.current.z * 16) / 16;
-    target.position.set(x, 0, z);
-    light.current?.position.set(x + 25, 40, z + 18);
-  });
-  return <>
-    <primitive object={target} />
-    <directionalLight ref={light} target={target} position={[25, 40, 18]} color="#ffe2b1" intensity={2.3}
-      castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-32} shadow-camera-right={32}
-      shadow-camera-top={32} shadow-camera-bottom={-32} shadow-bias={-.0002} />
-  </>;
-}
-
 export const City = memo(function City({ caught }: { caught: number[] }) {
   return (
     <>
-      <color attach="background" args={['#c6d6c8']} />
-      <fog attach="fog" args={['#c6d6c8', 85, 185]} />
 
-      <hemisphereLight args={['#ffefd0', '#677e70', 1.5]} />
-      <ambientLight intensity={0.35} />
-
-      <LocalSun />
 
       <CityInfrastructure />
 

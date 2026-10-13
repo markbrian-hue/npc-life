@@ -1,5 +1,6 @@
 
 export type GameSound =
+  | 'eat' | 'drink' | 'thunder'
   | 'step' | 'horn' | 'impact'
   | 'interact'
   | 'talk'
@@ -13,6 +14,9 @@ export type GameSound =
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
 let noiseSource: AudioBufferSourceNode | null = null;
+let rainGain: GainNode | null=null;
+let weatherNight=0;
+export function updateWeatherAudio(rain:number,night:number){weatherNight=night;if(context&&rainGain)rainGain.gain.setTargetAtTime(rain*.28,context.currentTime,.8);}
 let birdTimer: number | null = null;
 let enabled = false;
 let volume = 0.75;
@@ -69,6 +73,9 @@ export function playGameSound(sound: GameSound): void {
   if (!enabled || context?.state !== 'running') return;
 
   switch (sound) {
+    case 'eat': tone(140,.09,.06,0,'triangle',80);tone(170,.09,.04,.2,'triangle',100);break;
+    case 'drink': tone(420,.22,.035,0,'sine',140);break;
+    case 'thunder': tone(48,1.8,.14,.35,'sawtooth',24,true);tone(62,1.4,.07,.55,'triangle',28,true);break;
     case 'step': tone(100,.055,.026,0,'triangle',65); break;
     case 'horn': tone(280,.28,.06,0,'sawtooth'); tone(355,.28,.04,0,'triangle'); break;
     case 'impact': tone(90,.18,.075,0,'triangle',25); break;
@@ -117,6 +124,7 @@ export function playGameSound(sound: GameSound): void {
 function birdChirp(): void {
   if (!enabled || context?.state !== 'running') return;
 
+  if(weatherNight>.8){tone(2200,.045,.008,0,'sine',1800,true);return;}
   tone(1160, 0.12, 0.03, 0, 'sine', 1750,true);
   tone(1420, 0.115, 0.025, 0.16, 'sine', 1880,true);
 }
@@ -155,6 +163,8 @@ function beginAmbience(
   highpass.connect(lowpass);
   lowpass.connect(windGain);
   windGain.connect(destination);
+  const rainFilter=ctx.createBiquadFilter();rainFilter.type='lowpass';rainFilter.frequency.value=4500;
+  rainGain=ctx.createGain();rainGain.gain.value=0;source.connect(rainFilter);rainFilter.connect(rainGain);rainGain.connect(destination);
 
   source.start();
   noiseSource = source;
@@ -216,6 +226,7 @@ export async function stopGameAudio(): Promise<void> {
     noiseSource = null;
   }
 
+  rainGain?.disconnect();rainGain=null;
   motor?.stop();motor?.disconnect();motorGain?.disconnect();motor=null;motorGain=null;sfxGain=null;ambienceGain=null;
   const old = context;
   context = null;

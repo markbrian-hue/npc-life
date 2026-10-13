@@ -1,3 +1,5 @@
+import type {MutableRefObject} from 'react';
+import type {LivingRuntime} from './LivingCity';
 import { citizenPositions } from './citizenPositions';
 import { Character } from './Character';
 
@@ -57,10 +59,12 @@ function Citizen({
   npc,
   player,
   reputation,
+  environment,
 }: {
   npc: StreetNpc;
   player: PlayerLocation;
   reputation: number;
+  environment:MutableRefObject<LivingRuntime>;
 }) {
   const root = useRef<THREE.Group>(null);
   const body = useRef<THREE.Group>(null);
@@ -74,6 +78,7 @@ function Citizen({
   const pauseTimer = useRef(0.4);
   const walkClock = useRef(0);
   const movingBlend = useRef(0);
+  const umbrella=useRef<THREE.Group>(null);
   useEffect(()=>()=>{citizenPositions.delete(npc.id);},[npc.id]);
 
   useFrame(({ clock }, rawDelta) => {
@@ -82,6 +87,7 @@ function Citizen({
     if (!actor) return;
 
     const dt = Math.min(rawDelta, 0.05);
+    if(umbrella.current)umbrella.current.visible=environment.current.env.rain>.25;
 
     const dx = player.x - actor.position.x;
     const dz = player.z - actor.position.z;
@@ -92,6 +98,9 @@ function Citizen({
     const watching = playerDistance < 3.8;
 
     const path = ROUTES[npc.id];
+    const env=environment.current.env;
+    // Residents keep their identity and encounter routes, but settle at night.
+    if(env.minute<360||env.minute>1320)pauseTimer.current=Math.max(pauseTimer.current,2);
 
     let walking = false;
     let intendedYaw = actor.rotation.y;
@@ -123,7 +132,7 @@ function Citizen({
       } else {
         const amount = Math.min(
           distance,
-          1.22 * dt
+          (env.rain>.3?1.65:1.22) * dt
         );
 
         const mx = tx / distance;
@@ -241,6 +250,7 @@ function Citizen({
     <group ref={root} position={[npc.x, 0, npc.z]}>
       <group ref={body}>
         <Character shirt={npc.shirt} hair={npc.hair} pants={npc.pants} gender={npc.id === 'gus' ? 'man' : 'woman'} skin={npc.id === 'nia' ? '#ae7959' : '#dbad88'} style={npc.id === 'dot' ? 2 : 1} leftArmRef={leftArm} rightArmRef={rightArm} leftLegRef={leftLeg} rightLegRef={rightLeg} />
+        <group ref={umbrella} visible={false} position={[0,3.2,0]}><mesh><coneGeometry args={[1.1,.45,8]}/><meshStandardMaterial color={npc.shirt}/></mesh><mesh position={[.3,-.75,0]}><cylinderGeometry args={[.025,.025,1.5,6]}/><meshStandardMaterial color="#e8d7a7"/></mesh></group>
         {/* Interaction marker */}
         <mesh
           position={[0, 3.1, 0]}
@@ -261,9 +271,11 @@ function Citizen({
 export function ReactiveCitizens({
   player,
   reputation,
+  environment,
 }: {
   player: PlayerLocation;
   reputation: number;
+  environment:MutableRefObject<LivingRuntime>;
 }) {
   return (
     <>
@@ -273,6 +285,7 @@ export function ReactiveCitizens({
           npc={npc}
           player={player}
           reputation={reputation}
+          environment={environment}
         />
       ))}
     </>

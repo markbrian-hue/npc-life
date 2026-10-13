@@ -94,7 +94,7 @@ export function CarModel({ color = '#ba6660', runtime }: { color?: string; runti
           ))}
 
           {/* Headlights */}
-          <mesh position={[2.105, 0.73, side * 0.6]}>
+          <mesh userData={{environment:'lamp'}} position={[2.105, 0.73, side * 0.6]}>
             <boxGeometry args={[0.035, 0.2, 0.43]} />
             <meshStandardMaterial
               color="#fff0c7"
@@ -194,7 +194,7 @@ export function StreetLamp({
         <meshStandardMaterial color="#3f4c52" />
       </mesh>
 
-      <mesh position={[0.81, 4.8, 0]}>
+      <mesh userData={{environment:'lamp'}} position={[0.81, 4.8, 0]}>
         <boxGeometry args={[0.45, 0.14, 0.4]} />
         <meshStandardMaterial
           color="#fff2c9"
