@@ -11,10 +11,10 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:800}});
  page.setDefaultTimeout(60000);
  page.on('pageerror',e=>errors.push(e.message));
- page.addInitScript(()=>{window.__npcPosition={x:0,z:0,y:0};window.addEventListener('npc-life:position',e=>{window.__npcPosition=e.detail;});});
+ await page.addInitScript(()=>{window.__npcPosition={x:0,z:0,y:0};window.addEventListener('npc-life:position',e=>{window.__npcPosition=e.detail;});});
  await page.goto('http://127.0.0.1:5201');
  await page.getByRole('button',{name:'Skip, I live here already'}).click();
- await page.waitForFunction(()=>window.__npcPosition.x!==0);
+ await page.waitForFunction(()=>Number.isFinite(window.__npcPosition?.x)&&window.__npcPosition.x!==0);
  const ladder=ROOFTOP_LADDERS[0];
  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:{x:p.x,z:p.z}})),ladder);
  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.25,ladder);
