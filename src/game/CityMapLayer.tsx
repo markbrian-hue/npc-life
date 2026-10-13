@@ -10,6 +10,7 @@ export const CityMapLayer=memo(function CityMapLayer({size,details=false}:{size:
   return <>
     <rect width={size} height={size} fill="#91a27c"/>
     <rect y={s(75)} width={size} height={size-s(75)} fill="#578f9b"/>
+    {rect({x:20,z:-32,w:165,d:150},'#898f8b','nyc-civic')}
     {rect({x:61.5,z:-271.5,w:434,d:135},'#898f8b','nyc-base')}
     {rect(NYC_RIVER,'#578f9b','east-river')}
     {NYC_PUBLIC_SPACES.map(p=>rect(p,p.color,p.id))}
