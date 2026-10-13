@@ -26,7 +26,7 @@ export const CityMapLayer=memo(function CityMapLayer({size,details=false}:{size:
     {BUILDINGS.map((b,i)=><rect key={i} transform={`rotate(${-(b.rotation||0)*180/Math.PI} ${s(b.x)} ${s(b.z)})`} x={s(b.x-b.w/2)} y={s(b.z-b.d/2)} width={b.w*u} height={b.d*u} fill={b.roof} stroke="#d0c5a5" strokeWidth={.7}/>)}
     {details&&NYC_DISTRICTS.map(d=><text key={d.id} x={s(d.x)} y={s(d.z)} fill="#ffffff" stroke="#1f2934" strokeWidth={2} paintOrder="stroke" fontSize={size/52} textAnchor="middle">{d.name}</text>)}
     {BOROUGHS.map(d=><text key={d.id} x={s(d.x)} y={s(d.z)} fill="#fff6e5" stroke="#253340" strokeWidth={2} paintOrder="stroke" fontWeight={800} fontSize={size/49} textAnchor="middle">{d.name}</text>)}
-    <text x={s(-92)} y={s(-113)} fill="#f8efd4" fontSize={size/35} textAnchor="middle">JUNIPER CLOSE</text>
+    <text x={s(-92)} y={s(-113)} fill="#f8efd4" fontSize={size/35} textAnchor="middle">BROOKLYN COURT</text>
     <text x={s(-44)} y={s(-192)} fill="#f8efd4" fontSize={size/36} textAnchor="middle">NORTHGATE</text>
     <text x={s(162)} y={s(-174)} fill="#f8efd4" fontSize={size/36} textAnchor="middle">EASTBANK</text>
     {GARAGES.map(g=><g key={g.id}><rect x={s(g.x)-3} y={s(g.z)-3} width={6} height={6} fill="#a9d8ad"/><title>{g.name} · U dealership / collection</title></g>)}
