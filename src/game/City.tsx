@@ -70,7 +70,7 @@ function GaryNPC() {
   );
 }
 
-export const City = memo(function City({ caught }: { caught: number[] }) {
+export const City = memo(function City({ caught,quality='medium' }: { caught: number[];quality?:string }) {
   return (
     <>
 
@@ -80,7 +80,7 @@ export const City = memo(function City({ caught }: { caught: number[] }) {
 
       <CityArchitecture/>
 
-      <CityTrees />
+      <CityTrees quality={quality}/>
 
       {BENCHES.map((bench) => (
         <Bench

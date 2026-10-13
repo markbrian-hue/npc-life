@@ -1,3 +1,4 @@
+import {EXPLORATION_KEY,validateExploration} from '../../shared/exploration.mjs';
 import {GARAGE_KEY,validateGarage} from '../../shared/vehicleCatalog.mjs';
 import { LIVING_KEY, validateLiving } from '../../shared/livingCity.mjs';
 import { LIFE_KEY, validateLife } from '../../shared/residentLife.mjs';
@@ -10,6 +11,7 @@ import { STREET_NPCS } from './alpha7';
 import { DAILY_CHALLENGES } from './alpha6';
 
 export const RELEASE_KEYS = [
+  EXPLORATION_KEY,
   GARAGE_KEY,
   LIVING_KEY,
   LIFE_KEY,
@@ -217,6 +219,7 @@ export function exportSave(): void {
 }
 
 function validateValue(key: string, raw: string): string {
+  if(key===EXPLORATION_KEY) return JSON.stringify(validateExploration(JSON.parse(raw)));
   if(key===GARAGE_KEY) return JSON.stringify(validateGarage(JSON.parse(raw)));
   if(key===LIVING_KEY) return JSON.stringify(validateLiving(JSON.parse(raw)));
   if(key===LIFE_KEY) return JSON.stringify(validateLife(JSON.parse(raw)));

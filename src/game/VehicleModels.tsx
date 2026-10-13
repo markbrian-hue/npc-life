@@ -17,7 +17,7 @@ function Wheel({x,z,r,steered,motion,rim,widthScale=1,index=0,bike=false}:{x:num
 }
 export const VehicleModel=memo(function VehicleModel({model,color,rim='alloy',motion,environment}:{model:string;color:string;rim?:string;motion:()=>Motion;environment:MutableRefObject<LivingRuntime>}){
  const v=VEHICLE_BY_ID[model]||VEHICLE_BY_ID.sedan,root=useRef<Group>(null),near=useRef<Group>(null),far=useRef<Group>(null),world=useMemo(()=>new Vector3(),[]);
- useFrame(({camera})=>{if(!root.current||!near.current||!far.current)return;root.current.getWorldPosition(world);const close=camera.position.distanceToSquared(world)<55*55;near.current.visible=close;far.current.visible=!close;});
+ useFrame(({camera})=>{if(!root.current||!near.current||!far.current)return;root.current.getWorldPosition(world);const close=camera.position.distanceToSquared(world)<38*38;near.current.visible=close;far.current.visible=!close;});
  useEffect(()=>{const group=root.current;return()=>{const mats=new Set<MeshStandardMaterial>();group?.traverse(o=>{const m=(o as import('three').Mesh).material;if(m)for(const mat of Array.isArray(m)?m:[m])mats.add(mat as MeshStandardMaterial);});mats.forEach(m=>m.dispose());};},[]);
  return <group ref={root} dispose={null}><group ref={near} name="vehicle-detail">{v.category==='Motorcycles'?<Motorcycle v={v} color={color} rim={rim} motion={motion} environment={environment}/>:<Automobile v={v} color={color} rim={rim} motion={motion} environment={environment}/>}</group><group ref={far} name="vehicle-distant" visible={false}><DistantVehicle v={v} color={color}/></group></group>;
 });

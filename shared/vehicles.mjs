@@ -1,3 +1,4 @@
+import {AVATAR_RADIUS} from './avatarDimensions.mjs';
 import { PARKED_CARS, blocked, onRoad, ROUNDABOUT } from './world.mjs';
 import {VEHICLE_BY_ID,GARAGES} from './vehicleCatalog.mjs';
 import {suspensionState,stepSuspension} from './vehicleSuspension.mjs';
@@ -12,9 +13,9 @@ export function createFleet(){return [...PARKED_CARS.map((c,i)=>({...c,...vehicl
 // Variable dimensions: a conservative chain of circles covers each body.
 export function hull(car){const v=vehicleSpec(car),r=v.width/2,count=Math.max(2,Math.ceil((v.length-v.width)/Math.max(.35,r)) +1),span=Math.max(0,v.length/2-r);return Array.from({length:count},(_,i)=>{const d=-span+i/(count-1)*span*2;return {x:car.x+Math.cos(car.heading)*d,z:car.z-Math.sin(car.heading)*d,r};});}
 export function carBlocked(car,fleet=[]){const circles=hull(car),v=vehicleSpec(car);return circles.some(p=>blocked(p.x,p.z,p.r)||Math.hypot(p.x,p.z)<ROUNDABOUT.island+p.r||fleet.some(other=>other.id!==car.id&&Math.hypot(other.x-car.x,other.z-car.z)<(v.length+vehicleSpec(other).length)/2+1&&hull(other).some(q=>Math.hypot(p.x-q.x,p.z-q.z)<p.r+q.r)));}
-export function pedestrianBlocked(x,z,fleet){return fleet.some(c=>Math.hypot(x-c.x,z-c.z)<vehicleSpec(c).length/2+1&&hull(c).some(p=>Math.hypot(p.x-x,p.z-z)<p.r+.36));}
+export function pedestrianBlocked(x,z,fleet){return fleet.some(c=>Math.hypot(x-c.x,z-c.z)<vehicleSpec(c).length/2+1&&hull(c).some(p=>Math.hypot(p.x-x,p.z-z)<p.r+AVATAR_RADIUS));}
 export function exitPosition(car,fleet){if(Math.abs(car.speed)>.65)return null;const v=vehicleSpec(car),offset=v.width/2+1;
- for(const [side,back]of [[1,0],[-1,0],[1,-v.length*.6],[-1,-v.length*.6],[1,v.length*.6],[-1,v.length*.6]]){const x=car.x+Math.sin(car.heading)*side*offset+Math.cos(car.heading)*back,z=car.z+Math.cos(car.heading)*side*offset-Math.sin(car.heading)*back;if(!blocked(x,z)&&!pedestrianBlocked(x,z,fleet))return {x,z};}return null;}
+ for(const [side,back]of [[1,0],[-1,0],[1,-v.length*.6],[-1,-v.length*.6],[1,v.length*.6],[-1,v.length*.6]]){const x=car.x+Math.sin(car.heading)*side*offset+Math.cos(car.heading)*back,z=car.z+Math.cos(car.heading)*side*offset-Math.sin(car.heading)*back;if(!blocked(x,z,AVATAR_RADIUS)&&!pedestrianBlocked(x,z,fleet))return {x,z};}return null;}
 export function vehicleRenderPose(car){const state=simulation.get(car),alpha=state?state.accumulator/PHYSICS_STEP:1,prev=state?.previous||car;return {x:prev.x+(car.x-prev.x)*alpha,z:prev.z+(car.z-prev.z)*alpha,heading:prev.heading+Math.atan2(Math.sin(car.heading-prev.heading),Math.cos(car.heading-prev.heading))*alpha};}
 function integrate(car,input,dt,fleet,wetness){const v=vehicleSpec(car),wet=Math.min(1,Math.max(0,wetness)),bike=v.category==='Motorcycles';
  const throttle=Number.isFinite(input.throttle)?Math.max(-1,Math.min(1,input.throttle)):0,steer=Number.isFinite(input.steer)?Math.max(-1,Math.min(1,input.steer)):0;

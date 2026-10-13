@@ -33,7 +33,7 @@ export function LivingEnvironment({runtime,quality}:{runtime:MutableRefObject<Li
   if(e.kind==='thunderstorm'&&e.mix>.5){stormAge.current+=dt;if(stormAge.current>nextThunder.current){stormAge.current=0;nextThunder.current=28+(e.cycle%4)*9;if(!reduced)lightning.current=.35;playGameSound('thunder');}}else stormAge.current=0;
   lightning.current=Math.max(0,lightning.current-dt);const flash=lightning.current>0?.25:0;
   (scene.background as Color)?.copy(sky);const fog=scene.fog as Fog;fog.color.copy(sky);
-  const visibility=(k:string)=>k==='fog'?75:k==='heavy-rain'||k==='thunderstorm'?170:340;
+  const visibility=(k:string)=>k==='fog'?75:k==='heavy-rain'||k==='thunderstorm'?170:quality==='high'?300:quality==='low'?190:260;
   fog.far=visibility(e.previous)+(visibility(e.kind)-visibility(e.previous))*e.mix;fog.near=fog.far*.18;
   const angle=(e.minute-360)/1440*Math.PI*2,x=Math.round(player.current.x*16)/16,z=Math.round(player.current.z*16)/16;
   target.position.set(x,0,z);

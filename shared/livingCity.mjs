@@ -35,7 +35,7 @@ export const BUSINESSES = [
 ];
 export const kioskPosition = shop=>({x:shop.x,z:shop.z+(shop.z<0?-3:3)});
 export const clampNeed = n=>Math.min(100,Math.max(0,Number.isFinite(n)?n:100));
-export const freshLiving = ()=>({version:1,needs:{hunger:100,thirst:100,energy:100},inventory:/** @type {Record<string,number>} */({}),elapsed:0,seed:17,relaxed:false,quality:'medium',buff:0,sampleCycle:-1});
+export const freshLiving = ()=>({version:1,needs:{hunger:100,thirst:100,energy:100},inventory:/** @type {Record<string,number>} */({}),elapsed:0,seed:17,relaxed:false,quality:'medium',autoResolution:true,cinematic:false,showFps:true,buff:0,sampleCycle:-1});
 export function validateLiving(value) {
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid living city save');
  const s=freshLiving(), valid=v=>Number.isFinite(v)&&v>=0;
@@ -47,6 +47,7 @@ export function validateLiving(value) {
  if(value.sampleCycle!==undefined){if(!Number.isInteger(value.sampleCycle)||value.sampleCycle< -1||value.sampleCycle>1e9)throw new Error('Invalid sample cooldown');s.sampleCycle=value.sampleCycle;}
  if(value.relaxed!==undefined&&typeof value.relaxed!=='boolean')throw new Error('Invalid relaxed setting');
  if(value.quality!==undefined&&!['low','medium','high'].includes(value.quality))throw new Error('Invalid graphics quality');
+ for(const key of ['autoResolution','cinematic','showFps']){if(value[key]!==undefined){if(typeof value[key]!=='boolean')throw new Error('Invalid graphics setting');s[key]=value[key];}}
  return {...s,relaxed:value.relaxed??s.relaxed,quality:value.quality??s.quality};
 }
 export function loadLiving(){try{return validateLiving(JSON.parse(localStorage.getItem(LIVING_KEY)||'null'));}catch{return freshLiving();}}

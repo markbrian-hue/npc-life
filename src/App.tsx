@@ -1,3 +1,6 @@
+import {useExploration,ExplorationUI} from './game/Exploration';
+import {ExplorerWorld} from './game/ExplorerWorld';
+import {PerformanceBudget,PerformanceHUD} from './game/PerformanceBudget';
 import {CinematicEffects} from './game/CinematicEffects';
 import {useGarage,GarageUI} from './game/Garage';
 import {LivingResidents} from './game/LivingResidents';
@@ -443,9 +446,10 @@ export default function App() {
   });
 
   const environment = useRef(environmentAt(0));
+  const contractBusy=useRef(false);
   const life = useResidentLife(player, coins, reputation, vehicles, (amount, rep, message) => {
     setCoins(n => Math.max(0,n + amount)); setReputation(n => n + rep); setToast(message);
-  }, setToast,environment);
+  }, setToast,environment,()=>contractBusy.current);
 
   const wallet = useRef(coins);wallet.current=coins;
   const city = useLivingCity(player,coins,multiplayer,!!life.active||quest.job!=='none',(price)=>{
@@ -454,6 +458,8 @@ export default function App() {
   },setToast);
 
   const garage=useGarage(player,coins,reputation,life.record.chapters.length,vehicles,(price)=>{if(wallet.current<price)return false;wallet.current-=price;setCoins(n=>n-price);return true;});
+  const explore=useExploration(player,vehicles,!!life.active||quest.job!=='none'||revival.carrying,(amount,rep,message)=>{setCoins(n=>n+amount);setReputation(n=>n+rep);setToast(message);},setToast);
+  contractBusy.current=!!explore.record.active;
   environment.current=city.env;
 
   // Save existing progression without migrating or resetting it.
@@ -1025,7 +1031,7 @@ export default function App() {
       {/* Existing city + reactive citizens */}
       <Canvas
         shadows={city.view.quality!=='low'}
-        dpr={[1, city.view.quality==='high'?1.75:city.view.quality==='low'?1:1.5]}
+        dpr={[1, city.view.quality==='high'?1.5:city.view.quality==='low'?1:1.25]}
         camera={{
           position: [9, 10, 13],
           fov: 55,
@@ -1034,14 +1040,16 @@ export default function App() {
         }}
         gl={{ antialias: true, toneMappingExposure: .78 }}
       >
-        <City caught={quest.caught} />
-        <CinematicEffects quality={city.view.quality}/>
+        <City caught={quest.caught} quality={city.view.quality} />
+        <CinematicEffects quality={city.view.quality} enabled={city.view.cinematic}/>
+        <PerformanceBudget quality={city.view.quality} automatic={city.view.autoResolution}/>
         <LivingEnvironment runtime={city.runtime} quality={city.view.quality} />
         <FoodBusinesses runtime={city.runtime} />
         <LivingResidents runtime={city.runtime} />
         <DistrictWorld campaign={revival.campaign} carrying={revival.carrying} />
         <RemoteResidents multiplayer={multiplayer} />
         <ResidentLifeWorld life={life} />
+        <ExplorerWorld explore={explore}/>
         <CityActivities touched={quest.touched} />
         <ArcadeKiosk />
 
@@ -1070,8 +1078,10 @@ export default function App() {
       </Canvas>
       <VehicleHUD vehicles={vehicles} />
       <ResidentLifeUI life={life} />
+      <ExplorationUI explore={explore}/>
       <LivingCityUI city={city} player={player} />
       <GarageUI garage={garage}/>
+      <PerformanceHUD visible={city.view.showFps}/>
 
       {/* New Alpha 0.7 interaction layer */}
       <CityEncounters
@@ -1098,7 +1108,7 @@ export default function App() {
       />
 
       <CityRevival revival={revival} player={player} />
-      <WorldMinimap target={life.target || revival.task} />
+      <WorldMinimap target={explore.target || life.target || revival.task} />
       <MultiplayerMenu multiplayer={multiplayer} />
 
       {/* Header */}
@@ -1225,6 +1235,7 @@ export default function App() {
           Controls <span>H</span>
         </button>
 
+        <button onClick={()=>store.open('explorer')}>Explore <span>X</span></button>
         <button onClick={()=>store.open('garage')}>Garage <span>U</span></button>
 
         <span className="jobs-counter">
@@ -1296,6 +1307,7 @@ export default function App() {
             <kbd>SPACE</kbd> Jump on foot / brake in a car
           </p>
           <p><kbd>G</kbd> Food shop / free bureau meal · <kbd>O</kbd> Food bag · <kbd>U</kbd> Garage</p>
+          <p><kbd>X</kbd> Daily contracts, passport and shuttles · <kbd>Z</kbd> Discover / contract stop</p>
           <p><kbd>F</kbd> Talk to street residents · clock gear for needs/graphics settings</p>
           <p><kbd>R</kbd> Enter a parked car / exit when stopped</p>
           <p><kbd>W/S</kbd> Accelerate/reverse · <kbd>A/D</kbd> Steer</p>

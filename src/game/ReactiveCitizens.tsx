@@ -1,3 +1,4 @@
+import {AVATAR_RADIUS} from '../../shared/avatarDimensions.mjs';
 import {groundHeight} from '../../shared/playerPhysics.mjs';
 import {pedestrianBodies,residentBlocked} from './pedestrianBodies';
 import type {MutableRefObject} from 'react';
@@ -149,7 +150,7 @@ function Citizen({
           actor.position.z + mz * amount;
 
         // Avoid static world obstacles.
-        if (!blocked(nx, nz)&&!residentBlocked(nx,nz,actor.position.x,actor.position.z,npc.id)) {
+        if (!blocked(nx, nz,AVATAR_RADIUS)&&!residentBlocked(nx,nz,actor.position.x,actor.position.z,npc.id)) {
           actor.position.set(nx, groundHeight(nx,nz), nz);
           intendedYaw = Math.atan2(mx, mz);
           walking = true;

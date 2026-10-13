@@ -17,7 +17,9 @@
     "test:living": "node tests/living-city-browser.mjs",
     "test:mobility": "node tests/mobility-browser.mjs",
     "test:suspension": "node tests/suspension-browser.mjs",
-    "test:art": "node tests/art-browser.mjs"
+    "test:art": "node tests/art-browser.mjs",
+    "test:exploration": "node tests/exploration-browser.mjs",
+    "test:performance": "node tests/performance-browser.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.0.0",

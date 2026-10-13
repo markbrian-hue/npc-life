@@ -12,7 +12,7 @@ import { playGameSound } from './gameAudio';
 import { CityMapLayer } from './CityMapLayer';
 type Pos={x:number;z:number};
 type Active={id:string;stage:number;variant:number;started:number;deadline:number}|null;
-export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehicles,reward:(coins:number,rep:number,message:string)=>void,notify:(message:string)=>void,environment:MutableRefObject<ReturnType<typeof environmentAt>>){
+export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehicles,reward:(coins:number,rep:number,message:string)=>void,notify:(message:string)=>void,environment:MutableRefObject<ReturnType<typeof environmentAt>>,externalWork?:()=>boolean){
   const [record,setRecord]=useState(loadLife),[active,setActive]=useState<Active>(null),[notice,setNoticeState]=useState('Start with Go Buy Milk. Earn coins, unlock work, explore the city.'),[now,setNow]=useState(Date.now),[resting,setResting]=useState(false);
   const {store}=useGameUI();const state=useRef({player,coins,rep,record,active,resting,reward});state.current={player,coins,rep,record,active,resting,reward};
   const setNotice=(message:string)=>{setNoticeState(message);notify(message);};
@@ -21,7 +21,7 @@ export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehi
   const near=ACTIVITY_SITES.find(p=>Math.hypot(p.x-player.x,p.z-player.z)<(p.radius??4));
   const nearBench=BENCHES.some(b=>Math.hypot(b.x-player.x,b.z-player.z)<2.8);
   useEffect(()=>{const timer=setInterval(()=>{const t=Date.now();setNow(t);const a=state.current.active;if(a?.deadline&&t>a.deadline){state.current.active=null;setActive(null);setNotice('Shift expired. No penalty. Pick another from L.');}},500);return()=>clearInterval(timer);},[]);
-  const start=(id:string)=>{const s=state.current;if(s.active){setNotice('Finish or abandon your current shift first.');return;}const next=startShift(id,s.rep,s.record,Date.now(),environment.current);if(!next){setNotice('Shift unavailable: check reputation, licence, weather and time.');return;}state.current.active=next;setActive(next);setNotice('Shift accepted. Follow the amber marker and press T at each stop.');store.close('resident-phone');};
+  const start=(id:string)=>{if(externalWork?.()){setNotice('Finish or cancel your daily contract in X before taking a shift.');return;}const s=state.current;if(s.active){setNotice('Finish or abandon your current shift first.');return;}const next=startShift(id,s.rep,s.record,Date.now(),environment.current);if(!next){setNotice('Shift unavailable: check reputation, licence, weather and time.');return;}state.current.active=next;setActive(next);setNotice('Shift accepted. Follow the amber marker and press T at each stop.');store.close('resident-phone');};
   const cancel=()=>{state.current.active=null;setActive(null);setNotice('Shift abandoned. No charge, no paperwork.');};
   const purchase=(id:string)=>{const s=state.current,u=UPGRADES.find(u=>u.id===id);if(!u||s.record.upgrades.includes(id))return;if(!['garage','board'].some(site=>ACTIVITY_SITES.some(p=>p.id===site&&Math.hypot(p.x-s.player.x,p.z-s.player.z)<4))){setNotice('Visit the resident bureau or Juniper Motor Club to purchase.');return;}if(s.coins<u.price){setNotice('Not enough coins yet. Try a shift.');return;}state.current.coins-=u.price;save({...s.record,upgrades:[...s.record.upgrades,id]});s.reward(-u.price,0,`${u.name} unlocked.`);setNotice(`${u.name} purchased.`);};
   const interact=()=>{
@@ -42,7 +42,7 @@ export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehi
     if(site?.id==='coffee'){window.dispatchEvent(new CustomEvent('npc-life:food-shop',{detail:'coffee'}));return;}
     if(site?.id==='bus'){window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:{x:-82,z:-71}}));setNotice('Free shuttle to Juniper Motor Club. Against all odds, the bus arrived.');return;}
     if(Math.hypot(s.player.x+116,s.player.z-27)<3&&!s.record.secret){save({...s.record,secret:true});s.reward(35,10,'Secret found: the city was surveyed by a pigeon.');setNotice('Municipal Conspiracy achievement earned.');return;}
-    if(site){store.open('resident-phone');return;}
+    if(site){store.open(site.kind==='explore'?'explorer':'resident-phone');return;}
   };
   const handlers=useRef({interact});handlers.current={interact};
   useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.repeat||isTyping(e.target)||store.getSnapshot()!==null)return;if(e.code==='KeyL')store.open('resident-phone');if(e.code==='KeyT')handlers.current.interact();};const stand=()=>{setResting(false);state.current.resting=false;};const position=(e:Event)=>{state.current.player=(e as CustomEvent<Pos>).detail;};window.addEventListener('npc-life:position',position);window.addEventListener('keydown',key);window.addEventListener('npc-life:stood',stand);return()=>{window.removeEventListener('npc-life:position',position);window.removeEventListener('keydown',key);window.removeEventListener('npc-life:stood',stand);};},[store]);
