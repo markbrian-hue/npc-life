@@ -11,6 +11,7 @@ on:
       - 'feat/blocky-explorers-performance'
       - 'feat/nyc-vertical-traversal'
       - 'feat/nyc-districts-streetscape'
+      - 'feat/nyc-expanded-megacity'
   pull_request:
     branches:
       - 'feat/cinematic-city-art'
