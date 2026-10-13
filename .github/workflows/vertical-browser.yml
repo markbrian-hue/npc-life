@@ -5,6 +5,7 @@ on:
       - 'feat/nyc-vertical-traversal'
       - 'feat/nyc-districts-streetscape'
       - 'feat/nyc-expanded-megacity'
+      - 'feat/nyc-street-grid-rebuild'
   workflow_dispatch:
 jobs:
   traverse:
