@@ -7,9 +7,9 @@ import {cityMaps,interiorTexture,worldMapping} from './cityMaterials';
 type Piece={x:number;y:number;z:number;w:number;h:number;d:number;rotation:number;color:string};
 const SIGNS=['CIVIC RECORDS','JUNIPER COFFEE','LAST CHANCE LOFTS','CORNER PROVISIONS','PAPERWORK & SONS','NPC MARKET','ORDINARY RESIDENCES','THE UNEMPLOYED INN'];
 function pieces(buildings=BUILDINGS){const batches:Record<string,Piece[]>={brick:[],concrete:[],masonry:[],trim:[],glass:[],dark:[],metal:[],wood:[]};
- buildings.forEach((b,i)=>{const rotation=b.rotation||0,c=Math.cos(rotation),s=Math.sin(rotation),home=b.kind==='bungalow',warehouse=b.kind==='warehouse',modern=!home&&!warehouse&&i%4===1;
+ buildings.forEach((b,i)=>{const rotation=b.rotation||0,c=Math.cos(rotation),s=Math.sin(rotation),home=b.kind==='bungalow',warehouse=b.kind==='warehouse',tower=b.kind==='tower',row=b.kind==='brownstone',modern=tower||(!row&&!home&&!warehouse&&i%4===1);
   const add=(kind:string,x:number,y:number,z:number,w:number,h:number,d:number,color:string,yaw=0)=>batches[kind].push({x:b.x+c*x+s*z,y,z:b.z-s*x+c*z,w,h,d,rotation:rotation+yaw,color});
-  const kind=warehouse||modern?'concrete':i%3===0?'brick':'masonry',wall=['#ded5c3','#ced6d4','#dac7b3','#bfb5a7'][i%4],trim=modern?'#646f72':'#c9c5b8';
+  const kind=row?'brick':warehouse||modern?'concrete':i%3===0?'brick':'masonry',wall=tower||row?b.color:['#ded5c3','#ced6d4','#dac7b3','#bfb5a7'][i%4],trim=row?'#cfb39d':modern?'#646f72':'#c9c5b8';
   add(kind,0,b.h/2,0,b.w,b.h,b.d,wall);
   add('trim',0,.28,0,b.w+.1,.55,b.d+.1,'#777d7a');
   add('dark',0,b.h+.035,0,b.w,.075,b.d,'#525b5c');
@@ -44,6 +44,21 @@ function pieces(buildings=BUILDINGS){const batches:Record<string,Piece[]>={brick
    }
    if(!home&&!warehouse)for(const x of [-width/2+.2,width/2-.2]){place('trim',x,b.h/2,depth/2+.07,.26,b.h,.18,trim);for(let y=.7;y<b.h-.5;y+=.55)place('trim',x,y,depth/2+.18,.36,.24,.07,trim);}
    if(modern)for(let col=0;col<=cols;col++)place('metal',(col-cols/2)*spacing,3+(b.h-3)/2,depth/2+.11,.065,b.h-3,.16,'#7e8a89');
+    if(row&&face===0){
+     // Flush brownstone cornices and fire-escape silhouettes use existing batch materials.
+     for(let level=1;level<b.h/3.1-1;level++){
+      const fy=level*3.1+2.1;
+      place('metal',0,fy,depth/2+.19,width*.76,.11,.43,'#465052');
+      for(const edge of [-1,1])place('metal',edge*width*.36,fy+.43,depth/2+.37,.07,.93,.07,'#465052');
+      place('metal',0,fy+.83,depth/2+.38,width*.75,.07,.09,'#465052');
+      for(let n=-3;n<=3;n++)place('metal',n*width*.105,fy+.46,depth/2+.38,.055,.79,.07,'#465052');
+     }
+    }
+    if(tower&&face===0&&b.h>=30){
+     // Manhattan-inspired vertical mullions and recessed podium separation.
+     place('dark',0,3.65,depth/2+.12,width*.94,.11,.22,'#354750');
+     for(const edge of [-1,1])place('metal',edge*width*.46,b.h/2,depth/2+.22,.14,b.h*.94,.21,'#637f89');
+    }
   }
   add('dark',0,1.28,b.d/2+.04,1.5,2.55,.07,'#303c41');add('glass',0,1.36,b.d/2+.095,1.21,2.23,.035,'#9cabaa');
   for(const side of [-1,1])add('metal',side*.67,1.34,b.d/2+.13,.055,2.4,.06,'#394b4e');add('metal',.47,1.18,b.d/2+.18,.025,.43,.065,'#c1bbb0');add('trim',0,.07,b.d/2+.18,1.55,.14,.42,'#b9b6a9');
