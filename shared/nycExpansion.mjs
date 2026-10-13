@@ -19,7 +19,7 @@ export const NYC_EXPANSION_ROADS = [
 export const NYC_PUBLIC_SPACES=[
  {id:'neon-plaza',name:'Neon Plaza',x:25,z:-241,w:26,d:25,kind:'plaza',color:'#aab0aa'},
  {id:'liberty-park',name:'Liberty Pocket Park',x:-123,z:-284,w:26,d:28,kind:'park',color:'#758c64'},
- {id:'east-promenade',name:'East River Promenade',x:282,z:-265,w:18,d:86,kind:'waterfront',color:'#8ca8a1'},
+ {id:'east-promenade',name:'East River Promenade',x:285,z:-265,w:12,d:86,kind:'waterfront',color:'#8ca8a1'},
 ];
 export const NYC_DISTRICTS=[
  {id:'uptown',name:'UPTOWN',x:-83,z:-308,w:130,d:52,color:'#a89f89'},
@@ -59,5 +59,5 @@ export const NYC_STREET_SIGNS=[
  {x:168,z:-219,name:'EAST RIVER DRIVE'},
  {x:261,z:-307,name:'BROOKLYN ROW'},
 ];
-export const NYC_RIVER={x:305,z:-266,w:70,d:157};
+export const NYC_RIVER={x:318,z:-266,w:44,d:148};
 export function inNYCExpansion(x,z){return z<=-205&&z>=-340&&x>=-155&&x<=290;}
