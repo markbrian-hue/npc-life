@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {BOROUGHS,BOROUGH_PARCELS,boroughAt} from '../shared/boroughPlan.mjs';
-import {BUILDINGS,SPAWN,TREES,blocked,validateWorld,roadOverlap,footprint,ACTIVITY_SITES} from '../shared/world.mjs';
+import {BOROUGHS,BOROUGH_PARCELS,BOROUGH_CROSSINGS,boroughAt} from '../shared/boroughPlan.mjs';
+import {BUILDINGS,SPAWN,TREES,SIGNAL_POSTS,roadAt,blocked,validateWorld,roadOverlap,footprint,ACTIVITY_SITES} from '../shared/world.mjs';
 import {ROOFTOP_LADDERS,platformsAt} from '../shared/verticalTraversal.mjs';
 import {walkingRoute} from './pathing.mjs';
 
@@ -38,5 +38,19 @@ test('higher façades and foot-level world collision share exactly the same heig
  for(const l of boroughLadders){
   assert.equal(blocked(l.landing.x,l.landing.z,.42,l.roof),false,'walkable ladder landing');
   assert.ok(platformsAt(l.landing.x,l.landing.z).some(p=>p.id==='building:'+l.index));
+ }
+});
+
+test('zebra crossings land on drivable streets and physical pedestrian signal poles',()=>{
+ assert.ok(BOROUGH_CROSSINGS.length>=5);
+ assert.ok(SIGNAL_POSTS.length>=4,'safe signals accepted beside roadway');
+ for(const crossing of BOROUGH_CROSSINGS){
+  assert.equal(roadAt(crossing.x,crossing.z),true,crossing.id);
+  assert.ok(crossing.width>=7);
+ }
+ for(const p of SIGNAL_POSTS){
+  assert.equal(blocked(p.x,p.z,.1),true,p.id);
+  assert.equal(roadAt(p.x,p.z),false,p.id);
+  assert.equal(roadOverlap(footprint(p),.3),false,p.id);
  }
 });
