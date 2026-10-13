@@ -59,15 +59,59 @@ TRAFFIC_POINTS.reverse();
 const routeLengths=TRAFFIC_POINTS.map((p,i)=>Math.hypot(p.x-TRAFFIC_POINTS[(i+1)%TRAFFIC_POINTS.length].x,p.z-TRAFFIC_POINTS[(i+1)%TRAFFIC_POINTS.length].z));
 export const TRAFFIC_LENGTH=routeLengths.reduce((a,b)=>a+b,0);
 export function trafficPose(distance){let remaining=((distance%TRAFFIC_LENGTH)+TRAFFIC_LENGTH)%TRAFFIC_LENGTH;for(let i=0;i<routeLengths.length;i++){const length=routeLengths[i];if(remaining<=length){const a=TRAFFIC_POINTS[i],b=TRAFFIC_POINTS[(i+1)%TRAFFIC_POINTS.length],t=length?remaining/length:0;return {x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,heading:Math.atan2(-(b.z-a.z),b.x-a.x)};}remaining-=length;}return {...TRAFFIC_POINTS[0],heading:0};}
-export function createTraffic(){return ['#ab9774','#698d81','#8c9fab'].map((color,i)=>({id:`traffic-${i}`,name:'City traffic',color,rotation:0,...trafficPose(i*TRAFFIC_LENGTH/3),...vehicleState(['sedan','taxi','delivery'][i]),speed:0,steer:0,driver:'traffic',braking:false,traffic:true,distance:i*TRAFFIC_LENGTH/3}));}
+// A separate rounded NYC grid circuit; no changes to the original east-bypass route.
+// Every corner follows the *real* connecting avenue/street asphalt union.
+const NYC_TRAFFIC_POINTS=[];
+function nycArc(cx,cz,start,end){
+ for(let i=0;i<=12;i++){
+  const angle=start+(end-start)*i/12;
+  NYC_TRAFFIC_POINTS.push({x:cx+4*Math.cos(angle),z:cz+4*Math.sin(angle)});
+ }
+}
+nycArc(4,-223,Math.PI,Math.PI/2);
+nycArc(164,-223,Math.PI/2,0);
+nycArc(164,-303,0,-Math.PI/2);
+nycArc(4,-303,-Math.PI/2,-Math.PI);
+const nycLengths=NYC_TRAFFIC_POINTS.map((p,i)=>{
+ const q=NYC_TRAFFIC_POINTS[(i+1)%NYC_TRAFFIC_POINTS.length];
+ return Math.hypot(q.x-p.x,q.z-p.z);
+});
+export const NYC_TRAFFIC_LENGTH=nycLengths.reduce((a,n)=>a+n,0);
+export function nycTrafficPose(distance){
+ let remaining=((distance%NYC_TRAFFIC_LENGTH)+NYC_TRAFFIC_LENGTH)%NYC_TRAFFIC_LENGTH;
+ for(let i=0;i<nycLengths.length;i++){
+  const length=nycLengths[i];
+  if(remaining<=length){
+   const a=NYC_TRAFFIC_POINTS[i],b=NYC_TRAFFIC_POINTS[(i+1)%NYC_TRAFFIC_POINTS.length],t=length?remaining/length:0;
+   return {x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,heading:Math.atan2(-(b.z-a.z),b.x-a.x)};
+  }
+  remaining-=length;
+ }
+ return {...NYC_TRAFFIC_POINTS[0],heading:0};
+}
+export function createTraffic(){
+ const old=['#ab9774','#698d81','#8c9fab'].map((color,i)=>({
+   id:`traffic-${i}`,name:'City traffic',color,rotation:0,...trafficPose(i*TRAFFIC_LENGTH/3),
+   ...vehicleState(['sedan','taxi','delivery'][i]),speed:0,steer:0,driver:'traffic',
+   braking:false,traffic:true,distance:i*TRAFFIC_LENGTH/3
+ }));
+ const uptown=['#e8c77e','#7f9eaf','#b55d62','#b6aca0','#d0a65b'].map((color,i)=>({
+   id:`nyc-traffic-${i}`,name:i%2===0?'NYC yellow taxi':'Uptown traffic',color,
+   rotation:0,...nycTrafficPose(i*NYC_TRAFFIC_LENGTH/5),
+   ...vehicleState(i%2===0?'taxi':'sedan'),speed:0,steer:0,driver:'traffic',
+   braking:false,traffic:true,route:'nyc',distance:i*NYC_TRAFFIC_LENGTH/5
+ }));
+ return [...old,...uptown];
+}
 export function stepTraffic(car,seconds,fleet,people=[]){
   let state=simulation.get(car);if(!state){state={accumulator:0,previous:{x:car.x,z:car.z,heading:car.heading}};simulation.set(car,state);}
   state.accumulator+=Math.min(.25,Math.max(0,Number.isFinite(seconds)?seconds:0));
   while(state.accumulator+1e-9>=PHYSICS_STEP){const dt=PHYSICS_STEP;state.accumulator=Math.max(0,state.accumulator-dt);state.previous={x:car.x,z:car.z,heading:car.heading};
     const before=car.speed,previousHeading=car.heading;
-    const look=trafficPose(car.distance+4);
+    const pose=car.route==='nyc'?nycTrafficPose:trafficPose;
+    const look=pose(car.distance+4);
     const stopped=people.some(p=>Math.hypot(p.x-look.x,p.z-look.z)<2);
-    const speed=stopped?0:Math.min(7,car.speed+3*dt),distance=car.distance+speed*dt,next={...car,...trafficPose(distance)};
+    const speed=stopped?0:Math.min(7,car.speed+3*dt),distance=car.distance+speed*dt,next={...car,...pose(distance)};
     if(stopped||carBlocked(next,fleet)){car.speed=0;car.braking=true;}else{Object.assign(car,next,{distance,speed,braking:false});}
     const yaw=Math.atan2(Math.sin(car.heading-previousHeading),Math.cos(car.heading-previousHeading))/dt;
     stepSuspension(car,vehicleSpec(car),dt,Math.max(-18,Math.min(12,(car.speed-before)/dt)),yaw*car.speed);
