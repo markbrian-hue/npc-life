@@ -51,7 +51,7 @@ test('traffic shares the fixed timestep and rejects invalid elapsed time',()=>{
  const before=JSON.stringify(a);for(const dt of [NaN,Infinity,-1])stepTraffic(a,dt,[a]);assert.equal(JSON.stringify(a),before);
 });
 test('swept stopping reaches contact without overlap, bounce or artificial wheel spin',()=>{
- const c={...car('hyper'),x:-13,speed:40};stepVehicle(c,drive,.25,[c]);assert.equal(c.speed,0);assert.equal(carBlocked(c,[c]),false);assert.ok(c.impact>0);
+ const c={...car('hyper'),x:-16,z:-7,heading:Math.PI/2,speed:40};stepVehicle(c,drive,.25,[c]);assert.equal(c.speed,0);assert.equal(carBlocked(c,[c]),false);assert.ok(c.impact>0);
  const x=c.x,distance=c.distance;for(let i=0;i<120;i++)stepVehicle(c,drive,1/120,[c]);assert.ok(Math.abs(c.x-x)<.0001);assert.ok(c.distance-distance<.0001);assert.ok(Math.abs(c.pitch)<.1);
 });
 
