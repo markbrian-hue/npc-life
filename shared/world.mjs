@@ -1,4 +1,5 @@
 import {EXPLORER_SITES} from './exploration.mjs';
+import {BOROUGH_PARCELS,styleBoroughBuilding} from './boroughPlan.mjs';
 import {BUSINESSES,kioskPosition} from './livingCity.mjs';
 import { placeCandidates, footprint, overlaps, roadOverlap, roadAt, streetFacing, PARKING_BAYS, ACTIVITY_SITES, ACTIVITY_ZONES, ROAD_SEGMENTS, roadBounds, PARK_PATHS } from './cityPlan.mjs';
 export * from './cityPlan.mjs';
@@ -49,7 +50,7 @@ buildingCandidates.push(
  ...[-92,-55,30,67].map((x,i)=>({x,z:-128,w:15,d:12,h:7+i*2,color:'#cbbdad',roof:'#757865',rotation:Math.PI})),
  ...[-106,-76,-43,23].flatMap((z,i)=>[142,190].map(x=>({x,z,w:13,d:15,h:7+i%3*3,color:x>170?'#bbccc2':'#bcb8a5',roof:'#586c72',rotation:x<168?Math.PI/2:-Math.PI/2,kind:i===1?'warehouse':undefined}))),
 );
-export const BUILDINGS = placeCandidates(buildingCandidates, [...PARKING_BAYS,...ACTIVITY_ZONES.filter(p=>p.kind==='explore'),{x:-65,z:-185,w:16,d:15},{x:184,z:-115,w:22,d:15}],{roadClearance:2,gap:.4});
+export const BUILDINGS = placeCandidates([...buildingCandidates,...BOROUGH_PARCELS], [...PARKING_BAYS,...ACTIVITY_ZONES.filter(p=>p.kind==='explore'),{x:-65,z:-185,w:16,d:15},{x:184,z:-115,w:22,d:15}],{roadClearance:2,gap:.4}).map(styleBoroughBuilding);
 
 export const PALMS = [[-118,-102],[-100,-118],[-75,-115],[-65,-75],[-105,-62],[-101,-37],[-82,-53]];
 
