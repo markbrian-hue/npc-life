@@ -1,7 +1,9 @@
+import {groundHeight} from '../../shared/playerPhysics.mjs';
+import {pedestrianBodies,residentBlocked} from './pedestrianBodies';
 import { blocked } from './world';
 import { Character } from './Character';
 import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import type {
   CityEvent,
@@ -194,7 +196,7 @@ function StaticCitizen({
   });
 
   return (
-    <group ref={root} position={[x, 0, z]}>
+    <group ref={root} position={[x, groundHeight(x,z), z]}>
       <CitizenBody
         shirt={shirt}
         hair={hair}
@@ -220,6 +222,7 @@ function WalkingCitizen({
   const leftArm = useRef<THREE.Group>(null);
   const rightArm = useRef<THREE.Group>(null);
 
+  useEffect(()=>()=>{pedestrianBodies.delete(data.id);},[data.id]);
   const nextPoint = useRef(1);
   const pauseTimer = useRef(0);
   const animationTime = useRef(0);
@@ -229,6 +232,7 @@ function WalkingCitizen({
     const actor = root.current;
 
     if (!actor || !body.current) return;
+    actor.position.y=groundHeight(actor.position.x,actor.position.z);pedestrianBodies.set(data.id,{x:actor.position.x,z:actor.position.z});
 
     const dxPlayer =
       player.x - actor.position.x;

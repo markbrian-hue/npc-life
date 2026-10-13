@@ -25,6 +25,7 @@ import './game/release.css';
 import './game/ui/retro.css';
 import './game/city-revival.css';
 import './game/living-city.css';
+import './game/garage.css';
 
 ReactDOM.createRoot(
   document.getElementById('root')!

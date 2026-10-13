@@ -1,13 +1,14 @@
+import {groundHeight} from '../../shared/playerPhysics.mjs';
 import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound } from './gameAudio';
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { MathUtils, type Group } from 'three';
-import { createFleet, exitPosition, neutralControls, stepTraffic, stepVehicle } from '../../shared/vehicles.mjs';
+import { createFleet, exitPosition, neutralControls, stepTraffic, stepVehicle, vehicleRenderPose, vehicleSpec } from '../../shared/vehicles.mjs';
 import type { Multiplayer } from './Multiplayer';
 import { SPAWN } from './world';
-import { CarModel } from './CityProps';
+import { VehicleModel } from './VehicleModels';
 import { Character } from './Character';
 import { isTyping, useGameUI } from './ui/GameUI';
 
@@ -17,6 +18,7 @@ export function useVehicles(multiplayer: Multiplayer, player: {x:number;z:number
   const {store}=useGameUI();
   const runtime=useRef<VehicleRuntime>({player,cars:createFleet(),targets:[],ownedId:'',networked:false,controls:neutralControls()});
   runtime.current.player=player;
+  const [,setRevision]=useState(0);const refresh=()=>setRevision(n=>n+1);
   const [message,setMessage]=useState('');
   const [status,setStatus]=useState({name:'',speed:0,near:''});
   const state=useRef({multiplayer,player}); state.current={multiplayer,player};
@@ -74,16 +76,16 @@ export function useVehicles(multiplayer: Multiplayer, player: {x:number;z:number
     window.addEventListener('keydown',down);window.addEventListener('keyup',up);window.addEventListener('blur',reset);
     return()=>{window.removeEventListener('npc-life:position',position);unsub();clearInterval(timer);window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);window.removeEventListener('blur',reset);reset();};
   },[store]);
-  return {runtime,status,message};
+  return {runtime,status,message,refresh};
 }
 export type Vehicles = ReturnType<typeof useVehicles>;
-function MovingCar({id,vehicles}:{id:string;vehicles:Vehicles}) {
+function MovingCar({id,vehicles,environment}:{id:string;vehicles:Vehicles;environment:MutableRefObject<LivingRuntime>}) {
   const group=useRef<Group>(null), driver=useRef<Group>(null);
   const car=vehicles.runtime.current.cars.find(c=>c.id===id)!;
-  useFrame(()=>{const c=vehicles.runtime.current.cars.find(c=>c.id===id);if(!c||!group.current)return;group.current.position.set(c.x,0,c.z);group.current.rotation.y=c.heading;if(driver.current)driver.current.visible=!!c.driver;});
+  useFrame(()=>{const c=vehicles.runtime.current.cars.find(c=>c.id===id);if(!c||!group.current)return;const p=vehicles.runtime.current.networked?c:vehicleRenderPose(c);group.current.position.set(p.x,groundHeight(p.x,p.z),p.z);group.current.rotation.y=p.heading;if(driver.current)driver.current.visible=!!c.driver&&vehicleSpec(c).category!=='Motorcycles';});
   return <group ref={group}>
-    <CarModel color={car.color} runtime={()=>vehicles.runtime.current.cars.find(c=>c.id===id)!} />
-    <group ref={driver} position={[-.15,.18,-.4]} rotation={[0,Math.PI/2,0]} scale={.49}><Character shirt="#d1aa65" /></group>
+    <VehicleModel model={car.model} color={car.color} rim={car.rim} environment={environment} motion={()=>vehicles.runtime.current.cars.find(c=>c.id===id)!} />
+    <group ref={driver} position={[-.15,.1,-.4]} rotation={[0,Math.PI/2,0]} scale={Math.min(.49,vehicleSpec(car).height/2.6)}><Character shirt="#d1aa65" /></group>
   </group>;
 }
 export function VehiclesWorld({vehicles,environment}:{vehicles:Vehicles;environment:MutableRefObject<LivingRuntime>}) {
@@ -93,11 +95,11 @@ export function VehiclesWorld({vehicles,environment}:{vehicles:Vehicles;environm
       for(const car of r.cars){const t=r.targets.find(c=>c.id===car.id);if(!t)continue;
         car.x=MathUtils.damp(car.x,t.x,16,dt);car.z=MathUtils.damp(car.z,t.z,16,dt);
         car.heading+=Math.atan2(Math.sin(t.heading-car.heading),Math.cos(t.heading-car.heading))*(1-Math.exp(-16*dt));
-        car.speed=t.speed;car.driver=t.driver;car.steer=t.steer;car.braking=t.braking;
+        car.speed=t.speed;car.driver=t.driver;car.steer=t.steer;car.braking=t.braking;car.lean=t.lean;car.pitch=t.pitch;car.roll=t.roll;car.signal=t.signal;car.rpm=t.rpm;
       }
     }else for(const car of r.cars){if(car.traffic)stepTraffic(car,dt,r.cars,[r.player]);else stepVehicle(car,car.id===r.ownedId?r.controls:neutralControls(),dt,r.cars,environment.current.env.rain);}
   },-2);
-  return <>{vehicles.runtime.current.cars.map(car=><MovingCar key={car.id} id={car.id} vehicles={vehicles}/>)}</>;
+  return <>{vehicles.runtime.current.cars.map(car=><MovingCar key={car.id+car.model+car.color+car.rim} id={car.id} vehicles={vehicles} environment={environment}/>)}</>;
 }
 export function VehicleHUD({vehicles}:{vehicles:Vehicles}) {
   const {status,message}=vehicles;

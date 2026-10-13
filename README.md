@@ -1,3 +1,9 @@
+## City Mobility & Visual Foundation
+
+The next milestone is on `feat/city-mobility-and-visual-foundation`, built from Living City. It adds 30 original vehicle designs (including seven motorcycles), a saved dealership/garage, fixed-step vehicle/player movement, class handling, wet-road traction, instanced city facades, street textures and richer weather detail. Press **U** for the garage. Personal collection is solo-only; rooms retain exclusive server-controlled public vehicles and motorcycles.
+
+See [completed scope, physics limits, vehicle catalog and QA](docs/city-mobility-visual-foundation.md). This milestone does not yet complete the full city-art/rigid-body overhaul.
+
 ## Living City & Survival update
 
 The development branch `feat/living-city-survival-weather` builds on the career-and-bulletin gameplay source. It adds player needs, a food bag, four functional food businesses, six weather states, day/night lighting, shared room time, local resident routines, six new shifts and bounded city events. Press **G** to order, **O** to eat, **L** for work, and **T** to rest at benches. **F** retains NPC conversations.

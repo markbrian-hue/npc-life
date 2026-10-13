@@ -105,7 +105,7 @@ test('display preferences apply even when persistence fails', () => {
   assert.throws(() => setSettings({ reducedMotion: true, compactHud: false, hideMinimap: true }));
   assert.equal(applied.get('npc-reduce-motion'), true);
   assert.equal(applied.get('npc-hide-minimap'), true);
-  assert.equal(RELEASE_KEYS.length, 18);
+  assert.equal(RELEASE_KEYS.length, 19);
 });
 
 test('city revival progress participates in import and invalid progress preserves the prior save', async () => {
@@ -134,4 +134,11 @@ test('kiosk camera preserves open headroom instead of hitting a phantom wall',as
  const {safeCameraDistance}=await source('src/game/cameraCollision.ts');
  const direction={x:Math.sin(.6)*Math.cos(.65),y:Math.sin(.65),z:Math.cos(.6)*Math.cos(.65)};
  assert.ok(safeCameraDistance({x:57,y:1.7,z:6},direction,13)>2);
+});
+
+test('garage backups preserve unlocks and finishes; malformed records cannot erase prior coins',async()=>{
+ const key='npc-life:garage-v1';globalThis.localStorage=storage({'npc-life:coins-v1':'321'});
+ await assert.rejects(importSave(file({[key]:JSON.stringify({version:1,owned:['bogus']})})));assert.equal(localStorage.getItem('npc-life:coins-v1'),'321');
+ const garage={version:1,owned:['scooter','sedan'],selected:'sedan',paints:{sedan:'#aabbcc'},rims:{sedan:'dark'}};
+ await importSave(file({'npc-life:coins-v1':'251',[key]:JSON.stringify(garage)}));assert.deepEqual(JSON.parse(localStorage.getItem(key)),garage);
 });

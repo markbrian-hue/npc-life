@@ -160,3 +160,11 @@ Manual follow-up: walk from arrivals to the sedan east of Gary, enter with R, ac
 The Living City update extends the advanced career source. See `docs/living-city-survival-weather.md` for controls, compatibility, tuning and intentional limitations. The current update was exercised in Chromium using software WebGL; prior sections above describe older commits and their browser constraints.
 
 `npm ci`, 43 Node regression tests, TypeScript, the production build and whitespace checks pass. Existing UI/encounter checks (19), resident/driving checks (9), and new living-city browser checks (14) pass. New fixtures cover all six weather states, nighttime rendering, exact purchase/consume counts, zero-coin recovery, new shifts, samples, phone/laptop panels and real save import/reload. Captured audio initialization does not establish speaker audibility or hardware performance.
+
+## City Mobility & Visual Foundation milestone
+
+Built from the delivered Living City commit. The shared vehicle catalog, collision-aware collection, new fixed-step controllers and original procedural art are documented in `docs/city-mobility-visual-foundation.md`.
+
+Run `npm run test:mobility` with the existing external Playwright/Chromium environment variables. The fixtures exercise legitimate garage purchases, single-debit handling, persistence/finishes, scooter driving, car entry/exit, jumps/landing, six additional premium/utility/motorcycle silhouettes, responsive panels and two-browser public motorcycle driving. Owned-vehicle render fixtures are test-only.
+
+The UI browser driver now uses shorter input samples near waypoints so that it can converge under the new momentum controller; assertions and real movement remain in place. Personal collection is intentionally not accepted from local-save unlocks in shared rooms. Full 3D rigid-body physics and the final city art target remain further milestones.

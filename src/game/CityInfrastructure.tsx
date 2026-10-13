@@ -1,14 +1,19 @@
+import {cityTexture} from './cityMaterials';
+import {PlaneGeometry} from 'three';
+import {useMemo} from 'react';
 import { memo } from 'react';
 import { ROAD_SEGMENTS, ROUND_ROADS, PARKING_BAYS, PARK_PATHS, WORLD_RADIUS, roadBounds, inBox } from './world';
 import { StreetBoard } from './DistrictWorld';
 function Surface({x,z,w,d,y,color}:{x:number;z:number;w:number;d:number;y:number;color:string}) {
-  return <mesh userData={{environment:color==='#626b69'||color==='#4f595d'?'road':''}} receiveShadow position={[x,y,z]} rotation={[-Math.PI/2,0,0]}><planeGeometry args={[w,d]}/><meshStandardMaterial color={color} roughness={.98}/></mesh>;
+  const geometry=useMemo(()=>{const g=new PlaneGeometry(w,d),uv=g.getAttribute('uv');for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*w/4,uv.getY(i)*d/4);return g;},[w,d]);
+  const texture=useMemo(()=>cityTexture(color==='#626b69'||color==='#4f595d'?'asphalt':'paving'),[color]);
+  return <mesh geometry={geometry} userData={{environment:color==='#626b69'||color==='#4f595d'?'road':''}} receiveShadow position={[x,y,z]} rotation={[-Math.PI/2,0,0]}><meshStandardMaterial map={texture} color={color} roughness={.98}/></mesh>;
 }
 export const CityInfrastructure=memo(function CityInfrastructure(){
   return <>
     <Surface x={0} z={0} w={WORLD_RADIUS*2+12} d={WORLD_RADIUS*2+12} y={-.085} color="#91a27c"/>
-    {PARK_PATHS.map((p,i)=><Surface key={`path${i}`} {...p} y={-.04} color="#c6baa0"/>)}
-    {ROAD_SEGMENTS.map(r=><Surface key={`pave${r.id}`} {...roadBounds(r,2.1)} y={-.05} color="#b9b5a6"/>)}
+    {PARK_PATHS.map((p,i)=><Surface key={`path${i}`} {...p} y={.035} color="#c6baa0"/>)}
+    {ROAD_SEGMENTS.map(r=><Surface key={`pave${r.id}`} {...roadBounds(r,2.1)} y={.06} color="#b9b5a6"/>)}
     {ROUND_ROADS.map(r=><mesh key={`pave${r.id}`} position={[r.x,-.045,r.z]} rotation={[-Math.PI/2,0,0]} receiveShadow><circleGeometry args={[r.outer+2.1,64]}/><meshStandardMaterial color="#b9b5a6"/></mesh>)}
     {ROAD_SEGMENTS.map(r=><Surface key={r.id} {...roadBounds(r)} y={-.02} color={r.kind==='highway'?'#4f595d':'#626b69'}/>)}
     {ROUND_ROADS.map(r=><mesh key={r.id} position={[r.x,-.015,r.z]} rotation={[-Math.PI/2,0,0]} receiveShadow><ringGeometry args={[r.inner,r.outer,64]}/><meshStandardMaterial color="#626b69"/></mesh>)}

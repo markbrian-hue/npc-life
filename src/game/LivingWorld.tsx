@@ -1,3 +1,4 @@
+import {WeatherDetail} from './WeatherDetail';
 import {useEffect,useMemo,useRef,type MutableRefObject} from 'react';
 import {useFrame,useThree} from '@react-three/fiber';
 import {Color,Fog,Object3D,BufferAttribute,BufferGeometry,MeshStandardMaterial,MathUtils,type DirectionalLight,type HemisphereLight,type LineBasicMaterial,type Mesh} from 'three';
@@ -42,6 +43,7 @@ export function LivingEnvironment({runtime,quality}:{runtime:MutableRefObject<Li
  return <><primitive object={target}/><hemisphereLight ref={hemi} args={['#ffefd0','#657e73',1.5]}/><ambientLight intensity={.25}/>
   <directionalLight ref={sun} target={target} castShadow={quality!=='low'} position={[25,40,18]} intensity={2.3} shadow-mapSize={[1024,1024]} shadow-camera-left={-32} shadow-camera-right={32} shadow-camera-top={32} shadow-camera-bottom={-32} shadow-bias={-.0002}/>
   <Rain runtime={runtime} quality={quality}/>
+  <WeatherDetail runtime={runtime}/>
   <NightPools runtime={runtime}/>
   {[[-12,25],[38,7],[60,5],[-57,-10],[24,58]].map(([x,z],i)=><Puddle key={i} x={x} z={z} runtime={runtime}/>)}
  </>;

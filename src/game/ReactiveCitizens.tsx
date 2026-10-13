@@ -1,3 +1,5 @@
+import {groundHeight} from '../../shared/playerPhysics.mjs';
+import {pedestrianBodies,residentBlocked} from './pedestrianBodies';
 import type {MutableRefObject} from 'react';
 import type {LivingRuntime} from './LivingCity';
 import { citizenPositions } from './citizenPositions';
@@ -79,7 +81,7 @@ function Citizen({
   const walkClock = useRef(0);
   const movingBlend = useRef(0);
   const umbrella=useRef<THREE.Group>(null);
-  useEffect(()=>()=>{citizenPositions.delete(npc.id);},[npc.id]);
+  useEffect(()=>()=>{citizenPositions.delete(npc.id);pedestrianBodies.delete(npc.id);},[npc.id]);
 
   useFrame(({ clock }, rawDelta) => {
     const actor = root.current;
@@ -93,7 +95,9 @@ function Citizen({
     const dz = player.z - actor.position.z;
 
     const playerDistance = Math.hypot(dx, dz);
+    actor.position.y=groundHeight(actor.position.x,actor.position.z);
     citizenPositions.set(npc.id,{x:actor.position.x,z:actor.position.z});
+    pedestrianBodies.set(npc.id,{x:actor.position.x,z:actor.position.z});
     if(playerDistance>65)return;
     const watching = playerDistance < 3.8;
 
@@ -145,8 +149,8 @@ function Citizen({
           actor.position.z + mz * amount;
 
         // Avoid static world obstacles.
-        if (!blocked(nx, nz)) {
-          actor.position.set(nx, 0, nz);
+        if (!blocked(nx, nz)&&!residentBlocked(nx,nz,actor.position.x,actor.position.z,npc.id)) {
+          actor.position.set(nx, groundHeight(nx,nz), nz);
           intendedYaw = Math.atan2(mx, mz);
           walking = true;
 

@@ -1,4 +1,6 @@
-import {useRef,type MutableRefObject} from 'react';
+import {groundHeight} from '../../shared/playerPhysics.mjs';
+import {pedestrianBodies,residentBlocked} from './pedestrianBodies';
+import {useEffect,useRef,type MutableRefObject} from 'react';
 import {useFrame} from '@react-three/fiber';
 import {MathUtils,type Group} from 'three';
 import {Character} from './Character';
@@ -11,9 +13,10 @@ const RESIDENTS=[{name:'Decaf Dave',x:31,z:6,shirt:'#78a990'},{name:'Latte Linda
 export function LivingResidents({runtime}:{runtime:MutableRefObject<LivingRuntime>}){return <>{RESIDENTS.map((person,index)=><Resident key={person.name} person={person} index={index} runtime={runtime}/>)}</>;}
 function Resident({person,index,runtime}:{person:typeof RESIDENTS[number];index:number;runtime:MutableRefObject<LivingRuntime>}) {
  const root=useRef<Group>(null),arm=useRef<Group>(null),left=useRef<Group>(null),right=useRef<Group>(null),cup=useRef<Group>(null),umbrella=useRef<Group>(null),label=useRef<Group>(null);
+ useEffect(()=>()=>{pedestrianBodies.delete(person.name);},[person.name]);
  const stage=useRef(''),delay=useRef(index*2),cycle=useRef(0),moving=useRef(0);
  useFrame((_,raw)=>{
-  const actor=root.current;if(!actor)return;const dt=Math.min(raw,.1),e=runtime.current.env;
+  const actor=root.current;if(!actor)return;actor.position.y=groundHeight(actor.position.x,actor.position.z);pedestrianBodies.set(person.name,{x:actor.position.x,z:actor.position.z});const dt=Math.min(raw,.1),e=runtime.current.env;
   const mode=e.minute<360||e.minute>1320?'home':e.rain>.25?'shelter':e.minute>720&&e.minute<900?'lunch':e.minute<690?'coffee':'stroll';
   if(stage.current!==mode){stage.current=mode;delay.current=index*1.5;}
   let x=person.x,z=person.z;
@@ -22,7 +25,7 @@ function Resident({person,index,runtime}:{person:typeof RESIDENTS[number];index:
   if(mode==='stroll')x=person.x+Math.sin(e.seconds/35+index)*2;
   const dx=x-actor.position.x,dz=z-actor.position.z,d=Math.hypot(dx,dz);let walking=false;
   if(delay.current>0)delay.current-=dt;
-  else if(d>.12){const speed=(.85+index*.11)*dt,nx=actor.position.x+dx/d*Math.min(d,speed),nz=actor.position.z+dz/d*Math.min(d,speed);if(!blocked(nx,nz,.3)){actor.position.set(nx,0,nz);actor.rotation.y=Math.atan2(dx,dz);walking=true;}}
+  else if(d>.12){const speed=(.85+index*.11)*dt,nx=actor.position.x+dx/d*Math.min(d,speed),nz=actor.position.z+dz/d*Math.min(d,speed);if(!blocked(nx,nz,.3)&&!residentBlocked(nx,nz,actor.position.x,actor.position.z,person.name)){actor.position.set(nx,groundHeight(nx,nz),nz);const yaw=Math.atan2(dx,dz);actor.rotation.y+=Math.atan2(Math.sin(yaw-actor.rotation.y),Math.cos(yaw-actor.rotation.y))*(1-Math.exp(-6*dt));walking=true;}}
   moving.current=MathUtils.damp(moving.current,walking?1:0,8,dt);cycle.current+=dt*6;
   if(left.current)left.current.rotation.x=Math.sin(cycle.current)*.4*moving.current;
   if(right.current)right.current.rotation.x=-Math.sin(cycle.current)*.4*moving.current;
