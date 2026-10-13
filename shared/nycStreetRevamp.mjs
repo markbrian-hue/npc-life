@@ -51,7 +51,7 @@ export const CITY_CROSSINGS=[
  ...[-362,-400,-438].flatMap((z,j)=>
    [-235,-190,-146,-100,-51,0,50,116,168,217,261].map((x,i)=>({
     id:'uptown-cross-'+j+'-'+i,x,z,axis:'z',width:9.5
-   }))
+   })))
 ];
 // Traffic poles occupy physically clear sidewalk quadrants, not roads.
 export const CORNER_SIGNAL_CANDIDATES=CITY_CROSSINGS.filter((p,i)=>
