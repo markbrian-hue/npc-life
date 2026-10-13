@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'feat/nyc-vertical-traversal'
+      - 'feat/nyc-districts-streetscape'
   workflow_dispatch:
 jobs:
   traverse:
