@@ -1,5 +1,6 @@
 import {memo} from 'react';
 import {BOROUGHS} from '../../shared/boroughPlan.mjs';
+import {URBAN_GROUND_ZONES} from '../../shared/nycStreetRevamp.mjs';
 import {NYC_PUBLIC_SPACES,NYC_DISTRICTS,NYC_RIVER} from '../../shared/nycExpansion.mjs';
 import {GARAGES} from '../../shared/vehicleCatalog.mjs';
 import {BUSINESSES} from '../../shared/livingCity.mjs';
@@ -10,6 +11,7 @@ export const CityMapLayer=memo(function CityMapLayer({size,details=false}:{size:
   return <>
     <rect width={size} height={size} fill="#91a27c"/>
     <rect y={s(75)} width={size} height={size-s(75)} fill="#578f9b"/>
+    {URBAN_GROUND_ZONES.map(z=>rect(z,'#89908f',z.id))}
     {rect({x:20,z:-32,w:165,d:150},'#898f8b','nyc-civic')}
     {rect({x:61.5,z:-271.5,w:434,d:135},'#898f8b','nyc-base')}
     {rect(NYC_RIVER,'#578f9b','east-river')}
