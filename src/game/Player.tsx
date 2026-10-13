@@ -6,7 +6,7 @@ import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound, updateEngineSound } from './gameAudio';
 import type { Vehicles } from './Vehicles';
-import { pedestrianBlocked } from '../../shared/vehicles.mjs';
+import { pedestrianBlocked, vehicleSpec } from '../../shared/vehicles.mjs';
 
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -260,7 +260,12 @@ export function Player({
     const fleet=vehicles.runtime.current;
     const car=fleet.cars.find(c=>c.id===fleet.ownedId);
     if (model.current) model.current.visible=!car;
-    const movementBlocked=(x:number,z:number)=>blocked(x,z,AVATAR_RADIUS)||pedestrianBlocked(x,z,fleet.cars)||residentBlocked(x,z,position.current.x,position.current.z);
+    const movementBlocked=(x:number,z:number)=>{
+      const feet=physics.current.y;
+      const solidVehicles=fleet.cars.filter(c=>feet<groundHeight(c.x,c.z)+vehicleSpec(c).height*.98-.025);
+      return blocked(x,z,AVATAR_RADIUS,feet)||pedestrianBlocked(x,z,solidVehicles)||
+        (feet<1.8&&residentBlocked(x,z,position.current.x,position.current.z));
+    };
 
     const side = worldLocked || car
       ? 0
@@ -315,13 +320,13 @@ export function Player({
 
     const v=velocity.current;
     const physicsState=physics.current;
-    if(worldLocked||car||sitting.current){physicsState.x=position.current.x;physicsState.z=position.current.z;physicsState.y=position.current.y;physicsState.vx=physicsState.vz=physicsState.vy=0;v.set(0,0);physicsTime.current=0;jumpBuffer.current=0;}
+    if(worldLocked||car||sitting.current){physicsState.x=position.current.x;physicsState.z=position.current.z;physicsState.y=position.current.y;physicsState.vx=physicsState.vz=physicsState.vy=0;physicsState.support=null;physicsState.ladder=null;physicsState.mantle=null;v.set(0,0);physicsTime.current=0;jumpBuffer.current=0;}
     else {
       // Relocation and safe vehicle exits preserve the public event API.
       if(Math.hypot(physicsState.x-position.current.x,physicsState.z-position.current.z)>1){Object.assign(physicsState,freshPlayer(position.current.x,position.current.z));}
       physicsTime.current+=Math.min(rawDelta,.25);
       let jump=jumpBuffer.current>0,consumed=false;
-      while(physicsTime.current+1e-9>=PLAYER_STEP){stepPlayer(physicsState,{x:targetX,z:targetZ,jump,lowGravity:cityEvent==='low-gravity'},PLAYER_STEP,movementBlocked);jump=false;consumed=true;physicsTime.current=Math.max(0,physicsTime.current-PLAYER_STEP);}
+      while(physicsTime.current+1e-9>=PLAYER_STEP){stepPlayer(physicsState,{x:targetX,z:targetZ,jump,jumpHeld:pressed.has('Space'),climb:pressed.has('KeyE'),lowGravity:cityEvent==='low-gravity'},PLAYER_STEP,movementBlocked,fleet.cars);jump=false;consumed=true;physicsTime.current=Math.max(0,physicsTime.current-PLAYER_STEP);}
       if(consumed)jumpBuffer.current=0;position.current.set(physicsState.x,physicsState.y,physicsState.z);v.set(physicsState.vx,physicsState.vz);grounded.current=physicsState.grounded;
     }
     const actualSpeed=v.length();
@@ -513,6 +518,8 @@ export function Player({
             y: Math.max(0,position.current.y),
             driving: !!car,
             cameraYaw: orbit.current.yaw,
+             locomotion:physics.current.ladder?'climb':physics.current.mantle?'mantle':physics.current.grounded?'ground':'air',
+             support:physics.current.support,
           },
         })
       );
