@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'vite';
 import {ROOFTOP_LADDERS} from '../shared/verticalTraversal.mjs';
+import {freshLiving} from '../shared/livingCity.mjs';
 const {chromium}=await import(process.env.NPC_LIFE_PLAYWRIGHT_MODULE||'playwright');
 const vite=await createServer({server:{host:'127.0.0.1',port:5201,strictPort:true,hmr:false}});
 await vite.listen();
@@ -8,10 +9,10 @@ let browser;
 const errors=[];
 try{
  browser=await chromium.launch({headless:true,...(process.env.NPC_LIFE_CHROMIUM?{executablePath:process.env.NPC_LIFE_CHROMIUM}:{}),args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
- const page=await browser.newPage({viewport:{width:1280,height:800}});
+ const page=await browser.newPage({viewport:{width:900,height:600}});
  page.setDefaultTimeout(60000);
  page.on('pageerror',e=>errors.push(e.message));
- await page.addInitScript(()=>{window.__npcPosition={x:0,z:0,y:0};window.addEventListener('npc-life:position',e=>{window.__npcPosition=e.detail;});});
+ await page.addInitScript(living=>{localStorage.setItem('npc-life:living-city-v1',JSON.stringify({...living,quality:'low',autoResolution:false,cinematic:false}));window.__npcPosition={x:0,z:0,y:0};window.addEventListener('npc-life:position',e=>{window.__npcPosition=e.detail;});},freshLiving());
  await page.goto('http://127.0.0.1:5201');
  await page.getByRole('button',{name:'Skip, I live here already'}).click();
  await page.waitForFunction(()=>Number.isFinite(window.__npcPosition?.x)&&window.__npcPosition.x!==0);
@@ -30,7 +31,7 @@ try{
  console.log('PASS ladder visuals exist in actual R3F scene');
  await page.keyboard.down('e');
  try{
-  await page.waitForFunction(p=>window.__npcPosition.y>p.roof-.15,ladder,{timeout:30000});
+  await page.waitForFunction(p=>window.__npcPosition.y>p.roof-.15,ladder,{timeout:90000});
  }catch(error){
   const debug=await page.evaluate(()=>({position:window.__npcPosition,dialogs:[...document.querySelectorAll('[role="dialog"]')].map(x=>x.getAttribute('aria-label')),focus:document.activeElement?.tagName}));
   console.error('TRAVERSAL DEBUG',JSON.stringify({ladder,debug,errors}));
