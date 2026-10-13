@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - 'feat/npc-career-and-city-bulletin'
+      - 'feat/living-city-survival-weather'
   pull_request:
     branches:
       - main
+      - 'feat/npc-career-and-city-bulletin'
 
 jobs:
   verify:

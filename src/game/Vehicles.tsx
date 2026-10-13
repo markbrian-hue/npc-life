@@ -1,3 +1,5 @@
+import type {LivingRuntime} from './LivingCity';
+import type {MutableRefObject} from 'react';
 import { playGameSound } from './gameAudio';
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -84,7 +86,7 @@ function MovingCar({id,vehicles}:{id:string;vehicles:Vehicles}) {
     <group ref={driver} position={[-.15,.18,-.4]} rotation={[0,Math.PI/2,0]} scale={.49}><Character shirt="#d1aa65" /></group>
   </group>;
 }
-export function VehiclesWorld({vehicles}:{vehicles:Vehicles}) {
+export function VehiclesWorld({vehicles,environment}:{vehicles:Vehicles;environment:MutableRefObject<LivingRuntime>}) {
   useFrame((_,dt)=>{
     const r=vehicles.runtime.current;
     if(r.networked){
@@ -93,7 +95,7 @@ export function VehiclesWorld({vehicles}:{vehicles:Vehicles}) {
         car.heading+=Math.atan2(Math.sin(t.heading-car.heading),Math.cos(t.heading-car.heading))*(1-Math.exp(-16*dt));
         car.speed=t.speed;car.driver=t.driver;car.steer=t.steer;car.braking=t.braking;
       }
-    }else for(const car of r.cars){if(car.traffic)stepTraffic(car,dt,r.cars,[r.player]);else stepVehicle(car,car.id===r.ownedId?r.controls:neutralControls(),dt,r.cars);}
+    }else for(const car of r.cars){if(car.traffic)stepTraffic(car,dt,r.cars,[r.player]);else stepVehicle(car,car.id===r.ownedId?r.controls:neutralControls(),dt,r.cars,environment.current.env.rain);}
   },-2);
   return <>{vehicles.runtime.current.cars.map(car=><MovingCar key={car.id} id={car.id} vehicles={vehicles}/>)}</>;
 }

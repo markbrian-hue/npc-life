@@ -13,7 +13,8 @@
     "start": "node server/multiplayer.mjs",
     "test:city": "node tests/city-browser.mjs",
     "test:foundation": "node tests/foundation-browser.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:living": "node tests/living-city-browser.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.0.0",

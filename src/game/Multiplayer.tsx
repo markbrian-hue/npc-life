@@ -11,6 +11,7 @@ import { isTyping, useGameUI } from './ui/GameUI';
 export type Resident = { id: string; name: string; color: string; x: number; y: number; z: number; heading: number; waving: boolean; vehicleId?: string };
 type Session = { id: string; token: string; code: string };
 export function useMultiplayer() {
+  const [environment,setEnvironment]=useState<{seconds:number;seed:number;received:number}|null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [players, setPlayers] = useState<Resident[]>([]);
   const [cars, setCars] = useState(createFleet);
@@ -33,18 +34,19 @@ export function useMultiplayer() {
       const response = await fetch('/api/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, code }), signal: AbortSignal.timeout(6000) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not join room.');
+      if(data.environment)setEnvironment({...data.environment,received:performance.now()});
       setSession({ id: data.id, token: data.token, code: data.code }); setPlayers(data.players); if (data.cars) setCars(data.cars);
     } catch (e) {
       setError(e instanceof Error && !['SyntaxError', 'TimeoutError', 'TypeError'].includes(e.name) ? e.message : 'Multiplayer server unavailable. Start the game with npm run dev:multi, or connect to a running host.');
     } finally { joining.current = false; setBusy(false); }
   }, []);
   useEffect(() => {
-    if (!session) return;
+    if (!session) {setEnvironment(null);return;}
     let active = true, sending = false;
     const events = new EventSource(`/api/events?token=${encodeURIComponent(session.token)}`);
     events.onmessage = event => {
       if (!active) return;
-      try { const data = JSON.parse(event.data); if (Array.isArray(data.players)) { setPlayers(data.players); if (data.cars) setCars(data.cars); setConnected(true); setError(''); } } catch { /* Ignore incomplete packets. */ }
+      try { const data = JSON.parse(event.data); if (Array.isArray(data.players)) { setPlayers(data.players); if (data.cars) setCars(data.cars); if(data.environment)setEnvironment({...data.environment,received:performance.now()}); setConnected(true); setError(''); } } catch { /* Ignore incomplete packets. */ }
     };
     events.onerror = () => { if (active) { setConnected(false); setError('Connection interrupted. Reconnecting…'); } };
     const send = async () => {
@@ -68,7 +70,7 @@ export function useMultiplayer() {
     const data=await response.json(); if (!response.ok) throw new Error(data.error);
     setCars(data.cars); setPlayers(data.players); return data.position as {x:number;z:number} | undefined;
   };
-  return { session, players, cars, controls, vehicle, connected, error, busy, join, leave: () => setSession(null) };
+  return { environment, session, players, cars, controls, vehicle, connected, error, busy, join, leave: () => setSession(null) };
 }
 export type Multiplayer = ReturnType<typeof useMultiplayer>;
 export function MultiplayerMenu({ multiplayer }: { multiplayer: Multiplayer }) {

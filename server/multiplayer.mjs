@@ -1,3 +1,4 @@
+import {environmentAt} from '../shared/livingCity.mjs';
 import { WORLD_RADIUS, SPAWN, blocked } from '../shared/world.mjs';
 import { createFleet, stepTraffic, stepVehicle, neutralControls, exitPosition } from '../shared/vehicles.mjs';
 import { createServer } from 'node:http';
@@ -10,7 +11,7 @@ const COLORS = ['#e5b36a', '#a3c6b0', '#c2a3cc', '#8dc5d7', '#df9385', '#c8c878'
 const MAX_PLAYERS = 8;
 export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}) {
   const rooms = new Map(), sessions = new Map(), joins = new Map();
-  function snapshot(room) { return { code: room.code, cars: room.cars, players: [...room.players.values()].map(({ id, name, color, x, y, z, heading, waveUntil, vehicleId }) => ({ id, name, color, x, y, z, heading, vehicleId, waving: waveUntil > now() })) }; }
+  function snapshot(room) { return { environment:{seconds:Math.max(0,(now()-room.started)/1000),seed:room.seed}, code: room.code, cars: room.cars, players: [...room.players.values()].map(({ id, name, color, x, y, z, heading, waveUntil, vehicleId }) => ({ id, name, color, x, y, z, heading, vehicleId, waving: waveUntil > now() })) }; }
   function broadcast(room) { const data = `data: ${JSON.stringify(snapshot(room))}\n\n`; for (const player of room.players.values()) if (player.stream && !player.stream.writableEnded) player.stream.write(data); }
   function remove(player) { player.stream?.end(); sessions.delete(player.token); const room = rooms.get(player.room); if (room) { for (const car of room.cars) if (car.driver === player.id) { car.driver = ''; car.speed = 0; } room.players.delete(player.id); if (!room.players.size) rooms.delete(room.code); else broadcast(room); } }
   let lastPhysics = now();
@@ -19,7 +20,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
     for (const room of rooms.values()) for (const car of room.cars) {
       const driver=room.players.get(car.driver);
       if(car.traffic){stepTraffic(car,dt,room.cars,[...room.players.values()].filter(p=>!p.vehicleId));continue;}
-      stepVehicle(car,driver && time-driver.lastMove<750 ? driver.controls : neutralControls(),dt,room.cars);
+      stepVehicle(car,driver && time-driver.lastMove<750 ? driver.controls : neutralControls(),dt,room.cars,environmentAt((time-room.started)/1000,room.seed).rain);
       if (driver) Object.assign(driver,{x:car.x,z:car.z,y:0,heading:car.heading+Math.PI/2});
     }
   }, 1000/60);
@@ -58,7 +59,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
           } else {
             if (rooms.size >= 64) return reply(res, 503, { error: 'Server is full. Try again later.' });
             let nextCode; do { nextCode = randomBytes(3).toString('hex').toUpperCase(); } while (rooms.has(nextCode));
-            room = { code: nextCode, players: new Map(), cars: createFleet() }; rooms.set(nextCode, room);
+            room = { started:now(),seed:parseInt(nextCode,16)%10000,code: nextCode, players: new Map(), cars: createFleet() }; rooms.set(nextCode, room);
           }
           if (room.players.size >= MAX_PLAYERS) return reply(res, 409, { error: 'This room is full (8 residents).' });
           const taken = new Set([...room.players.values()].map(p => p.color));

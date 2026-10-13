@@ -1,3 +1,4 @@
+import {BUSINESSES,kioskPosition} from './livingCity.mjs';
 import { placeCandidates, footprint, overlaps, roadOverlap, roadAt, streetFacing, PARKING_BAYS, ACTIVITY_SITES, ACTIVITY_ZONES, ROAD_SEGMENTS, roadBounds, PARK_PATHS } from './cityPlan.mjs';
 export * from './cityPlan.mjs';
 export const WORLD_RADIUS = 136;
@@ -118,6 +119,7 @@ export const DISTRICT_COLLIDERS = [
 ];
 
 const roadProps = [
+  ...BUSINESSES.map(b=>({...kioskPosition(b),halfX:2.65,halfZ:1.5})),
   ...DISTRICT_COLLIDERS,
   {x:10.5,z:10.5,halfX:.75,halfZ:.75},
   ...BENCHES.map(({ x, z, rotation }) => ({

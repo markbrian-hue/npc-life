@@ -1,3 +1,7 @@
+import {LivingResidents} from './game/LivingResidents';
+import {environmentAt} from '../shared/livingCity.mjs';
+import {useLivingCity, LivingCityUI} from './game/LivingCity';
+import {LivingEnvironment, FoodBusinesses} from './game/LivingWorld';
 import { useResidentLife, ResidentLifeWorld, ResidentLifeUI } from './game/ResidentLife';
 import { useVehicles, VehiclesWorld, VehicleHUD } from './game/Vehicles';
 import { SPAWN } from './game/world';
@@ -10,7 +14,7 @@ import { GameDialog } from './game/ui/GameDialog';
 import { useGameUI, useMenuState, isTyping } from './game/ui/GameUI';
 
 import { Canvas } from '@react-three/fiber';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { City } from './game/City';
 import { CityActivities } from './game/CityActivities';
@@ -436,9 +440,18 @@ export default function App() {
     playGameSound('interact');
   });
 
+  const environment = useRef(environmentAt(0));
   const life = useResidentLife(player, coins, reputation, vehicles, (amount, rep, message) => {
     setCoins(n => Math.max(0,n + amount)); setReputation(n => n + rep); setToast(message);
-  }, setToast);
+  }, setToast,environment);
+
+  const wallet = useRef(coins);wallet.current=coins;
+  const city = useLivingCity(player,coins,multiplayer,!!life.active||quest.job!=='none',(price)=>{
+    if(wallet.current<price)return false;
+    wallet.current-=price;setCoins(n=>n-price);return true;
+  },setToast);
+
+  environment.current=city.env;
 
   // Save existing progression without migrating or resetting it.
 
@@ -1008,8 +1021,8 @@ export default function App() {
     <div className="game-shell">
       {/* Existing city + reactive citizens */}
       <Canvas
-        shadows
-        dpr={[1, 1.5]}
+        shadows={city.view.quality!=='low'}
+        dpr={[1, city.view.quality==='high'?1.75:city.view.quality==='low'?1:1.5]}
         camera={{
           position: [9, 10, 13],
           fov: 60,
@@ -1019,6 +1032,9 @@ export default function App() {
         gl={{ antialias: true }}
       >
         <City caught={quest.caught} />
+        <LivingEnvironment runtime={city.runtime} quality={city.view.quality} />
+        <FoodBusinesses runtime={city.runtime} />
+        <LivingResidents runtime={city.runtime} />
         <DistrictWorld campaign={revival.campaign} carrying={revival.carrying} />
         <RemoteResidents multiplayer={multiplayer} />
         <ResidentLifeWorld life={life} />
@@ -1033,10 +1049,12 @@ export default function App() {
         <ReactiveCitizens
           player={player}
           reputation={reputation}
+          environment={city.runtime}
         />
 
-        <VehiclesWorld vehicles={vehicles} />
+        <VehiclesWorld vehicles={vehicles} environment={city.runtime} />
         <Player
+          living={city.runtime}
           vehicles={vehicles}
           onMove={onMove}
           equipped={equipped}
@@ -1048,9 +1066,11 @@ export default function App() {
       </Canvas>
       <VehicleHUD vehicles={vehicles} />
       <ResidentLifeUI life={life} />
+      <LivingCityUI city={city} player={player} />
 
       {/* New Alpha 0.7 interaction layer */}
       <CityEncounters
+        environment={city.runtime}
         player={player}
         reputation={reputation}
         disabled={locked}
@@ -1086,7 +1106,7 @@ export default function App() {
             <h1>NPC LIFE</h1>
             <p>
               THE CITY OF IDIOTS{' '}
-              <span>•</span> CITY REVIVAL
+              <span>•</span> LIVING CITY
             </p>
           </div>
         </div>
@@ -1268,6 +1288,8 @@ export default function App() {
           <p>
             <kbd>SPACE</kbd> Jump on foot / brake in a car
           </p>
+          <p><kbd>G</kbd> Food shop / free bureau meal · <kbd>O</kbd> Food bag</p>
+          <p><kbd>F</kbd> Talk to street residents · clock gear for needs/graphics settings</p>
           <p><kbd>R</kbd> Enter a parked car / exit when stopped</p>
           <p><kbd>W/S</kbd> Accelerate/reverse · <kbd>A/D</kbd> Steer</p>
           <p>

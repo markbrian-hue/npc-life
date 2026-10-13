@@ -1,3 +1,4 @@
+import {BUSINESSES,kioskPosition} from '../../shared/livingCity.mjs';
 
 import { BUILDINGS } from './world';
 
@@ -32,6 +33,15 @@ const BUILDING_BOXES: Bounds[] = CAMERA_STRUCTURES.map((building) => ({
   maxY: building.h + 0.85,
   minZ: building.z - building.d / 2 - PADDING,
   maxZ: building.z + building.d / 2 + PADDING,
+}));
+// Kiosks have open space above their counters. Use actual body and roof slabs
+// so the camera can pass above the counter instead of hitting a phantom wall.
+BUILDING_BOXES.push(...BUSINESSES.flatMap(shop=>{
+  const p=kioskPosition(shop);
+  return [
+    {minX:p.x-2.1,maxX:p.x+2.1,minY:0,maxY:2.15,minZ:p.z-.95,maxZ:p.z+.95},
+    {minX:p.x-2.65,maxX:p.x+2.65,minY:4.05,maxY:4.4,minZ:p.z-3.1,maxZ:p.z+2.9},
+  ];
 }));
 
 /**

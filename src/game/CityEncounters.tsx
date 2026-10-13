@@ -1,3 +1,5 @@
+import type {MutableRefObject} from 'react';
+import type {LivingRuntime} from './LivingCity';
 import { citizenPositions } from './citizenPositions';
 import { GameDialog } from './ui/GameDialog';
 import { useGameUI } from './ui/GameUI';
@@ -26,6 +28,7 @@ import {
 import './encounters.css';
 
 type Props = {
+  environment:MutableRefObject<LivingRuntime>;
   player: PlayerLocation;
   reputation: number;
   disabled: boolean;
@@ -36,6 +39,7 @@ type Props = {
 };
 
 export function CityEncounters({
+  environment,
   player,
   reputation,
   disabled,
@@ -244,7 +248,7 @@ export function CityEncounters({
             </p>
 
             <p className="encounter-rumor">
-              ON THE STREET: {rumor}
+              ON THE STREET: {rumor}<br/>{environment.current.env.rain>.25?'Rain brings better-paid delivery shifts. Check L. Umbrella insurance remains a scam.':environment.current.env.minute>1200?'The convenience store is always open. Free benches restore energy.':'G opens food menus, O opens your bag. The bureau offers free meals and water when needs are low.'}
             </p>
 
             <p className="encounter-question">
