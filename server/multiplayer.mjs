@@ -108,7 +108,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
           player.lastMove=now();
           const c=input.controls;
           player.controls=c && [-1,0,1].includes(c.throttle) && [-1,0,1].includes(c.steer) && typeof c.brake==='boolean' ? c : neutralControls();
-          if (!player.vehicleId && !blocked(input.x,input.z)) Object.assign(player, { x: input.x, y: input.y, z: input.z, heading: input.heading });
+          if (!player.vehicleId && !blocked(input.x,input.z,.42,input.y)) Object.assign(player, { x: input.x, y: input.y, z: input.z, heading: input.heading });
           if (input.wave === true) player.waveUntil = now() + 1600;
           return reply(res, 200, { ok: true });
         }
