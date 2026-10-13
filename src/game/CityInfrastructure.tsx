@@ -1,6 +1,7 @@
 import {memo,useMemo} from 'react';
 import {BufferGeometry,Float32BufferAttribute} from 'three';
 import {cityMaps} from './cityMaterials';
+import {BOROUGH_CROSSINGS} from '../../shared/boroughPlan.mjs';
 import {ROAD_SEGMENTS,ROUND_ROADS,PARKING_BAYS,PARK_PATHS,BUILDINGS,onRoad,roadBounds,inBox} from './world';
 import {StreetBoard} from './DistrictWorld';
 type Rect={x:number;z:number;w:number;d:number;y?:number};
@@ -26,7 +27,13 @@ export const CityInfrastructure=memo(function CityInfrastructure(){
   const marks:Rect[]=[];
   for(const v of [-18,18])for(let i=-3;i<=3;i++){marks.push({x:v+i*.57,z:0,w:.36,d:7.1,y:-.003},{x:0,z:v+i*.57,w:7.1,d:.36,y:-.003});}
   for(const r of ROAD_SEGMENTS)for(let i=1;i<r.length/3-1;i++)for(const s of [-1,1]){const along=-r.length/2+i*3,b={x:r.x+(r.axis==='x'?along:s*(r.width/2-.3)),z:r.z+(r.axis==='z'?along:s*(r.width/2-.3)),w:r.axis==='x'?3:.075,d:r.axis==='z'?3:.075,y:-.003};if(!ROUND_ROADS.some(c=>Math.hypot(b.x-c.x,b.z-c.z)<c.outer+2)&&!ROAD_SEGMENTS.some(o=>o.id!==r.id&&inBox(b.x,b.z,roadBounds(o),.7)))marks.push(b);}
-  for(const x of [-21,21])marks.push({x,z:x>0?2:-2,w:.27,d:3.6,y:-.003});
+  for(const cross of BOROUGH_CROSSINGS)for(let lane=-2;lane<=2;lane++){
+    marks.push({x:cross.x+(cross.axis==='x'?lane*.88:0),
+     z:cross.z+(cross.axis==='z'?lane*.88:0),
+     w:cross.axis==='x'?.53:cross.width-.85,
+     d:cross.axis==='z'?.53:cross.width-.85,y:-.003});
+   }
+   for(const x of [-21,21])marks.push({x,z:x>0?2:-2,w:.27,d:3.6,y:-.003});
   for(const z of [-21,21])marks.push({x:z>0?-2:2,z,w:3.6,d:.27,y:-.003});
   return marks;
  },[]);
