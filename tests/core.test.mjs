@@ -105,7 +105,7 @@ test('display preferences apply even when persistence fails', () => {
   assert.throws(() => setSettings({ reducedMotion: true, compactHud: false, hideMinimap: true }));
   assert.equal(applied.get('npc-reduce-motion'), true);
   assert.equal(applied.get('npc-hide-minimap'), true);
-  assert.equal(RELEASE_KEYS.length, 17);
+  assert.equal(RELEASE_KEYS.length, 18);
 });
 
 test('city revival progress participates in import and invalid progress preserves the prior save', async () => {

@@ -1,3 +1,4 @@
+import { LIVING_KEY, validateLiving } from '../../shared/livingCity.mjs';
 import { LIFE_KEY, validateLife } from '../../shared/residentLife.mjs';
 import { CAMPAIGN_KEY, validateCampaign } from './campaign';
 
@@ -8,6 +9,7 @@ import { STREET_NPCS } from './alpha7';
 import { DAILY_CHALLENGES } from './alpha6';
 
 export const RELEASE_KEYS = [
+  LIVING_KEY,
   LIFE_KEY,
   CAMPAIGN_KEY,
   'npc-life:coins-v1',
@@ -212,6 +214,7 @@ export function exportSave(): void {
 }
 
 function validateValue(key: string, raw: string): string {
+  if(key===LIVING_KEY) return JSON.stringify(validateLiving(JSON.parse(raw)));
   if(key===LIFE_KEY) return JSON.stringify(validateLife(JSON.parse(raw)));
   if (key === CAMPAIGN_KEY) return JSON.stringify(validateCampaign(JSON.parse(raw)));
   if ([
