@@ -1,4 +1,5 @@
 import {EXPLORER_SITES} from './exploration.mjs';
+import {GARAGES} from './vehicleCatalog.mjs';
 import {generateStreetInfill,CORNER_SIGNAL_CANDIDATES} from './nycStreetRevamp.mjs';
 import {NYC_BLOCK_CANDIDATES,NYC_PUBLIC_SPACES,NYC_RIVER,NYC_EXPANSION_ROADS,NYC_SIGN_POST_CANDIDATES} from './nycExpansion.mjs';
 import {BOROUGH_PARCELS,BOROUGH_SIGNAL_CANDIDATES,styleBoroughBuilding} from './boroughPlan.mjs';
@@ -57,12 +58,24 @@ const RESERVED_BUILDING_SITES = [...PARKING_BAYS,...ACTIVITY_ZONES.filter(p=>p.k
  ...NYC_PUBLIC_SPACES,{x:-65,z:-185,w:16,d:15},{x:184,z:-115,w:22,d:15}];
 const oldBuildings=placeCandidates([...buildingCandidates,...BOROUGH_PARCELS,...NYC_BLOCK_CANDIDATES],
  RESERVED_BUILDING_SITES,{roadClearance:2,gap:.4}).map(styleBoroughBuilding);
+// All existing game interaction spots and vehicle door clearances are reserved.
+// Expansion density must never turn an old job or a purchased car into a trap.
+const OLD_JOB_STOPS=[
+ [-6,-16],[6,22],[-44,-8],[-60,-10],[-76,-8],[-44,6],
+ [8,-82],[6,68],[-92,-77],[80,1.8],[57,6],[21,6],
+ [36,6],[25,58],[-82,-71],[6.4,16],
+];
+const STOP_CLEARANCES=OLD_JOB_STOPS.map(([x,z])=>({x,z,w:8,d:8}));
+const GARAGE_CLEARANCES=GARAGES.flatMap(g=>[
+ {x:g.x,z:g.z,w:13,d:13},
+ ...g.pads.map(p=>({x:p.x,z:p.z,w:13,d:13}))
+]);
 const newInfill=placeCandidates(generateStreetInfill(ROAD_SEGMENTS),[
- ...RESERVED_BUILDING_SITES,...oldBuildings,
- ...EXPLORER_SITES.map(p=>({x:p.x,z:p.z,w:9,d:9})),
- ...BUSINESSES.map(b=>({...kioskPosition(b),w:7,d:5})),
- {x:6.4,z:16,w:8,d:8},{x:8,z:25,w:8,d:8},
-],{roadClearance:2,gap:.85});
+ ...RESERVED_BUILDING_SITES,...ACTIVITY_ZONES,...oldBuildings,
+ ...EXPLORER_SITES.map(p=>({x:p.x,z:p.z,w:10,d:10})),
+ ...BUSINESSES.map(b=>({...kioskPosition(b),w:9,d:7})),
+ ...STOP_CLEARANCES,...GARAGE_CLEARANCES,
+],{roadClearance:2,gap:1.1});
 export const BUILDINGS=[...oldBuildings,...newInfill];
 
 export const PALMS = [[-118,-102],[-100,-118],[-75,-115],[-65,-75],[-105,-62],[-101,-37],[-82,-53]];
