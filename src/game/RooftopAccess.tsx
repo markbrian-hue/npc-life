@@ -31,7 +31,7 @@ export const RooftopAccess=memo(function RooftopAccess(){
   instanced.instanceMatrix.needsUpdate=true;instanced.computeBoundingSphere();
  },[pieces]);
  return <>
-  <instancedMesh ref={mesh} args={[undefined,undefined,pieces.length]} castShadow={false} receiveShadow>
+  <instancedMesh name="roof-access-ladders" ref={mesh} args={[undefined,undefined,pieces.length]} castShadow={false} receiveShadow>
    <boxGeometry args={[1,1,1]}/>
    <meshStandardMaterial color="#697d83" metalness={.72} roughness={.39}/>
   </instancedMesh>
