@@ -24,3 +24,51 @@ test('resident saves reject corrupt unlocks, preserve progress and give useful u
   const s={...freshLife(),completed:{milk:10},upgrades:['bag'],benches:[0,1,2],wins:1,secret:true};const restored=validateLife(JSON.parse(JSON.stringify(s)));assert.equal(restored.completed.milk,10);assert.equal(lifeAchievements(restored).length,5);assert.equal(shiftReward('milk',restored).coins,35);assert.equal(shiftReward('cleanup',restored).coins,45);
   for(const bad of [{...s,wins:-1},{...s,upgrades:['admin']},{...s,completed:{milk:Infinity}},{...s,benches:[-1]},null])assert.throws(()=>validateLife(bad));
 });
+
+
+import { CAREER_CHAPTERS, CAREER_DISTRICTS, addDistrict, finishCareerShift, finishCareerCourt, careerReady, claimCareerChapter, claimBulletin, currentBulletin, freshBulletin } from '../shared/career.mjs';
+import { shiftStops } from '../shared/residentLife.mjs';
+test('career chapters award once in order, only after requirements are met',()=>{
+  let s=freshLife();const date='2026-10-13';
+  assert.equal(claimCareerChapter(s,'badge',0),null);
+  s=finishCareerShift(s,'milk',date);
+  const award=claimCareerChapter(s,'badge',10);
+  assert.equal(award.coins,35);s=award.record;
+  assert.equal(claimCareerChapter(s,'badge',10),null);
+  assert.equal(claimCareerChapter(s,'tour',10),null);
+  for(const d of CAREER_DISTRICTS.slice(0,3))s=addDistrict(s,d.id,date);
+  assert.equal(careerReady(CAREER_CHAPTERS[1],s,10),true);
+  assert.equal(claimCareerChapter(s,'tour',10).coins,45);
+});
+test('exploration passport persists and daily district challenge resets on rollover',()=>{
+  let s=freshLife();s=addDistrict(s,'civic','2026-10-13');
+  assert.deepEqual(s.visited,['civic']);
+  assert.equal(addDistrict(s,'civic','2026-10-13'),s);
+  s=addDistrict(s,'market','2026-10-13');s=addDistrict(s,'park','2026-10-13');
+  const claimed=claimBulletin(s,'districts','2026-10-13');
+  assert.equal(claimed.coins,25);
+  assert.equal(claimBulletin(claimed.record,'districts','2026-10-13'),null);
+  const after=addDistrict(claimed.record,'civic','2026-10-14');
+  assert.deepEqual(after.visited,['civic','market','park']);
+  assert.deepEqual(after.daily.districts,['civic']);assert.deepEqual(after.daily.claimed,[]);
+});
+test('shift and court daily claims cannot duplicate, and day rollover clears counters',()=>{
+  let s=freshLife();s=finishCareerShift(s,'milk','2026-10-13');s=finishCareerShift(s,'post','2026-10-13');
+  s=finishCareerCourt(s,'2026-10-13');
+  assert.equal(claimBulletin(s,'shifts','2026-10-13').rep,5);
+  s=claimBulletin(s,'court','2026-10-13').record;
+  assert.equal(claimBulletin(s,'court','2026-10-13'),null);
+  assert.equal(currentBulletin(s.daily,'2026-10-14').shifts,0);
+});
+test('alternate job routes are deterministic and old resident saves migrate losslessly',()=>{
+  const old={completed:{milk:3},upgrades:['club'],benches:[1],wins:0,secret:false};
+  const previous=validateLife(old);
+  assert.deepEqual(previous.visited,[]);assert.deepEqual(previous.chapters,[]);
+  const post=JOBS.find(j=>j.id==='post');assert.ok(post);
+  const first=startShift('post',55,previous,0);
+  assert.equal(shiftStops(post,first)[1].x,57);
+  const second=startShift('post',55,{...previous,completed:{...previous.completed,post:1}},0);
+  assert.equal(shiftStops(post,second)[1].x,8);
+  assert.throws(()=>validateLife({...old,chapters:['unofficial']}));
+  assert.throws(()=>validateLife({...old,daily:{...freshBulletin('2026-10-13'),claimed:['bogus']}}));
+});

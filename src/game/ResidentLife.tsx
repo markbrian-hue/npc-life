@@ -1,5 +1,6 @@
+import { CAREER_CHAPTERS, DAILY_BULLETIN, addDistrict, districtNear, careerReady, careerMetrics, claimCareerChapter, claimBulletin, dailyProgress, currentBulletin, careerDayStamp, finishCareerShift, finishCareerCourt } from '../../shared/career.mjs';
 import { useEffect, useRef, useState } from 'react';
-import { LIFE_KEY, JOBS, UPGRADES, loadLife, startShift, advanceShift, shiftReward, lifeAchievements, LIFE_ACHIEVEMENTS, canStart } from '../../shared/residentLife.mjs';
+import { LIFE_KEY, JOBS, UPGRADES, loadLife, startShift, advanceShift, shiftReward, shiftStops, lifeAchievements, LIFE_ACHIEVEMENTS, canStart } from '../../shared/residentLife.mjs';
 import { ACTIVITY_SITES, BENCHES, WORLD_RADIUS } from './world';
 import type { Vehicles } from './Vehicles';
 import { useGameUI, isTyping } from './ui/GameUI';
@@ -8,13 +9,13 @@ import { WorldSign } from './DistrictWorld';
 import { playGameSound } from './gameAudio';
 import { CityMapLayer } from './CityMapLayer';
 type Pos={x:number;z:number};
-type Active={id:string;stage:number;started:number;deadline:number}|null;
+type Active={id:string;stage:number;variant:number;started:number;deadline:number}|null;
 export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehicles,reward:(coins:number,rep:number,message:string)=>void,notify:(message:string)=>void){
   const [record,setRecord]=useState(loadLife),[active,setActive]=useState<Active>(null),[notice,setNoticeState]=useState('Start with Go Buy Milk. Earn coins, unlock work, explore the city.'),[now,setNow]=useState(Date.now),[resting,setResting]=useState(false);
   const {store}=useGameUI();const state=useRef({player,coins,rep,record,active,resting,reward});state.current={player,coins,rep,record,active,resting,reward};
   const setNotice=(message:string)=>{setNoticeState(message);notify(message);};
   const save=(next:typeof record)=>{state.current.record=next;setRecord(next);try{localStorage.setItem(LIFE_KEY,JSON.stringify(next));}catch{setNotice('Storage unavailable. This resident record lasts until you close the page.');}};
-  const job=JOBS.find(j=>j.id===active?.id),target=job&&active?job.stops[active.stage]:null;
+  const job=JOBS.find(j=>j.id===active?.id),target=job&&active?shiftStops(job,active)[active.stage]:null;
   const near=ACTIVITY_SITES.find(p=>Math.hypot(p.x-player.x,p.z-player.z)<(p.radius??4));
   const nearBench=BENCHES.some(b=>Math.hypot(b.x-player.x,b.z-player.z)<2.8);
   useEffect(()=>{const timer=setInterval(()=>{const t=Date.now();setNow(t);const a=state.current.active;if(a?.deadline&&t>a.deadline){state.current.active=null;setActive(null);setNotice('Shift expired. No penalty. Pick another from L.');}},500);return()=>clearInterval(timer);},[]);
@@ -26,7 +27,7 @@ export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehi
     const fleet=vehicles.runtime.current,car=fleet.cars.find(c=>c.id===fleet.ownedId);
     if(s.resting){window.dispatchEvent(new CustomEvent('npc-life:rest',{detail:null}));setResting(false);state.current.resting=false;return;}
     if(s.active){const result=advanceShift(s.active,s.player,{driving:!!car,speed:car?.speed||0,now:Date.now()});
-      if(result.status==='complete'){const id=s.active.id,earned=shiftReward(id,s.record);state.current.active=null;setActive(null);save({...s.record,completed:{...s.record.completed,[id]:(s.record.completed[id]||0)+1}});s.reward(earned.coins,earned.rep,'Shift complete. You have been useful. Management is concerned.');setNotice(`+${earned.coins} coins · +${earned.rep} reputation. Pick your next shift with L.`);playGameSound('job');return;}
+      if(result.status==='complete'){const id=s.active.id,earned=shiftReward(id,s.record);state.current.active=null;setActive(null);save(finishCareerShift(s.record,id));s.reward(earned.coins,earned.rep,'Shift complete. You have been useful. Management is concerned.');setNotice(`+${earned.coins} coins · +${earned.rep} reputation. Pick your next shift with L.`);playGameSound('job');return;}
       if(result.status==='advanced'){state.current.active=result.active;setActive(result.active);setNotice(result.active.stage===1?'Cargo collected. It has declined to comment.':'Next stop marked.');playGameSound('interact');return;}
       if(result.status==='stop-car'||result.status==='on-foot'){setNotice(result.status==='stop-car'?'Use a car and brake at the stop.':'Exit the car to handle the delivery.');return;}
     }
@@ -42,8 +43,31 @@ export function useResidentLife(player:Pos,coins:number,rep:number,vehicles:Vehi
   };
   const handlers=useRef({interact});handlers.current={interact};
   useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.repeat||isTyping(e.target)||store.getSnapshot()!==null)return;if(e.code==='KeyL')store.open('resident-phone');if(e.code==='KeyT')handlers.current.interact();};const stand=()=>{setResting(false);state.current.resting=false;};const position=(e:Event)=>{state.current.player=(e as CustomEvent<Pos>).detail;};window.addEventListener('npc-life:position',position);window.addEventListener('keydown',key);window.addEventListener('npc-life:stood',stand);return()=>{window.removeEventListener('npc-life:position',position);window.removeEventListener('keydown',key);window.removeEventListener('npc-life:stood',stand);};},[store]);
-  const courtWin=()=>{const s=state.current;save({...s.record,wins:s.record.wins+1});s.reward(12,4,'Juniper Court: three baskets. Your fan club is a lamp post.');};
-  return {record,active,target,job,near,nearBench,notice,now,start,cancel,purchase,interact,resting,courtWin,rep,player};
+  const courtWin=()=>{const s=state.current;save(finishCareerCourt(s.record));s.reward(12,4,'Juniper Court: three baskets. Your fan club is a lamp post.');};
+  // Stamp districts only when discovered, instead of writing localStorage per frame.
+  useEffect(()=>{
+    const nearDistrict=districtNear(player);
+    if(!nearDistrict)return;
+    const before=state.current.record,after=addDistrict(before,nearDistrict.id);
+    if(after!==before)save(after);
+  },[player.x,player.z]);
+  const claimChapter=(id:string)=>{
+    const s=state.current,result=claimCareerChapter(s.record,id,s.rep);
+    if(!result)return;
+    save(result.record);
+    s.reward(result.coins,result.rep,'CAREER PROMOTION: '+result.title);
+    playGameSound('job');
+    setNotice('Promotion approved. The city regrets encouraging you.');
+  };
+  const claimDaily=(id:string)=>{
+    const s=state.current,result=claimBulletin(s.record,id);
+    if(!result)return;
+    save(result.record);
+    s.reward(result.coins,result.rep,'CITY BULLETIN: '+result.title);
+    playGameSound('coin');
+    setNotice('Daily bulletin stamped. Return tomorrow for new tasks.');
+  };
+  return {record,active,target,job,near,nearBench,notice,now,start,cancel,purchase,interact,resting,courtWin,rep,player,claimChapter,claimDaily};
 }
 export type ResidentLife=ReturnType<typeof useResidentLife>;
 export function ResidentLifeWorld({life}:{life:ResidentLife}){return <>
@@ -53,16 +77,50 @@ export function ResidentLifeWorld({life}:{life:ResidentLife}){return <>
 export function ResidentLifeUI({life}:{life:ResidentLife}){
   const mapScale=(n:number)=>(n+WORLD_RADIUS)*400/(WORLD_RADIUS*2);
   const {store,menu}=useGameUI();const unlocked=lifeAchievements(life.record),done=Object.values(life.record.completed).reduce((a,b)=>a+b,0);
+  const nextChapter=CAREER_CHAPTERS.find(c=>!life.record.chapters.includes(c.id));
+  const bulletin=currentBulletin(life.record.daily,careerDayStamp(new Date(life.now)));
   const [shots,setShots]=useState({attempts:0,hits:0}),[meter,setMeter]=useState(0),[playing,setPlaying]=useState(false);const started=useRef(0),shotLock=useRef(false),finishLock=useRef(false);
   useEffect(()=>{if(menu!=='basketball'){setPlaying(false);return;}if(!playing)return;let frame=0;const tick=()=>{setMeter((Math.sin((performance.now()-started.current)/650)+1)/2);frame=requestAnimationFrame(tick);};frame=requestAnimationFrame(tick);return()=>cancelAnimationFrame(frame);},[playing,menu]);
   const shoot=()=>{if(!playing||shotLock.current||finishLock.current)return;shotLock.current=true;setTimeout(()=>{shotLock.current=false;},250);const hit=meter>.34&&meter<.66,next={attempts:shots.attempts+1,hits:shots.hits+Number(hit)};setShots(next);playGameSound(hit?'coin':'error');if(next.attempts===5){finishLock.current=true;setPlaying(false);if(next.hits>=3)life.courtWin();}};
   return <>
-    <div className="resident-access"><button onClick={()=>store.open('resident-phone')}>RESIDENT RECORD <kbd>L</kbd></button></div>
+    <div className="resident-access"><button onClick={()=>store.open('resident-phone')}>NPC CAREER <kbd>L</kbd></button></div>
     {life.active&&<aside className="shift-tracker"><b>{life.job?.title}</b><span>{life.target?.action} · {Math.ceil(Math.hypot(life.player.x-life.target!.x,life.player.z-life.target!.z))}m</span><small>{life.active.deadline?`${Math.max(0,Math.ceil((life.active.deadline-life.now)/1000))}s · `:''}T at marker · L for details</small></aside>}
     {!life.active&&(life.near||life.nearBench||life.resting)&&menu===null&&<button className="resident-prompt" onClick={life.interact}><kbd>T</kbd> {life.resting?'Stand up':life.nearBench?'Sit on bench':life.near?.id==='coffee'?'Coffee · 10 coins':life.near?.id==='bus'?'Free shuttle to Juniper':life.near?.name}</button>}
     <GameDialog id="resident-phone" label="Resident record" className="resident-phone" onClose={()=>store.close('resident-phone')}>
       <header className="dossier-heading"><div><small>DEPARTMENT OF ORDINARY PEOPLE</small><h2>Your next questionable opportunity.</h2></div><button onClick={()=>store.close('resident-phone')} aria-label="Close resident record">×</button></header>
       <p className="resident-notice" role="status">{life.notice}</p><p>{done} shifts completed · {life.rep} reputation · {unlocked.length}/{LIFE_ACHIEVEMENTS.length} resident achievements</p>
+
+      <section className="career-board" aria-label="NPC career progression">
+        <header>
+          <div><small>THE CITY'S LEAST QUALIFIED EMPLOYEE</small><h3>{nextChapter?.title||'CAREER COMPLETE · MAIN CHARACTER BY ACCIDENT'}</h3></div>
+          <b>{life.record.chapters.length}/{CAREER_CHAPTERS.length} PROMOTIONS</b>
+        </header>
+        <p>{nextChapter?.story||'You have been promoted to honorary municipal inconvenience. Daily work still pays.'}</p>
+        {nextChapter&&<>
+          <div className="career-metrics">
+            {careerMetrics(nextChapter,life.record,life.rep).map(m=><span key={m.label}><b>{m.label}</b><small>{m.current}/{m.required}</small></span>)}
+          </div>
+          <button disabled={!careerReady(nextChapter,life.record,life.rep)} onClick={()=>life.claimChapter(nextChapter.id)}>
+            {careerReady(nextChapter,life.record,life.rep)?'Claim promotion · +'+nextChapter.coins+' coins / +'+nextChapter.rep+' REP':'Complete objectives to unlock promotion'}
+          </button>
+        </>}
+        <details>
+          <summary>Career milestones and district passport</summary>
+          <ol className="career-chapters">{CAREER_CHAPTERS.map(ch=><li key={ch.id}><b>{life.record.chapters.includes(ch.id)?'✓ ':''}{ch.title}</b><small>{ch.story}</small></li>)}</ol>
+          <p>District stamps: {life.record.visited.length}/6</p>
+          <div className="career-districts">{['civic','switchyard','market','park','dock','juniper'].map((id,i)=><span key={id} className={life.record.visited.includes(id)?'earned':''}>{['Civic Square','Switchyard','Market Mile','Willow Park','Saltwater Dock','Juniper Close'][i]}</span>)}</div>
+        </details>
+      </section>
+      <section className="city-bulletin" aria-label="Daily city bulletin">
+        <header><h3>City bulletin · {bulletin.day}</h3><small>Three fresh tasks every local day</small></header>
+        <div className="bulletin-grid">{DAILY_BULLETIN.map(t=><article key={t.id}>
+          <b>{t.title}</b><p>{t.description}</p>
+          <small>{Math.min(dailyProgress(t,bulletin),t.target)}/{t.target} · +{t.coins} coins / +{t.rep} REP</small>
+          <button disabled={bulletin.claimed.includes(t.id)||dailyProgress(t,bulletin)<t.target} onClick={()=>life.claimDaily(t.id)}>
+            {bulletin.claimed.includes(t.id)?'CLAIMED':dailyProgress(t,bulletin)>=t.target?'Claim daily reward':'IN PROGRESS'}
+          </button>
+        </article>)}</div>
+      </section>
       <div className="resident-grid"><div><h3>Available shifts</h3>{JOBS.map(j=><article key={j.id}><b>{j.title}</b><p>{j.subtitle}</p><small>{j.coins} coins · +{j.rep} REP · {j.seconds?`${j.seconds}s limit`:'No timer'}</small><button disabled={!!life.active||!canStart(j,life.rep,life.record)} onClick={()=>life.start(j.id)}>{!canStart(j,life.rep,life.record)?`${j.minimum} REP${j.licence?' + club licence':''}`:'Take shift'}</button></article>)}{life.active&&<button onClick={life.cancel}>Abandon current shift</button>}</div>
       <div><h3>City services & unlocks</h3><svg viewBox="0 0 400 400" aria-label="Resident service map"><CityMapLayer size={400} details/>{life.target&&<circle cx={mapScale(life.target.x)} cy={mapScale(life.target.z)} r={8} fill="none" stroke="#ffdc83" strokeWidth={3}/>}<circle cx={mapScale(life.player.x)} cy={mapScale(life.player.z)} r={5} fill="#fff" stroke="#263a31" strokeWidth={2}><title>You are here</title></circle></svg><ol className="map-service-legend">{ACTIVITY_SITES.map(p=><li key={p.id}>{p.name}</li>)}</ol><p>T beside a bench to sit. Coffee at Market Mile gives a short sprint boost. The civic bus stop offers a free shuttle to Juniper. Play five shots at the court; score three for a reward.</p>{UPGRADES.map(u=><article key={u.id}><b>{u.name}</b><p>{u.description}</p><button disabled={life.record.upgrades.includes(u.id)} onClick={()=>life.purchase(u.id)}>{life.record.upgrades.includes(u.id)?'OWNED':`Buy · ${u.price} coins`}</button></article>)}<small>Buy at the bureau near spawn or at Juniper Motor Club.</small></div></div>
       <h3>Resident achievements</h3><div className="resident-badges">{LIFE_ACHIEVEMENTS.map(a=><span key={a.id} className={unlocked.some(u=>u.id===a.id)?'earned':''}><b>{a.name}</b><small>{a.description}</small></span>)}</div>

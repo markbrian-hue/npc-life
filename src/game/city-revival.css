@@ -91,3 +91,28 @@
 @media(max-width:650px){.game-shell .resident-access{bottom:125px;right:14px}.resident-access button{font-size:10px;padding:9px}}
 
 @media(max-width:650px){.game-shell .resident-prompt{bottom:215px;left:14px;transform:none;max-width:calc(100vw - 180px)}.game-shell:has(.resident-prompt) .interaction{bottom:265px}.game-shell:has(.resident-prompt) .encounter-prompt{bottom:321px}}
+
+
+/* Existing resident phone owns career and daily progress. No new floating HUD clutter. */
+.career-board,.city-bulletin{padding:16px;margin:18px 0;background:#25382d;border:2px solid #556a55;color:#efe5c8}
+.career-board>header,.city-bulletin>header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.career-board header h3,.city-bulletin header h3{margin:5px 0 8px}
+.career-board header b,.city-bulletin header small{font-size:11px;color:#f0c875}
+.career-board>p{font-size:13px;line-height:1.5}
+.career-board button{margin:10px 0}
+.career-metrics,.career-districts,.bulletin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.career-metrics span,.career-districts span{padding:10px;background:#16271e;border:1px solid #526454}
+.career-metrics b,.career-metrics small{display:block;font-size:12px}
+.career-metrics small{color:#f4d58f;margin-top:5px}
+.career-districts span{font-size:11px;opacity:.5}
+.career-districts .earned{opacity:1;border-color:#e1c27c}
+.career-board details{padding-top:14px;border-top:1px solid #526454}
+.career-board summary{cursor:pointer;font-weight:700;font-size:12px}
+.career-chapters{padding-left:20px;font-size:12px}
+.career-chapters li{margin:9px 0}
+.career-chapters small{display:block;opacity:.75;margin:3px 0}
+.bulletin-grid article{min-width:0;padding:12px;border:1px solid #627361;background:#1b3025}
+.bulletin-grid article p{font-size:12px;min-height:42px}
+.bulletin-grid article small{display:block;color:#f1cc84;font-size:10px;margin:10px 0}
+.bulletin-grid article button{max-width:100%;white-space:normal}
+@media(max-width:720px){.career-metrics,.bulletin-grid{grid-template-columns:1fr}.career-districts{grid-template-columns:repeat(2,minmax(0,1fr))}.career-board,.city-bulletin{padding:12px}}

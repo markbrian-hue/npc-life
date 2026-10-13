@@ -2,6 +2,16 @@
 
 A retro multiplayer browser comedy sandbox. The festival is cancelled, four districts are broken, and the city has hired the least qualified person available: you.
 
+## NPC career & daily city bulletin
+
+Press **L** for your Resident Record. NPC LIFE now has five sequential career promotions: earn your first badge, discover districts, learn different jobs, purchase a city upgrade, and eventually become a Main Character by Accident. Promotions pay existing coins and reputation, not a new currency.
+
+Six districts provide persistent passport stamps (Civic Square, Switchyard, Market Mile, Willow Park, Saltwater Dock, and Juniper Close). The daily City Bulletin rewards finishing two shifts, visiting three districts, and winning a court game. The three daily tasks reset on each **local calendar day**. Completed daily rewards and career promotions cannot be claimed twice.
+
+Three extra repeatable jobs now offer alternate routes on subsequent runs: **Lost Mail Department** (10 REP), **Questionable Lunch Run** (30 REP), and **Sidewalk Quality Inspector** (55 REP). The original four jobs remain available.
+
+This is a backwards-compatible extension of the existing resident v1 save data; old upgrades, shift counts, achievements and campaign progress are kept. Career and daily progress are **local to your browser**, not multiplayer-shared.
+
 ## World rebuild & gameplay foundation
 
 The city now uses a shared road/placement plan, connected collectors and an eastern bypass, marked parking, park paths and Juniper Close. Placement rules keep building footprints and tree canopies out of roads and recreation areas. Shared traffic follows a checked lane circuit.
