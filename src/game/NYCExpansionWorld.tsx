@@ -1,9 +1,9 @@
 import {memo,useMemo,useRef} from 'react';
 import {useFrame} from '@react-three/fiber';
 import {type Group} from 'three';
-import {BUILDINGS} from './world';
+import {BUILDINGS,NYC_SIGN_POSTS} from './world';
 import {WorldSign} from './DistrictWorld';
-import {NYC_PUBLIC_SPACES,NYC_RIVER,NYC_STREET_SIGNS} from '../../shared/nycExpansion.mjs';
+import {NYC_PUBLIC_SPACES,NYC_RIVER} from '../../shared/nycExpansion.mjs';
 
 // Visually playable borough blocks: built on the same shared meter coordinates as
 // the collision footprints and minimap. Materials/meshes are first-party geometry.
@@ -78,7 +78,7 @@ function Waterfront(){
   </group>
  </group>;
 }
-const streetSigns=NYC_STREET_SIGNS;
+const streetSigns=NYC_SIGN_POSTS;
 export const NYCExpansionWorld=memo(function NYCExpansionWorld(){
  const paving=useMemo(()=>({x:61.5,z:-271.5,w:434,d:135}),[]);
  return <group name="nyc-expanded-world">
@@ -96,8 +96,9 @@ export const NYCExpansionWorld=memo(function NYCExpansionWorld(){
   {NYC_PUBLIC_SPACES.map(place=><PublicSpace key={place.id} place={place}/>)}
   <Waterfront/>
   <IlluminatedFacades/>
-  {streetSigns.map((s,i)=><group key={i} position={[s.x,0,s.z]}>
-    <group position={[0,5.1,0]}><WorldSign text={s.name} width={6} color="#396c69"/></group>
+  {streetSigns.map(s=><group key={s.id} name={'nyc-street-sign:'+s.id} position={[s.x,0,s.z]}>
+    <Block y={2.1} w={.105} h={4.2} d={.105} color="#697774"/>
+    <group position={[0,4.35,0]}><WorldSign text={s.name} width={5.7} color="#396c69"/></group>
    </group>)}
  </group>;
 });
