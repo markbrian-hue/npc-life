@@ -155,21 +155,21 @@ const roadProps = [
   { ...BUS_STOP, halfX: 1.75, halfZ: 0.85 },
 ];
 
-export const WORLD_COLLIDERS=[...BUILDINGS.map(b=>({x:b.x,z:b.z,halfX:b.w/2,halfZ:b.d/2,c:Math.cos(b.rotation||0),s:Math.sin(b.rotation||0)})),...roadProps.map(p=>({...p,c:1,s:0}))];
+export const WORLD_COLLIDERS=[...BUILDINGS.map(b=>({x:b.x,z:b.z,halfX:b.w/2,halfZ:b.d/2,height:b.h+.075,c:Math.cos(b.rotation||0),s:Math.sin(b.rotation||0)})),...roadProps.map(p=>({...p,height:p.height??8,c:1,s:0}))];
 const CELL=16,cells=new Map();
 WORLD_COLLIDERS.forEach((p,id)=>{
  const hx=Math.abs(p.c)*p.halfX+Math.abs(p.s)*p.halfZ,hz=Math.abs(p.s)*p.halfX+Math.abs(p.c)*p.halfZ;
  for(let x=Math.floor((p.x-hx)/CELL);x<=Math.floor((p.x+hx)/CELL);x++)for(let z=Math.floor((p.z-hz)/CELL);z<=Math.floor((p.z+hz)/CELL);z++){const key=`${x},${z}`;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}
 });
-export function blocked(x,z,radius=.42){
- if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(radius)||radius<0)return true;
+export function blocked(x,z,radius=.42,feetY=0){
+ if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(radius)||!Number.isFinite(feetY)||radius<0)return true;
  if(Math.abs(x)+radius>WORLD_RADIUS||Math.abs(z)+radius>WORLD_RADIUS)return true;
  if(z+radius>93||(z>75&&Math.abs(x)+radius>10))return true;
  if(Math.hypot(x,z)<3.1+radius)return true;
  // Rotation expands a local square radius by up to sqrt(2) in world space.
  const margin=radius*Math.SQRT2;
  for(let gx=Math.floor((x-margin)/CELL);gx<=Math.floor((x+margin)/CELL);gx++)for(let gz=Math.floor((z-margin)/CELL);gz<=Math.floor((z+margin)/CELL);gz++){
-  for(const id of cells.get(`${gx},${gz}`)||[]){const p=WORLD_COLLIDERS[id],dx=x-p.x,dz=z-p.z;if(Math.abs(p.c*dx-p.s*dz)<p.halfX+radius&&Math.abs(p.s*dx+p.c*dz)<p.halfZ+radius)return true;}
+  for(const id of cells.get(`${gx},${gz}`)||[]){const p=WORLD_COLLIDERS[id];if(feetY>=p.height-.025)continue;const dx=x-p.x,dz=z-p.z;if(Math.abs(p.c*dx-p.s*dz)<p.halfX+radius&&Math.abs(p.s*dx+p.c*dz)<p.halfZ+radius)return true;}
  }
  return false;
 }
