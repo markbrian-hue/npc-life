@@ -39,7 +39,7 @@ for(const [column,x] of blockXs.entries()){
    for(const [j,dz] of (row===2?[0]:[-7,7]).entries()){
     const index=column*20+row*5+i*2+j;
     const brooklyn=column>=6,prewar=column<=1,financial=column===5;
-    const kind=brooklyn||prewar?'brownstone':'tower';
+    const kind=brooklyn?'brownstone':prewar?'prewar':'tower';
     NYC_BLOCK_CANDIDATES.push({
       x:x+offset,z:z+dz,w:10.8,d:11.8,
       h:brooklyn?10+(index%3)*2:prewar?16+(index%4)*3:financial?35+(index%5)*7:28+(index%7)*7,
