@@ -10,6 +10,7 @@ on:
       - 'feat/cinematic-city-art'
       - 'feat/blocky-explorers-performance'
       - 'feat/nyc-vertical-traversal'
+      - 'feat/nyc-districts-streetscape'
   pull_request:
     branches:
       - 'feat/cinematic-city-art'
