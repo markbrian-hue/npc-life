@@ -83,6 +83,12 @@ export const NYCExpansionWorld=memo(function NYCExpansionWorld(){
  const paving=useMemo(()=>({x:61.5,z:-271.5,w:434,d:135}),[]);
  return <group name="nyc-expanded-world">
   {/* Grey urban block ground under actual asphalt and sidewalks; no green voids. */}
+  <mesh name="nyc-lower-manhattan-ground" rotation={[-Math.PI/2,0,0]} position={[20,-.06,-32]} receiveShadow>
+   <planeGeometry args={[165,150]}/><meshStandardMaterial color="#838b88" roughness={.97}/>
+  </mesh>
+  <mesh name="fountain-green-island" rotation={[-Math.PI/2,0,0]} position={[0,-.024,0]} receiveShadow>
+   <circleGeometry args={[5.72,56]}/><meshStandardMaterial color="#7f9a70" roughness={1}/>
+  </mesh>
   <mesh name="nyc-urban-ground" rotation={[-Math.PI/2,0,0]} position={[paving.x,-.06,paving.z]} receiveShadow>
    <planeGeometry args={[paving.w,paving.d]}/>
    <meshStandardMaterial color="#777f7d" roughness={1}/>
