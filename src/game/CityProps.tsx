@@ -2,7 +2,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { BUS_STOP, FOUNTAIN } from './world';
+import { BUS_STOP } from './world';
 
 export function CarModel({ color = '#ba6660', runtime }: { color?: string; runtime?: () => { speed:number;steer:number;braking:boolean } }) {
   const wheels=useRef<(THREE.Group|null)[]>([]), lamps=useRef<(THREE.MeshStandardMaterial|null)[]>([]);
@@ -278,58 +278,6 @@ export function BusStop() {
       <mesh position={[0, 2.31, 0.61]}>
         <boxGeometry args={[1.62, 0.42, 0.07]} />
         <meshStandardMaterial color="#f7e8bd" />
-      </mesh>
-    </group>
-  );
-}
-
-export function Fountain() {
-  const water = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (water.current) {
-      water.current.scale.y =
-        1 + Math.sin(clock.elapsedTime * 2) * 0.035;
-    }
-  });
-
-  return (
-    <group position={[FOUNTAIN.x, 0, FOUNTAIN.z]} scale={1.3}>
-      <mesh receiveShadow position={[0, 0.08, 0]}>
-        <cylinderGeometry args={[2.2, 2.35, 0.16, 24]} />
-        <meshStandardMaterial
-          color="#bdb8aa"
-          roughness={0.95}
-        />
-      </mesh>
-
-      <mesh castShadow position={[0, 0.42, 0]}>
-        <cylinderGeometry args={[1.9, 2.06, 0.5, 24]} />
-        <meshStandardMaterial
-          color="#d0c9b9"
-          roughness={0.9}
-        />
-      </mesh>
-
-      <mesh ref={water} position={[0, 0.7, 0]}>
-        <cylinderGeometry args={[1.66, 1.66, 0.06, 24]} />
-        <meshStandardMaterial
-          color="#6baeba"
-          roughness={0.18}
-          metalness={0.18}
-          transparent
-          opacity={0.88}
-        />
-      </mesh>
-
-      <mesh castShadow position={[0, 1.08, 0]}>
-        <cylinderGeometry args={[0.28, 0.38, 0.82, 12]} />
-        <meshStandardMaterial color="#d7d0c0" />
-      </mesh>
-
-      <mesh castShadow position={[0, 1.62, 0]}>
-        <sphereGeometry args={[0.28, 12, 10]} />
-        <meshStandardMaterial color="#e0d4c5" />
       </mesh>
     </group>
   );
