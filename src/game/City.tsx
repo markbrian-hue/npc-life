@@ -1,3 +1,4 @@
+import { WORLD } from './worldConfig';
 
 import {
   BENCHES, BUILDINGS, GARY, LAMP_POSTS, PARKED_CARS,
@@ -283,7 +284,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.085, 0]}
       >
-        <planeGeometry args={[95, 95]} />
+        <planeGeometry args={[WORLD.groundSize, WORLD.groundSize]} />
         <meshStandardMaterial color="#8ab184" roughness={1} />
       </mesh>
 
@@ -292,7 +293,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.055, 0]}
       >
-        <planeGeometry args={[95, 8.5]} />
+        <planeGeometry args={[WORLD.groundSize, WORLD.roadWidth]} />
         <meshStandardMaterial color="#66737a" roughness={1} />
       </mesh>
 
@@ -301,7 +302,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.05, 0]}
       >
-        <planeGeometry args={[8.5, 95]} />
+        <planeGeometry args={[WORLD.roadWidth, WORLD.groundSize]} />
         <meshStandardMaterial color="#66737a" roughness={1} />
       </mesh>
 
@@ -340,7 +341,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.025, 0]}
       >
-        <circleGeometry args={[8.3, 48]} />
+        <circleGeometry args={[WORLD.plazaRadius, 48]} />
         <meshStandardMaterial color="#e2cfac" roughness={1} />
       </mesh>
 
@@ -348,7 +349,7 @@ function GroundAndRoads() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -0.017, 0]}
       >
-        <ringGeometry args={[7.65, 8.15, 48]} />
+        <ringGeometry args={[WORLD.plazaRadius - 0.65, WORLD.plazaRadius - 0.15, 48]} />
         <meshStandardMaterial color="#c7a981" side={2} />
       </mesh>
     </>

@@ -1,3 +1,4 @@
+import { MAP_PIXELS, WORLD, worldToMap, worldWidthToMap, worldDepthToMap } from './worldConfig';
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -59,9 +60,8 @@ const markers = [
   })),
 ];
 
-// Convert -42..42 world coordinates to 0..336 SVG.
-const scale = (worldCoordinate: number) =>
-  (worldCoordinate + 42) * 4;
+const mapX = (x: number) => worldToMap({ x, z: 0 }).x;
+const mapZ = (z: number) => worldToMap({ x: 0, z }).z;
 
 export function WorldMinimap() {
   const [player, setPlayer] = useState<Location>({
@@ -114,8 +114,8 @@ export function WorldMinimap() {
     };
   }, []);
 
-  const playerX = scale(player.x);
-  const playerY = scale(player.z);
+  const playerX = mapX(player.x);
+  const playerY = mapZ(player.z);
 
   return mount
     ? createPortal(
@@ -143,29 +143,29 @@ export function WorldMinimap() {
           </div>
 
           <svg
-            viewBox="0 0 336 336"
+            viewBox={`0 0 ${MAP_PIXELS} ${MAP_PIXELS}`}
             role="img"
             aria-label="City roads, buildings and player location"
           >
             {/* Grass */}
             <rect
-              width="336"
-              height="336"
+              width={MAP_PIXELS}
+              height={MAP_PIXELS}
               fill="#94b58d"
             />
 
             {/* Crossroads */}
             <path
-              d="M 0 168 H 336 M 168 0 V 336"
+              d={`M 0 ${mapZ(0)} H ${MAP_PIXELS} M ${mapX(0)} 0 V ${MAP_PIXELS}`}
               stroke="#616a77"
-              strokeWidth="34"
+              strokeWidth={worldWidthToMap(WORLD.roadWidth)}
             />
 
             {/* Plaza */}
             <circle
-              cx="168"
-              cy="168"
-              r="33.2"
+              cx={mapX(0)}
+              cy={mapZ(0)}
+              r={worldWidthToMap(WORLD.plazaRadius)}
               fill="#e4d1ac"
               stroke="#bea27e"
               strokeWidth="3"
@@ -173,7 +173,7 @@ export function WorldMinimap() {
 
             {/* Road lane markings */}
             <path
-              d="M0 168H336M168 0V336"
+              d={`M0 ${mapZ(0)}H${MAP_PIXELS}M${mapX(0)} 0V${MAP_PIXELS}`}
               stroke="#e8dcae"
               strokeWidth="1"
               strokeDasharray="7 7"
@@ -183,14 +183,10 @@ export function WorldMinimap() {
             {BUILDINGS.map((building, index) => (
               <rect
                 key={index}
-                x={scale(
-                  building.x - building.w / 2
-                )}
-                y={scale(
-                  building.z - building.d / 2
-                )}
-                width={building.w * 4}
-                height={building.d * 4}
+                x={mapX(building.x - building.w / 2)}
+                y={mapZ(building.z - building.d / 2)}
+                width={worldWidthToMap(building.w)}
+                height={worldDepthToMap(building.d)}
                 rx="2.5"
                 fill={building.roof}
                 stroke="#263e4a"
@@ -206,8 +202,8 @@ export function WorldMinimap() {
             {TREES.map((tree, index) => (
               <circle
                 key={index}
-                cx={scale(tree.x)}
-                cy={scale(tree.z)}
+                cx={mapX(tree.x)}
+                cy={mapZ(tree.z)}
                 r="3.2"
                 fill="#3b704b"
               />
@@ -215,8 +211,8 @@ export function WorldMinimap() {
 
             {/* Fountain */}
             <circle
-              cx={scale(FOUNTAIN.x)}
-              cy={scale(FOUNTAIN.z)}
+              cx={mapX(FOUNTAIN.x)}
+              cy={mapZ(FOUNTAIN.z)}
               r="9"
               fill="#6cbdc5"
               stroke="#eaf5e9"
@@ -227,8 +223,8 @@ export function WorldMinimap() {
 
             {/* Bus stop */}
             <rect
-              x={scale(BUS_STOP.x) - 6}
-              y={scale(BUS_STOP.z) - 3}
+              x={mapX(BUS_STOP.x) - 6}
+              y={mapZ(BUS_STOP.z) - 3}
               width="12"
               height="6"
               rx="2"
@@ -241,8 +237,8 @@ export function WorldMinimap() {
             {markers.map((mark) => (
               <g key={mark.id}>
                 <circle
-                  cx={scale(mark.x)}
-                  cy={scale(mark.z)}
+                  cx={mapX(mark.x)}
+                  cy={mapZ(mark.z)}
                   r="6"
                   fill={mark.fill}
                   stroke="#1f3044"
@@ -253,8 +249,8 @@ export function WorldMinimap() {
 
                 {showLabels && (
                   <text
-                    x={scale(mark.x) + 7}
-                    y={scale(mark.z) - 7}
+                    x={mapX(mark.x) + 7}
+                    y={mapZ(mark.z) - 7}
                     fontSize="10"
                     fontWeight="800"
                     fill="#172734"

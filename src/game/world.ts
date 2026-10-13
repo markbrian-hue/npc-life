@@ -1,3 +1,4 @@
+import { inWorldBounds } from './worldConfig';
 
 export type BuildingDef = {
   x: number; z: number; w: number; d: number; h: number;
@@ -102,7 +103,7 @@ const roadProps = [
 ];
 
 export function blocked(x: number, z: number): boolean {
-  if (Math.abs(x) > 42 || Math.abs(z) > 42) return true;
+  if (!inWorldBounds(x, z)) return true;
 
   if (BUILDINGS.some((b) =>
     Math.abs(x - b.x) < b.w / 2 + 0.7 &&

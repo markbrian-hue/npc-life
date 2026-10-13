@@ -1233,68 +1233,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Existing minimap */}
-      <div
-        className="minimap"
-        aria-label="Map showing your position"
-      >
-        <div className="map-label">
-          IDIOT CITY <span>LIVE</span>
-        </div>
-
-        <div className="mini-world">
-          <div className="mini-road mini-road-x" />
-          <div className="mini-road mini-road-y" />
-          <div className="mini-plaza" />
-
-          <div className="mini-building a" />
-          <div className="mini-building b" />
-          <div className="mini-building c" />
-          <div className="mini-building d" />
-
-          <div
-            className="mini-pin shop-pin"
-            title="Shop"
-          >
-            S
-          </div>
-          <div
-            className="mini-pin citizen-pin"
-            title="Marty"
-          >
-            ?
-          </div>
-
-          <div
-            className="mini-player"
-            style={{
-              left: `${
-                Math.max(
-                  2,
-                  Math.min(
-                    98,
-                    ((player.x + 42) / 84) * 100
-                  )
-                )
-              }%`,
-              top: `${
-                Math.max(
-                  2,
-                  Math.min(
-                    98,
-                    ((player.z + 42) / 84) * 100
-                  )
-                )
-              }%`,
-            }}
-          />
-        </div>
-
-        <span className="map-coords">
-          X {Math.round(player.x)} • Z{' '}
-          {Math.round(player.z)}
-        </span>
-      </div>
+      {/* WorldMinimap owns the live map. */}
 
       {/* Messages and existing interaction */}
       <div
