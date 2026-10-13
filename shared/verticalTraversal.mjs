@@ -7,7 +7,12 @@ const rotateLocal=(dx,dz,yaw)=>({x:Math.cos(yaw)*dx-Math.sin(yaw)*dz,z:Math.sin(
 const fromLocal=(b,x,z)=>({x:b.x+Math.cos(b.rotation||0)*x+Math.sin(b.rotation||0)*z,z:b.z-Math.sin(b.rotation||0)*x+Math.cos(b.rotation||0)*z});
 
 // Only a bounded number of roof accesses are created so the scene remains inexpensive.
-export const ROOFTOP_LADDERS=BUILDINGS.map((b,index)=>({b,index})).filter(({b,index})=>b.h>=6&&index%5===0).slice(0,16).map(({b,index},i)=>{
+const roofAccess=BUILDINGS.map((b,index)=>({b,index}));
+const original=roofAccess.filter(({b,index})=>b.h>=6&&index%5===0).slice(0,16);
+const boroughAccess=roofAccess.filter(({b,index})=>['tower','brownstone'].includes(b.kind)&&
+  !original.some(l=>l.index===index)).filter(({b})=>b.kind==='brownstone'||b.h<=39);
+export const ROOFTOP_LADDERS=[...original,...boroughAccess.filter(({b})=>b.kind==='tower').slice(0,2),
+  ...boroughAccess.filter(({b})=>b.kind==='brownstone').slice(0,2)].map(({b,index},i)=>{
  const localX=b.w*.31;
  const anchor=fromLocal(b,localX,b.d/2+.83);
  const landing=fromLocal(b,localX,b.d/2-1.15);
