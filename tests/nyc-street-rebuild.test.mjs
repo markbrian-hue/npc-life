@@ -35,6 +35,10 @@ test('new uptown extension is a physically continuous city, not decorative terra
 });
 test('empty street corridors receive real collidable buildings and safe crossing signals',()=>{
  assert.ok(generateStreetInfill(ROAD_SEGMENTS).length>100,'substantial proposed frontage');
+ const infill=BUILDINGS.filter(p=>p.source==='street-infill');
+ const downtown=infill.filter(p=>p.z>-195&&p.z<76);
+ assert.ok(infill.length>=20,'actual accepted buildings fill previously empty city parcels');
+ assert.ok(downtown.length>=10,'original downtown, not only new map, has more building frontage');
  const added=BUILDINGS.filter(p=>p.z<-338);
  assert.ok(added.length>=10,'new northern neighborhoods have real lots');
  assert.ok(added.some(p=>p.h>=25),'skyline architecture extends north');
