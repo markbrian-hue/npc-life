@@ -11,8 +11,11 @@ const roofAccess=BUILDINGS.map((b,index)=>({b,index}));
 const original=roofAccess.filter(({b,index})=>b.h>=6&&index%5===0).slice(0,16);
 const boroughAccess=roofAccess.filter(({b,index})=>['tower','brownstone'].includes(b.kind)&&
   !original.some(l=>l.index===index)).filter(({b})=>b.kind==='brownstone'||b.h<=39);
+const uptownAccess=roofAccess.filter(({b,index})=>b.z<-214&&b.h>=10&&b.h<=50&&!original.some(l=>l.index===index));
 export const ROOFTOP_LADDERS=[...original,...boroughAccess.filter(({b})=>b.kind==='tower').slice(0,2),
-  ...boroughAccess.filter(({b})=>b.kind==='brownstone').slice(0,2)].map(({b,index},i)=>{
+  ...boroughAccess.filter(({b})=>b.kind==='brownstone').slice(0,2),
+  ...uptownAccess.filter(({b})=>b.kind==='tower').slice(0,3),
+  ...uptownAccess.filter(({b})=>b.kind==='brownstone').slice(0,3)].map(({b,index},i)=>{
  const localX=b.w*.31;
  const anchor=fromLocal(b,localX,b.d/2+.83);
  const landing=fromLocal(b,localX,b.d/2-1.15);
