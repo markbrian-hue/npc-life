@@ -53,7 +53,7 @@ test('traffic shares the fixed timestep and rejects invalid elapsed time',()=>{
 });
 test('swept stopping reaches contact without overlap, bounce or artificial wheel spin',()=>{
  // Approach an actual city building after the central fountain was removed.
- const target=BUILDINGS.map(b=>({b,x:b.x-b.w/2-5,z:b.z})).find(p=>{
+ const target=BUILDINGS.map(b=>({b,x:b.x-b.w/2-vehicleSpec(car('hyper')).length/2-.55,z:b.z})).find(p=>{
   const probe={...car('hyper'),x:p.x,z:p.z,heading:0};
   return (p.b.rotation||0)===0&&!carBlocked(probe,[probe]);
  });
