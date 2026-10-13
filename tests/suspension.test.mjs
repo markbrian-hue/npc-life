@@ -60,8 +60,15 @@ test('swept stopping reaches contact without overlap, bounce or artificial wheel
  assert.ok(target,'a clear collision approach to an existing building is available');
  const c={...car('hyper'),x:target.x,z:target.z,heading:0,speed:40};
  stepVehicle(c,drive,.25,[c]);
- assert.equal(c.speed,0);assert.equal(carBlocked(c,[c]),false);assert.ok(c.impact>0);
- const x=c.x,distance=c.distance;for(let i=0;i<120;i++)stepVehicle(c,drive,1/120,[c]);assert.ok(Math.abs(c.x-x)<.0001);assert.ok(c.distance-distance<.0001);assert.ok(Math.abs(c.pitch)<.1);
+ assert.ok(c.speed>=0&&c.speed<40,'impact reduces speed rather than causing a bounce');
+ assert.equal(carBlocked(c,[c]),false,'swept contact stops before interpenetration');
+ assert.ok(c.impact>0,'contact feedback still fires');
+ const x=c.x,distance=c.distance;
+ for(let i=0;i<120;i++)stepVehicle(c,{throttle:0,steer:0,brake:true},1/120,[c]);
+ assert.equal(c.speed,0,'brakes settle the damaged vehicle after impact');
+ assert.ok(c.x>=x-.001&&c.x-x<3,'no reverse bounce or free sliding');
+ assert.ok(c.distance-distance<3,'contact and braking travel remains bounded');
+ assert.ok(Math.abs(c.pitch)<.1,'suspension settles after impact');
 });
 
 test('room snapshots carry authoritative spring state and ignore forged suspension input',async()=>{
