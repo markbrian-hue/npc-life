@@ -4,6 +4,7 @@ on:
     branches:
       - 'feat/nyc-vertical-traversal'
       - 'feat/nyc-districts-streetscape'
+      - 'feat/nyc-expanded-megacity'
   workflow_dispatch:
 jobs:
   traverse:
