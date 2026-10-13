@@ -8,8 +8,10 @@ on:
       - 'feat/city-mobility-and-visual-foundation'
       - 'feat/terrain-responsive-suspension'
       - 'feat/cinematic-city-art'
+      - 'feat/blocky-explorers-performance'
   pull_request:
     branches:
+      - 'feat/cinematic-city-art'
       - main
       - 'feat/npc-career-and-city-bulletin'
       - 'feat/living-city-survival-weather'

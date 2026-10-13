@@ -1,12 +1,13 @@
 import {memo,useLayoutEffect,useMemo,useRef} from 'react';
-import {Color,Object3D,MeshStandardMaterial,type InstancedMesh} from 'three';
-import {BUILDINGS} from './world';
+import {useFrame} from '@react-three/fiber';
+import {Color,Object3D,MeshStandardMaterial,type Group,type InstancedMesh} from 'three';
+import {BUILDINGS,WORLD_RADIUS} from './world';
 import {WorldSign} from './DistrictWorld';
 import {cityMaps,interiorTexture,worldMapping} from './cityMaterials';
 type Piece={x:number;y:number;z:number;w:number;h:number;d:number;rotation:number;color:string};
 const SIGNS=['CIVIC RECORDS','JUNIPER COFFEE','LAST CHANCE LOFTS','CORNER PROVISIONS','PAPERWORK & SONS','NPC MARKET','ORDINARY RESIDENCES','THE UNEMPLOYED INN'];
-function pieces(){const batches:Record<string,Piece[]>={brick:[],concrete:[],masonry:[],trim:[],glass:[],dark:[],metal:[],wood:[]};
- BUILDINGS.forEach((b,i)=>{const rotation=b.rotation||0,c=Math.cos(rotation),s=Math.sin(rotation),home=b.kind==='bungalow',warehouse=b.kind==='warehouse',modern=!home&&!warehouse&&i%4===1;
+function pieces(buildings=BUILDINGS){const batches:Record<string,Piece[]>={brick:[],concrete:[],masonry:[],trim:[],glass:[],dark:[],metal:[],wood:[]};
+ buildings.forEach((b,i)=>{const rotation=b.rotation||0,c=Math.cos(rotation),s=Math.sin(rotation),home=b.kind==='bungalow',warehouse=b.kind==='warehouse',modern=!home&&!warehouse&&i%4===1;
   const add=(kind:string,x:number,y:number,z:number,w:number,h:number,d:number,color:string,yaw=0)=>batches[kind].push({x:b.x+c*x+s*z,y,z:b.z-s*x+c*z,w,h,d,rotation:rotation+yaw,color});
   const kind=warehouse||modern?'concrete':i%3===0?'brick':'masonry',wall=['#ded5c3','#ced6d4','#dac7b3','#bfb5a7'][i%4],trim=modern?'#646f72':'#c9c5b8';
   add(kind,0,b.h/2,0,b.w,b.h,b.d,wall);
@@ -59,7 +60,15 @@ function Batch({data,kind}:{data:Piece[];kind:string}){
   if(textured)worldMapping(m,kind==='brick'?.8:kind==='office'?.065:.42);return m;
  },[kind]);
  useLayoutEffect(()=>{if(!ref.current)return;const obj=new Object3D(),color=new Color();data.forEach((p,i)=>{obj.position.set(p.x,p.y,p.z);obj.scale.set(p.w,p.h,p.d);obj.rotation.set(0,p.rotation,0);obj.updateMatrix();ref.current!.setMatrixAt(i,obj.matrix);ref.current!.setColorAt(i,color.set(p.color));});ref.current.instanceMatrix.needsUpdate=true;if(ref.current.instanceColor)ref.current.instanceColor.needsUpdate=true;ref.current.computeBoundingSphere();},[data]);
- return <instancedMesh name={`architecture:${kind}`} ref={ref} args={[undefined,material,data.length]} castShadow={kind!=='glass'} receiveShadow userData={{environment:kind==='glass'?'window':''}}><boxGeometry args={[1,1,1]}/></instancedMesh>;
+ return <instancedMesh name={`architecture:${kind}`} ref={ref} args={[undefined,material,data.length]} castShadow={['brick','concrete','masonry','office'].includes(kind)} receiveShadow userData={{environment:kind==='glass'?'window':''}}><boxGeometry args={[1,1,1]}/></instancedMesh>;
 }
-export const CityArchitecture=memo(function CityArchitecture(){const batches=useMemo(pieces,[]);return <>{Object.entries(batches).map(([kind,data])=><Batch key={kind} data={data} kind={kind}/>)}{BUILDINGS.filter((b,i)=>b.kind!=='bungalow'&&b.kind!=='warehouse'&&i%2===0).map((b,i)=>{const r=b.rotation||0;return <group key={i} position={[b.x+Math.sin(r)*(b.d/2+.19),3.18,b.z+Math.cos(r)*(b.d/2+.19)]} rotation={[0,r,0]}><WorldSign text={SIGNS[i%SIGNS.length]} width={Math.min(4.4,b.w*.48)} color={i%2?'#657367':'#8d7762'}/></group>;})}<DistantCity/></>;});
-function DistantCity(){const data=useMemo(()=>{const blocks:Piece[]=[];for(let i=0;i<44;i++){const a=Math.PI+(i/43)*Math.PI*1.48,r=185+i%4*25,x=Math.cos(a)*r,z=Math.sin(a)*r;if(z>70)continue;const h=12+i*17%42,w=9+i%4*4,d=11+i%3*3;blocks.push({x,y:h/2-1,z,w,h,d,rotation:0,color:i%3?'#a6aca8':'#909b9b'});blocks.push({x:x+w*.1,y:h+1,z,w:w*.73,h:4,d:d*.72,rotation:0,color:'#a5aaa5'});}return blocks;},[]);return <Batch data={data} kind="office"/>;}
+const chunks=Object.values(BUILDINGS.reduce<Record<string,typeof BUILDINGS>>((all,b)=>{const key=`${Math.floor(b.x/48)},${Math.floor(b.z/48)}`;(all[key]??=[]).push(b);return all;},{}));
+export const CityArchitecture=memo(function CityArchitecture(){return <>{chunks.map((buildings,i)=><Block key={i} buildings={buildings}/>)}<DistantCity/></>;});
+function Block({buildings}:{buildings:typeof BUILDINGS}){
+ const root=useRef<Group>(null),detail=useRef<Group>(null),proxy=useRef<Group>(null),batches=useMemo(()=>pieces(buildings),[buildings]);
+ const simple=useMemo(()=>buildings.map(b=>({x:b.x,y:b.h/2,z:b.z,w:b.w,h:b.h,d:b.d,rotation:b.rotation||0,color:b.color})),[buildings]);
+ const cx=buildings.reduce((n,b)=>n+b.x,0)/buildings.length,cz=buildings.reduce((n,b)=>n+b.z,0)/buildings.length;
+ useFrame(({camera})=>{const d=Math.hypot(camera.position.x-cx,camera.position.z-cz),near=d<105;if(root.current)root.current.visible=d<260;if(detail.current)detail.current.visible=near;if(proxy.current)proxy.current.visible=!near;});
+ return <group ref={root}><group ref={detail}>{Object.entries(batches).map(([kind,data])=><Batch key={kind} data={data} kind={kind}/>)}{buildings.filter((b,i)=>b.kind!=='bungalow'&&b.kind!=='warehouse'&&i%2===0).map((b,i)=>{const r=b.rotation||0;return <group key={i} position={[b.x+Math.sin(r)*(b.d/2+.19),3.18,b.z+Math.cos(r)*(b.d/2+.19)]} rotation={[0,r,0]}><WorldSign text={SIGNS[i%SIGNS.length]} width={Math.min(4.4,b.w*.48)} color={i%2?'#657367':'#8d7762'}/></group>;})}</group><group ref={proxy} visible={false}><Batch data={simple} kind="office"/></group></group>;
+}
+function DistantCity(){const data=useMemo(()=>{const blocks:Piece[]=[];for(let i=0;i<44;i++){const a=Math.PI+(i/43)*Math.PI*1.48,r=WORLD_RADIUS+180+i%4*25,x=Math.cos(a)*r,z=Math.sin(a)*r;if(z>70)continue;const h=12+i*17%42,w=9+i%4*4,d=11+i%3*3;blocks.push({x,y:h/2-1,z,w,h,d,rotation:0,color:i%3?'#a6aca8':'#909b9b'});blocks.push({x:x+w*.1,y:h+1,z,w:w*.73,h:4,d:d*.72,rotation:0,color:'#a5aaa5'});}return blocks;},[]);return <Batch data={data} kind="office"/>;}

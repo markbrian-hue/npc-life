@@ -40,6 +40,8 @@ export function currentTask(state: Campaign, carrying: boolean) {
   return { id: 'courier', title: contract.title, district: 'civic', description: carrying ? `Deliver ${contract.cargo} to ${contract.destination}.` : `Collect ${contract.cargo}. Next stop: ${contract.destination}.`, action: carrying ? 'Deliver cargo' : 'Pick up cargo', ...(carrying ? contract.to : contract.from), seconds: 2, coins: carrying ? 45 : 0, rep: carrying ? 5 : 0 };
 }
 export function districtAt(x: number, z: number) {
+  if(x>132)return {id:'eastbank',name:'Eastbank',x:168,z:-38,color:'#77bca8',subtitle:'Ideas at work'} as const;
+  if(z< -121)return {id:'northgate',name:'Northgate Campus',x:-28,z:-150,color:'#9bbcbf',subtitle:'Go a little further'} as const;
   if(x<-80&&z<-42)return {id:'juniper',name:'Juniper Close',x:-92,z:-92,color:'#aac397',subtitle:'Ordinary lives, extraordinary paperwork'} as const;
   if(x>88)return {id:'bypass',name:'East Bypass',x:116,z:0,color:'#afb8a3',subtitle:'Keep right. Think occasionally.'} as const;
   return DISTRICTS.reduce((near, district) => Math.hypot(x - district.x, z - district.z) < Math.hypot(x - near.x, z - near.z) ? district : near, DISTRICTS[0] as typeof DISTRICTS[number]);

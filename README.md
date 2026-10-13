@@ -1,6 +1,25 @@
+## Blocky residents & city exploration
+
+The latest development branch is **`feat/blocky-explorers-performance`**. It adds original blocky characters, connected Northgate and Eastbank districts, seven discoveries, daily paid contracts, two more garages, and discovery-unlocked free shuttles. Rendering now uses lighter avatars, spatial detail levels, fewer foliage/shadow passes, on-demand showroom rendering and adaptive resolution.
+
+Press **X** for the explorer board, **Z** at a marked stop, and **U** for vehicles. The clock gear contains graphics options and the FPS display. Existing missions, purchases, saves and room ownership remain compatible.
+
+See [scope, controls, measured rendering costs, QA and remaining work](docs/blocky-explorers-performance.md).
+
+From a clean existing clone:
+
+```bash
+git fetch origin
+git switch --track origin/feat/blocky-explorers-performance
+npm ci
+npm run dev:multi
+```
+
+If the branch already exists locally, use `git switch feat/blocky-explorers-performance` and `git pull --ff-only`. Commit or stash your own changes before switching. Nothing has been merged into `main`.
+
 ## Cinematic city art
 
-The latest milestone is on `feat/cinematic-city-art`, built on the verified terrain-responsive suspension branch. It rebuilds the cars with curved bodywork and reflective materials, fixes the asphalt/sidewalk layering, adds textured modular architecture and leaf foliage, and introduces an atmospheric sky, wet-road reflections, real local night lighting and optional AO/bloom. Press **U** to inspect the actual vehicles in the dealership's 3D preview, including locked premium models.
+The preceding art milestone is on `feat/cinematic-city-art`, built on the verified terrain-responsive suspension branch. It rebuilds the cars with curved bodywork and reflective materials, fixes the asphalt/sidewalk layering, adds textured modular architecture and leaf foliage, and introduces an atmospheric sky, wet-road reflections, real local night lighting and optional AO/bloom. Press **U** to inspect the actual vehicles in the dealership's 3D preview, including locked premium models.
 
 See [completed scope, rendering settings, compatibility and remaining work](docs/cinematic-city-art.md). The city still uses original procedural art; full rigid-body physics and shared personal garages remain further milestones. Existing saves and progression are preserved.
 

@@ -1,3 +1,4 @@
+import {AVATAR_RADIUS} from '../../shared/avatarDimensions.mjs';
 import {useGameUI} from './ui/GameUI';
 import {residentBlocked} from './pedestrianBodies';
 import {freshPlayer,stepPlayer,PLAYER_STEP,surfaceAt,groundHeight} from '../../shared/playerPhysics.mjs';
@@ -259,7 +260,7 @@ export function Player({
     const fleet=vehicles.runtime.current;
     const car=fleet.cars.find(c=>c.id===fleet.ownedId);
     if (model.current) model.current.visible=!car;
-    const movementBlocked=(x:number,z:number)=>blocked(x,z)||pedestrianBlocked(x,z,fleet.cars)||residentBlocked(x,z,position.current.x,position.current.z);
+    const movementBlocked=(x:number,z:number)=>blocked(x,z,AVATAR_RADIUS)||pedestrianBlocked(x,z,fleet.cars)||residentBlocked(x,z,position.current.x,position.current.z);
 
     const side = worldLocked || car
       ? 0

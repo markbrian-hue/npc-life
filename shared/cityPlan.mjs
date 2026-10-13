@@ -9,6 +9,13 @@ export const ROAD_SEGMENTS = [
   { id:'east-collector', kind:'collector', axis:'z', x:94,z:-23,length:138,width:8.5 },
   { id:'dock-link', kind:'collector', axis:'x', x:47,z:46,length:94,width:8.5 },
   { id:'bypass', kind:'highway', axis:'z', x:116,z:-25,length:182,width:12 },
+  { id:'campus-avenue',kind:'collector',axis:'z',x:0,z:-150,length:68,width:8.5 },
+  { id:'northgate-link',kind:'collector',axis:'x',x:30,z:-150,length:276,width:8.5 },
+  { id:'bypass-north',kind:'highway',axis:'z',x:116,z:-151,length:70,width:12 },
+  { id:'eastbank-loop',kind:'collector',axis:'z',x:168,z:-42,length:216,width:8.5 },
+  { id:'eastbank-central',kind:'collector',axis:'x',x:142,z:0,length:52,width:8.5 },
+  { id:'eastbank-south',kind:'collector',axis:'x',x:142,z:46,length:52,width:8.5 },
+  { id:'eastbank-north',kind:'collector',axis:'x',x:142,z:-128,length:52,width:8.5 },
   { id:'bypass-south-link', kind:'collector', axis:'x', x:105,z:46,length:22,width:8.5 },
 ];
 export const ROUND_ROADS = [
@@ -16,10 +23,16 @@ export const ROUND_ROADS = [
   {id:'grove',x:-92,z:-92,inner:0,outer:12},
 ];
 export const PARK_PATHS = [
+  {x:-65,z:-168,w:3,d:30},{x:184,z:-106,w:3,d:27},{x:180,z:42,w:22,d:3},
   {x:-59,z:-10,w:36,d:2.4}, {x:-59,z:10,w:36,d:2.4},
   {x:-78,z:0,w:2.4,d:22},{x:-40,z:0,w:2.4,d:22},
 ];
 export const ACTIVITY_SITES = [
+  {id:'campus',name:'Northgate Campus',x:-28,z:-141,kind:'explore'},
+  {id:'observatory',name:'Hilltop Observatory',x:-65,z:-174,kind:'explore'},
+  {id:'eastbank',name:'Eastbank Works',x:157,z:-38,kind:'explore'},
+  {id:'solar',name:'Solar Gardens',x:184,z:-100,kind:'explore'},
+  {id:'lookout',name:'Coastal Lookout',x:184,z:42,kind:'explore'},
   {id:'board',name:'Resident bureau',x:6,z:22,kind:'jobs'},
   {id:'coffee',name:'Last Chance Coffee',x:57,z:6,kind:'shop'},
   {id:'garage',name:'Juniper Motor Club',x:-82,z:-71,kind:'garage'},
@@ -53,6 +66,8 @@ export function placeCandidates(candidates,occupied=[],{roadClearance=0,gap=.5}=
   return accepted;
 }
 export const PARKING_BAYS = [
+  {id:'northgate-west',x:-43,z:-141,w:13,d:3.4,rotation:0},{id:'northgate-east',x:-17,z:-141,w:13,d:3.4,rotation:0},
+  {id:'eastbank-north',x:158,z:-22,w:3.4,d:11,rotation:0},{id:'eastbank-south',x:158,z:-10,w:3.4,d:11,rotation:0},
   {id:'sedan-1',x:8.4,z:33,w:3.4,d:6,rotation:0},
   {id:'sedan-2',x:-25,z:7.8,w:6,d:3.4,rotation:0},
   {id:'sedan-3',x:-8.5,z:-36,w:3.4,d:6,rotation:0},

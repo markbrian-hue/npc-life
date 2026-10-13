@@ -1,3 +1,4 @@
+import {EXPLORER_SITES} from '../../shared/exploration.mjs';
 import { CityMapLayer } from './CityMapLayer';
 import { DISTRICTS } from './campaign';
 import { WORLD_RADIUS } from './world';
@@ -17,7 +18,7 @@ type Location = {
   heading: number;
 };
 
-const markers = DISTRICTS.map(d => ({ ...d, label: d.name, fill: d.color }));
+const markers = [...DISTRICTS.map(d => ({ ...d, label: d.name, fill: d.color })),...EXPLORER_SITES.filter(p=>!['civic','juniper'].includes(p.id)).map(p=>({...p,label:p.name,fill:'#7bd5b0'}))];
 
 // Use the same world bounds as collision and the full city journal.
 const unit = 336 / (WORLD_RADIUS * 2);

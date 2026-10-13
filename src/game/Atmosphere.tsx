@@ -8,7 +8,7 @@ const noise=`
 uniform float cloudCoverage;uniform float cloudTime;uniform float nightAmount;uniform float rainfall;
 float hashCloud(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float cloudNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hashCloud(i),hashCloud(i+vec2(1,0)),f.x),mix(hashCloud(i+vec2(0,1)),hashCloud(i+vec2(1,1)),f.x),f.y);}
-float cloudFbm(vec2 p){float v=0.0,a=.5;for(int i=0;i<5;i++){v+=a*cloudNoise(p);p=mat2(1.6,-1.2,1.2,1.6)*p+7.3;a*=.5;}return v;}
+float cloudFbm(vec2 p){float v=0.0,a=.5;for(int i=0;i<3;i++){v+=a*cloudNoise(p);p=mat2(1.6,-1.2,1.2,1.6)*p+7.3;a*=.5;}return v;}
 `;
 const composite=`
 retColor*=mix(vec3(1.0),vec3(.57,.76,1.02),smoothstep(.02,.5,direction.y)*.8);

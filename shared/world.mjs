@@ -1,7 +1,8 @@
+import {EXPLORER_SITES} from './exploration.mjs';
 import {BUSINESSES,kioskPosition} from './livingCity.mjs';
 import { placeCandidates, footprint, overlaps, roadOverlap, roadAt, streetFacing, PARKING_BAYS, ACTIVITY_SITES, ACTIVITY_ZONES, ROAD_SEGMENTS, roadBounds, PARK_PATHS } from './cityPlan.mjs';
 export * from './cityPlan.mjs';
-export const WORLD_RADIUS = 136;
+export const WORLD_RADIUS = 210;
 export const SPAWN = { x: 6.4, z: 16 };
 export const GROVE = { x: -92, z: -92, radius: 12 };
 export const ROUNDABOUT = { x: 0, z: 0, island: 5.5, inner: 6.2, outer: 12, pavement: 14 };
@@ -42,7 +43,13 @@ buildingCandidates.push(
   ...[-65,-40,-15,20].flatMap((z,i)=>[82,104].map(x=>({x,z,w:8,d:12,h:5+i%2*3,color:'#b5b2a1',roof:'#626d6a',rotation:x<94?Math.PI/2:-Math.PI/2,kind:'warehouse'}))),
   ...[22,44,66].map((x,i)=>({x,z:-104,w:12,d:10,h:5+i*2,color:'#b9b39e',roof:'#716f61',rotation:0,kind:'warehouse'}))
 );
-export const BUILDINGS = placeCandidates(buildingCandidates, PARKING_BAYS,{roadClearance:2,gap:.4});
+// Northgate and Eastbank are connected neighborhoods, with reserved public landmarks.
+buildingCandidates.push(
+ ...[-95,-30,30,65,96].map((x,i)=>({x,z:-173,w:15,d:14,h:8+i%3*4,color:['#c2c1af','#c9b2a1','#a9beb9'][i%3],roof:'#617674',rotation:0})),
+ ...[-92,-55,30,67].map((x,i)=>({x,z:-128,w:15,d:12,h:7+i*2,color:'#cbbdad',roof:'#757865',rotation:Math.PI})),
+ ...[-106,-76,-43,23].flatMap((z,i)=>[142,190].map(x=>({x,z,w:13,d:15,h:7+i%3*3,color:x>170?'#bbccc2':'#bcb8a5',roof:'#586c72',rotation:x<168?Math.PI/2:-Math.PI/2,kind:i===1?'warehouse':undefined}))),
+);
+export const BUILDINGS = placeCandidates(buildingCandidates, [...PARKING_BAYS,...ACTIVITY_ZONES.filter(p=>p.kind==='explore'),{x:-65,z:-185,w:16,d:15},{x:184,z:-115,w:22,d:15}],{roadClearance:2,gap:.4});
 
 export const PALMS = [[-118,-102],[-100,-118],[-75,-115],[-65,-75],[-105,-62],[-101,-37],[-82,-53]];
 
@@ -75,6 +82,7 @@ export const BENCHES = [
 ];
 
 export const LAMP_POSTS = [
+  {x:-8,z:-130},{x:-8,z:-163},{x:174,z:-67},{x:162,z:-108},{x:-48,z:-144},
   { x: -8, z: -12 }, { x: 8, z: 12 }, { x: -28, z: 8 },
   { x: 28, z: -8 }, { x: -8, z: 28 }, { x: 8, z: -28 },
 ];
@@ -88,6 +96,8 @@ export const PLANTERS = [
 // Trees stay in landscaped perimeter strips.
 // Validation also protects against future building changes.
 const TREE_CANDIDATES = [
+  ...[-102,-80,-48,-13,18,48,82,105].flatMap(x=>[-194,-139].map(z=>[x,z])),
+  ...[-134,-92,-57,-20,36,62].map(z=>[180,z]),
   [-121,-76],[-120,-112],[-101,-123],[-73,-123],[-59,-107],[-73,-65],[-111,-47],[-105,-25],[-117,16],[108,-22],[118,22],
   ...[-78, -62, -46, 46, 62, 78].flatMap(x => [-38, 38].map(z => [x, z])),
   ...[-78, -62, -46, 46, 62].flatMap(z => [-38, 38].map(x => [x, z])),
@@ -106,6 +116,10 @@ const protectedSpaces = [...BUILDINGS,...PARKING_BAYS,...PARK_PATHS,...ACTIVITY_
 export const TREES = placeCandidates(TREE_CANDIDATES.map(([x,z])=>({x,z,w:4,d:4})),protectedSpaces,{roadClearance:2.5,gap:1}).map(({x,z})=>({x,z}));
 
 export const DISTRICT_COLLIDERS = [
+  ...EXPLORER_SITES.map(p=>({x:p.x+1.9,z:p.z-.5,halfX:.08,halfZ:.08})),
+  {x:184,z:52,halfX:10,halfZ:.08},
+  {x:-65,z:-185,halfX:6,halfZ:6},{x:184,z:-115,halfX:10,halfZ:5},
+  {x:157,z:-43,halfX:2,halfZ:1},{x:184,z:48,halfX:2.5,halfZ:.6},
   ...[48, 60, 72].map(x => ({ x, z: 10, halfX: 2.5, halfZ: 1 })),
   ...[16, 22, 28].map(x => ({ x, z: -82, halfX: 1.5, halfZ: 1.5 })),
   { x: 6, z: -62, halfX: .9, halfZ: .4 },
@@ -141,23 +155,23 @@ const roadProps = [
   { ...BUS_STOP, halfX: 1.75, halfZ: 0.85 },
 ];
 
-export function blocked(x, z, radius = .42) {
-  if (Math.abs(x) + radius > WORLD_RADIUS || Math.abs(z) + radius > WORLD_RADIUS) return true;
-
-  if (z + radius > 93 || (z > 75 && Math.abs(x) + radius > 10)) return true; // Harbor seawall; the center pier remains walkable.
-
-  if (Math.hypot(x, z) < 3.1 + radius) return true;
-  if (BUILDINGS.some(b => {
-    const c = Math.cos(b.rotation || 0), s = Math.sin(b.rotation || 0), dx = x - b.x, dz = z - b.z;
-    return Math.abs(c * dx - s * dz) < b.w / 2 + radius && Math.abs(s * dx + c * dz) < b.d / 2 + radius;
-  })) return true;
-
-
-
-  return roadProps.some((p) =>
-    Math.abs(x - p.x) < p.halfX + radius &&
-    Math.abs(z - p.z) < p.halfZ + radius
-  );
+export const WORLD_COLLIDERS=[...BUILDINGS.map(b=>({x:b.x,z:b.z,halfX:b.w/2,halfZ:b.d/2,c:Math.cos(b.rotation||0),s:Math.sin(b.rotation||0)})),...roadProps.map(p=>({...p,c:1,s:0}))];
+const CELL=16,cells=new Map();
+WORLD_COLLIDERS.forEach((p,id)=>{
+ const hx=Math.abs(p.c)*p.halfX+Math.abs(p.s)*p.halfZ,hz=Math.abs(p.s)*p.halfX+Math.abs(p.c)*p.halfZ;
+ for(let x=Math.floor((p.x-hx)/CELL);x<=Math.floor((p.x+hx)/CELL);x++)for(let z=Math.floor((p.z-hz)/CELL);z<=Math.floor((p.z+hz)/CELL);z++){const key=`${x},${z}`;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}
+});
+export function blocked(x,z,radius=.42){
+ if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(radius)||radius<0)return true;
+ if(Math.abs(x)+radius>WORLD_RADIUS||Math.abs(z)+radius>WORLD_RADIUS)return true;
+ if(z+radius>93||(z>75&&Math.abs(x)+radius>10))return true;
+ if(Math.hypot(x,z)<3.1+radius)return true;
+ // Rotation expands a local square radius by up to sqrt(2) in world space.
+ const margin=radius*Math.SQRT2;
+ for(let gx=Math.floor((x-margin)/CELL);gx<=Math.floor((x+margin)/CELL);gx++)for(let gz=Math.floor((z-margin)/CELL);gz<=Math.floor((z+margin)/CELL);gz++){
+  for(const id of cells.get(`${gx},${gz}`)||[]){const p=WORLD_COLLIDERS[id],dx=x-p.x,dz=z-p.z;if(Math.abs(p.c*dx-p.s*dz)<p.halfX+radius&&Math.abs(p.s*dx+p.c*dz)<p.halfZ+radius)return true;}
+ }
+ return false;
 }
 
 export function distance2D(

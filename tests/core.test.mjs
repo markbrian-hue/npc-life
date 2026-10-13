@@ -105,7 +105,7 @@ test('display preferences apply even when persistence fails', () => {
   assert.throws(() => setSettings({ reducedMotion: true, compactHud: false, hideMinimap: true }));
   assert.equal(applied.get('npc-reduce-motion'), true);
   assert.equal(applied.get('npc-hide-minimap'), true);
-  assert.equal(RELEASE_KEYS.length, 19);
+  assert.equal(RELEASE_KEYS.length, 20);
 });
 
 test('city revival progress participates in import and invalid progress preserves the prior save', async () => {
@@ -141,4 +141,14 @@ test('garage backups preserve unlocks and finishes; malformed records cannot era
  await assert.rejects(importSave(file({[key]:JSON.stringify({version:1,owned:['bogus']})})));assert.equal(localStorage.getItem('npc-life:coins-v1'),'321');
  const garage={version:1,owned:['scooter','sedan'],selected:'sedan',paints:{sedan:'#aabbcc'},rims:{sedan:'dark'}};
  await importSave(file({'npc-life:coins-v1':'251',[key]:JSON.stringify(garage)}));assert.deepEqual(JSON.parse(localStorage.getItem(key)),garage);
+});
+
+
+test('explorer contracts and stamps survive backup import alongside the existing wallet',async()=>{
+ const {freshExploration,acceptContract,dailyContracts}=await import('../shared/exploration.mjs');
+ const key='npc-life:exploration-v1',saved=acceptContract({...freshExploration(),visits:['civic']},dailyContracts(20735)[0].id,20735);
+ globalThis.localStorage=storage({'npc-life:coins-v1':'300'});
+ await assert.rejects(importSave(file({[key]:JSON.stringify({...saved,active:{...saved.active,stage:999}})})));assert.equal(localStorage.getItem('npc-life:coins-v1'),'300');
+ await importSave(file({[key]:JSON.stringify(saved),'npc-life:coins-v1':'312'}));assert.deepEqual(JSON.parse(localStorage.getItem(key)),saved);assert.equal(localStorage.getItem('npc-life:coins-v1'),'312');
+ await importSave(file({'npc-life:coins-v1':'99'}));assert.equal(localStorage.getItem(key),null,'older backups do not inherit unrelated new passport progress');
 });

@@ -1,0 +1,46 @@
+{
+  "base": "456f568d7a7a415706994744d2524d25594c6b55",
+  "viewport": [
+    1100,
+    720
+  ],
+  "dpr": 1,
+  "quality": "medium",
+  "shadowPolicy": "forced updates for both versions",
+  "note": "Draw counts include shadows. Software WebGL timings are not hardware FPS measurements.",
+  "views": [
+    {
+      "name": "civic",
+      "before": {
+        "draws": 944,
+        "triangles": 438645
+      },
+      "after": {
+        "draws": 537,
+        "triangles": 174653
+      }
+    },
+    {
+      "name": "avenue",
+      "before": {
+        "draws": 1467,
+        "triangles": 471744
+      },
+      "after": {
+        "draws": 860,
+        "triangles": 233314
+      }
+    },
+    {
+      "name": "north",
+      "before": {
+        "draws": 306,
+        "triangles": 300612
+      },
+      "after": {
+        "draws": 279,
+        "triangles": 131206
+      }
+    }
+  ]
+}

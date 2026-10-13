@@ -35,7 +35,7 @@ export const VEHICLE_CATALOG=[
 export const VEHICLE_BY_ID=Object.fromEntries(VEHICLE_CATALOG.map(v=>[v.id,v]));
 export const DEFAULT_PAINTS=['#678e85','#b96648','#416988','#d4c6a5','#242e36','#a7b9c2','#c6ab55','#8c6586'];
 export const GARAGE_KEY='npc-life:garage-v1';
-export const GARAGES=[{id:'juniper',name:'Juniper Motor Club',x:-82,z:-71,pads:[{x:-80,z:-64,heading:Math.PI/2},{x:-78,z:-52,heading:Math.PI/2}]},{id:'dispatch',name:'Dispatch Motor Pool',x:8,z:-82,pads:[{x:12,z:-70,heading:Math.PI/2},{x:12,z:-58,heading:Math.PI/2}]}];
+export const GARAGES=[{id:'northgate',name:'Northgate Motor Stop',x:-28,z:-141,pads:[{x:-43,z:-141,heading:0},{x:-17,z:-141,heading:0}]},{id:'eastbank',name:'Eastbank Motor Stop',x:157,z:-38,pads:[{x:158,z:-22,heading:Math.PI/2},{x:158,z:-10,heading:Math.PI/2}]},{id:'juniper',name:'Juniper Motor Club',x:-82,z:-71,pads:[{x:-80,z:-64,heading:Math.PI/2},{x:-78,z:-52,heading:Math.PI/2}]},{id:'dispatch',name:'Dispatch Motor Pool',x:8,z:-82,pads:[{x:12,z:-70,heading:Math.PI/2},{x:12,z:-58,heading:Math.PI/2}]}];
 export const freshGarage=()=>({version:1,owned:/** @type {string[]} */([]),paints:/** @type {Record<string,string>} */({}),rims:/** @type {Record<string,string>} */({}),selected:''});
 export function validateGarage(value){
  if(!value||typeof value!=='object'||Array.isArray(value)||value.version!==1||!Array.isArray(value.owned)||value.owned.some(id=>!VEHICLE_BY_ID[id]))throw new Error('Invalid garage record');

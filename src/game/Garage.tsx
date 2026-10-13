@@ -8,17 +8,17 @@ import {playGameSound} from './gameAudio';
 import type {Vehicles} from './Vehicles';
 type Pos={x:number;z:number};
 export function useGarage(player:Pos,coins:number,rep:number,chapters:number,vehicles:Vehicles,spend:(amount:number)=>boolean){
- const [record,setRecord]=useState(loadGarage),[message,setMessage]=useState('Browse the fleet. Buy and collect at Juniper Motor Club or Dispatch.'),[category,setCategory]=useState('Everyday'),[ownedOnly,setOwnedOnly]=useState(false);
+ const [record,setRecord]=useState(loadGarage),[message,setMessage]=useState('Browse the fleet. Buy and collect at any of the four marked Motor Club desks.'),[category,setCategory]=useState('Everyday'),[ownedOnly,setOwnedOnly]=useState(false);
  const {store}=useGameUI(),state=useRef({player,coins,rep,chapters,record,vehicles,spend});state.current={player,coins,rep,chapters,record,vehicles,spend};
  const save=(next:typeof record)=>{state.current.record=next;setRecord(next);try{localStorage.setItem(GARAGE_KEY,JSON.stringify(next));}catch{setMessage('Storage unavailable. Your garage lasts for this session.');}};
  const near=GARAGES.find(g=>Math.hypot(player.x-g.x,player.z-g.z)<5);
- const purchase=(id:string)=>{const s=state.current,g=GARAGES.find(g=>Math.hypot(s.player.x-g.x,s.player.z-g.z)<5);if(!g){setMessage('Visit a Motor Club desk to purchase. Maps mark both garages.');return;}const result=buyVehicle(s.record,id,s.coins,s.rep,s.chapters);if(!result.ok||!result.state||!result.price){setMessage(result.reason||'Vehicle unavailable.');return;}if(!s.spend(result.price)){setMessage('Not enough coins.');return;}s.coins-=result.price;save(result.state);setMessage(`${VEHICLE_BY_ID[id].name} added to your personal garage. Select a finish and Collect vehicle.`);playGameSound('coin');};
+ const purchase=(id:string)=>{const s=state.current,g=GARAGES.find(g=>Math.hypot(s.player.x-g.x,s.player.z-g.z)<5);if(!g){setMessage('Visit a Motor Club desk to purchase. Maps mark all four garages.');return;}const result=buyVehicle(s.record,id,s.coins,s.rep,s.chapters);if(!result.ok||!result.state||!result.price){setMessage(result.reason||'Vehicle unavailable.');return;}if(!s.spend(result.price)){setMessage('Not enough coins.');return;}s.coins-=result.price;save(result.state);setMessage(`${VEHICLE_BY_ID[id].name} added to your personal garage. Select a finish and Collect vehicle.`);playGameSound('coin');};
  const paint=(id:string,color:string)=>{const s=state.current;if(!s.record.owned.includes(id))return;save({...s.record,paints:{...s.record.paints,[id]:color}});};
  const rim=(id:string,value:string)=>{const s=state.current;if(!s.record.owned.includes(id))return;save({...s.record,rims:{...s.record.rims,[id]:value}});};
  const spawn=(id:string)=>{const s=state.current,r=s.vehicles.runtime.current;if(!s.record.owned.includes(id))return;
   if(r.networked){setMessage('Personal collection is available in solo play. Rooms share their server-controlled public motor pool; local saves do not authorize shared vehicle unlocks.');return;}
   if(r.ownedId){setMessage('Park and exit your current vehicle before collecting another.');return;}
-  const g=GARAGES.find(g=>Math.hypot(s.player.x-g.x,s.player.z-g.z)<5);if(!g){setMessage('Visit Juniper Motor Club or Dispatch to collect.');return;}
+  const g=GARAGES.find(g=>Math.hypot(s.player.x-g.x,s.player.z-g.z)<5);if(!g){setMessage('Visit a marked Motor Club desk to collect.');return;}
   const fleet=r.cars.filter(c=>c.id!=='personal-vehicle'),car=garageSpawn(id,g.id,fleet,s.record.paints[id]||DEFAULT_PAINTS[0],s.record.rims[id]||'alloy');
   if(!car){setMessage('Collection bays are blocked. Move the parked vehicles and try again. Nothing was replaced.');return;}
   r.cars=[...fleet,car];save({...s.record,selected:id});s.vehicles.refresh();setMessage(`${car.name} ready in the marked collection bay. R beside it to drive.`);playGameSound('interact');store.close('garage');
@@ -31,7 +31,7 @@ export function GarageUI({garage}:{garage:ReturnType<typeof useGarage>}){
  const inspect=(id:string)=>{setPreview(id);previewHost.current?.scrollIntoView({block:'start'});previewHost.current?.focus({preventScroll:true});};
  return <>
   <GameDialog id="garage" label="Motor Club dealership" className="garage-dialog" onClose={()=>store.close('garage')}>
-   <header><div><small>JUNIPER MOTOR CLUB / DISPATCH MOTOR POOL</small><h2>A better way to avoid walking.</h2></div><button onClick={()=>store.close('garage')} aria-label="Close garage">×</button></header>
+   <header><div><small>JUNIPER / DISPATCH / NORTHGATE / EASTBANK</small><h2>A better way to avoid walking.</h2></div><button onClick={()=>store.close('garage')} aria-label="Close garage">×</button></header>
    <p role="status">{garage.message}</p><p>◆ {garage.coins} coins · {garage.rep} REP · {garage.chapters} career promotions · {garage.record.owned.length} owned</p>
    <nav aria-label="Vehicle categories">{['Everyday','Performance','Premium','Motorcycles','City service'].map(c=><button key={c} aria-pressed={!garage.ownedOnly&&garage.category===c} onClick={()=>{garage.setOwnedOnly(false);garage.setCategory(c);}}>{c}</button>)}<button aria-pressed={garage.ownedOnly} onClick={()=>garage.setOwnedOnly(true)}>My garage</button></nav>
    {selected&&<div ref={previewHost} tabIndex={-1}><VehiclePreview model={selected.id} color={garage.record.paints[selected.id]||DEFAULT_PAINTS[0]} rim={garage.record.rims[selected.id]||'alloy'}/></div>}
