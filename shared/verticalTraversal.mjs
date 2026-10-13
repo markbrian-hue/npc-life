@@ -7,11 +7,11 @@ const rotateLocal=(dx,dz,yaw)=>({x:Math.cos(yaw)*dx-Math.sin(yaw)*dz,z:Math.sin(
 const fromLocal=(b,x,z)=>({x:b.x+Math.cos(b.rotation||0)*x+Math.sin(b.rotation||0)*z,z:b.z-Math.sin(b.rotation||0)*x+Math.cos(b.rotation||0)*z});
 
 // Only a bounded number of roof accesses are created so the scene remains inexpensive.
-export const ROOFTOP_LADDERS=BUILDINGS.filter((b,i)=>b.h>=6&&i%5===0).slice(0,16).map((b,i)=>{
+export const ROOFTOP_LADDERS=BUILDINGS.map((b,index)=>({b,index})).filter(({b,index})=>b.h>=6&&index%5===0).slice(0,16).map(({b,index},i)=>{
  const localX=b.w*.31;
  const anchor=fromLocal(b,localX,b.d/2+.83);
  const landing=fromLocal(b,localX,b.d/2-1.15);
- return {id:'roof-'+i,x:anchor.x,z:anchor.z,roof:b.h+.075,rotation:b.rotation||0,building:b,landing};
+ return {id:'roof-'+i,index,x:anchor.x,z:anchor.z,roof:b.h+.075,rotation:b.rotation||0,building:b,landing};
 });
 
 export function nearLadder(x,z,maxDistance=1.1){
