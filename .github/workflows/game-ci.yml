@@ -9,6 +9,7 @@ on:
       - 'feat/terrain-responsive-suspension'
       - 'feat/cinematic-city-art'
       - 'feat/blocky-explorers-performance'
+      - 'feat/nyc-vertical-traversal'
   pull_request:
     branches:
       - 'feat/cinematic-city-art'
