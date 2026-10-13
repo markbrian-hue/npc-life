@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
-  FOUNTAIN,
   BUS_STOP,
   TREES,
 } from './world';
@@ -120,18 +119,6 @@ export function WorldMinimap({ target }: { target: { x: number; z: number } }) {
                 fill="#3b704b"
               />
             ))}
-
-            {/* Fountain */}
-            <circle
-              cx={scale(FOUNTAIN.x)}
-              cy={scale(FOUNTAIN.z)}
-              r={2.35 * unit}
-              fill="#6cbdc5"
-              stroke="#eaf5e9"
-              strokeWidth="1.5"
-            >
-              <title>Fountain</title>
-            </circle>
 
             {/* Bus stop */}
             <rect

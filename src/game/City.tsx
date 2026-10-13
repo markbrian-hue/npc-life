@@ -1,5 +1,6 @@
 import {StreetDetail} from './StreetDetail';
 import {NYCExpansionWorld} from './NYCExpansionWorld';
+import {NYCStreetFurniture} from './NYCStreetFurniture';
 import {RooftopAccess} from './RooftopAccess';
 import {BoroughStreets} from './BoroughStreets';
 import {CityArchitecture} from './CityArchitecture';
@@ -17,7 +18,7 @@ import {
 } from './world';
 
 import {
-  Bench, StreetLamp, Planter, BusStop, Fountain,
+  Bench, StreetLamp, Planter, BusStop,
   Bin, Hydrant,
 } from './CityProps';
 
@@ -110,7 +111,7 @@ export const City = memo(function City({ caught,quality='medium' }: { caught: nu
       ))}
 
       <BusStop />
-      <Fountain />
+      <NYCStreetFurniture />
 
       <Bin x={-11} z={-8.5} />
       <Bin x={29} z={9} />

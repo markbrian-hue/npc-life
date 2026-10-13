@@ -4,6 +4,7 @@ import {type Group} from 'three';
 import {BUILDINGS,NYC_SIGN_POSTS} from './world';
 import {WorldSign} from './DistrictWorld';
 import {NYC_PUBLIC_SPACES,NYC_RIVER} from '../../shared/nycExpansion.mjs';
+import {URBAN_GROUND_ZONES} from '../../shared/nycStreetRevamp.mjs';
 
 // Visually playable borough blocks: built on the same shared meter coordinates as
 // the collision footprints and minimap. Materials/meshes are first-party geometry.
@@ -86,13 +87,15 @@ export const NYCExpansionWorld=memo(function NYCExpansionWorld(){
   <mesh name="nyc-lower-manhattan-ground" rotation={[-Math.PI/2,0,0]} position={[20,-.06,-32]} receiveShadow>
    <planeGeometry args={[165,150]}/><meshStandardMaterial color="#838b88" roughness={.97}/>
   </mesh>
-  <mesh name="fountain-green-island" rotation={[-Math.PI/2,0,0]} position={[0,-.024,0]} receiveShadow>
-   <circleGeometry args={[5.72,56]}/><meshStandardMaterial color="#7f9a70" roughness={1}/>
-  </mesh>
   <mesh name="nyc-urban-ground" rotation={[-Math.PI/2,0,0]} position={[paving.x,-.06,paving.z]} receiveShadow>
    <planeGeometry args={[paving.w,paving.d]}/>
    <meshStandardMaterial color="#777f7d" roughness={1}/>
   </mesh>
+  {URBAN_GROUND_ZONES.map(zone=><mesh key={zone.id} name={'nyc-urban-zone:'+zone.id}
+   rotation={[-Math.PI/2,0,0]} position={[zone.x,-.057,zone.z]} receiveShadow>
+   <planeGeometry args={[zone.w,zone.d]}/>
+   <meshStandardMaterial color="#7e8586" roughness={.98}/>
+  </mesh>)}
   {NYC_PUBLIC_SPACES.map(place=><PublicSpace key={place.id} place={place}/>)}
   <Waterfront/>
   <IlluminatedFacades/>

@@ -102,7 +102,7 @@ export const RUMORS = [
   'The bus stop is considering leaving the city.',
   'A tree requested relocation after meeting the traffic department.',
   'A pigeon has been appointed deputy finance minister.',
-  'The mayor claims the fountain is a public swimming pool.',
+  'The mayor claims the crosswalk is New York\'s busiest office.',
   'The city will soon install Wi-Fi for the pigeons only.',
 ] as const;
 

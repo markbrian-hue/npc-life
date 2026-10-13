@@ -2,7 +2,7 @@
 import {
   BENCHES,
   BUS_STOP,
-  FOUNTAIN,
+  CIVIC_CROSSING,
   PARKED_CARS,
   PLANTERS,
 } from './world';
@@ -46,15 +46,15 @@ export const DISCOVERIES = [
   },
   {
     id: 'fountain',
-    kind: 'fountain',
-    x: FOUNTAIN.x,
-    z: FOUNTAIN.z,
+    kind: 'landmark',
+    x: CIVIC_CROSSING.x,
+    z: CIVIC_CROSSING.z,
     range: 4.2,
-    label: 'Inspect fountain',
+    label: 'Inspect Broadway crossing',
     lines: [
-      'You wished for a career. The water ignored you.',
-      'Do not throw coins in here. Your wallet is fragile.',
-      'This fountain has better cash flow than you.',
+      'The traffic lights have been stuck in a meeting.',
+      'New York energy. Minimum-wage ambition.',
+      'The signal says WALK. Your motivation says MAYBE.',
     ],
   },
   ...BENCHES.map((p, i) => ({

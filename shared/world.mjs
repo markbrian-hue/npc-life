@@ -1,13 +1,16 @@
 import {EXPLORER_SITES} from './exploration.mjs';
+import {GARAGES} from './vehicleCatalog.mjs';
+import {generateStreetInfill,CORNER_SIGNAL_CANDIDATES} from './nycStreetRevamp.mjs';
 import {NYC_BLOCK_CANDIDATES,NYC_PUBLIC_SPACES,NYC_RIVER,NYC_EXPANSION_ROADS,NYC_SIGN_POST_CANDIDATES} from './nycExpansion.mjs';
 import {BOROUGH_PARCELS,BOROUGH_SIGNAL_CANDIDATES,styleBoroughBuilding} from './boroughPlan.mjs';
 import {BUSINESSES,kioskPosition} from './livingCity.mjs';
 import { placeCandidates, footprint, overlaps, roadOverlap, roadAt, streetFacing, PARKING_BAYS, ACTIVITY_SITES, ACTIVITY_ZONES, ROAD_SEGMENTS, roadBounds, PARK_PATHS } from './cityPlan.mjs';
 export * from './cityPlan.mjs';
-export const WORLD_RADIUS = 340;
+export const WORLD_RADIUS = 460;
 export const SPAWN = { x: 6.4, z: 16 };
 export const GROVE = { x: -92, z: -92, radius: 12 };
-export const ROUNDABOUT = { x: 0, z: 0, island: 5.5, inner: 6.2, outer: 12, pavement: 14 };
+// Legacy export only: the civic fountain roundabout no longer exists or blocks cars.
+export const ROUNDABOUT = { x: 0, z: 0, island: 0, inner: 0, outer: 0, pavement: 0 };
 
 /** @type {Array<{x:number,z:number,w:number,d:number,h:number,color:string,roof:string,rotation?:number,kind?:string}>} */
 const buildingCandidates = [
@@ -51,7 +54,29 @@ buildingCandidates.push(
  ...[-92,-55,30,67].map((x,i)=>({x,z:-128,w:15,d:12,h:7+i*2,color:'#cbbdad',roof:'#757865',rotation:Math.PI})),
  ...[-106,-76,-43,23].flatMap((z,i)=>[142,190].map(x=>({x,z,w:13,d:15,h:7+i%3*3,color:x>170?'#bbccc2':'#bcb8a5',roof:'#586c72',rotation:x<168?Math.PI/2:-Math.PI/2,kind:i===1?'warehouse':undefined}))),
 );
-export const BUILDINGS = placeCandidates([...buildingCandidates,...BOROUGH_PARCELS,...NYC_BLOCK_CANDIDATES], [...PARKING_BAYS,...ACTIVITY_ZONES.filter(p=>p.kind==='explore'),...NYC_PUBLIC_SPACES,{x:-65,z:-185,w:16,d:15},{x:184,z:-115,w:22,d:15}],{roadClearance:2,gap:.4}).map(styleBoroughBuilding);
+const RESERVED_BUILDING_SITES = [...PARKING_BAYS,...ACTIVITY_ZONES.filter(p=>p.kind==='explore'),
+ ...NYC_PUBLIC_SPACES,{x:-65,z:-185,w:16,d:15},{x:184,z:-115,w:22,d:15}];
+const oldBuildings=placeCandidates([...buildingCandidates,...BOROUGH_PARCELS,...NYC_BLOCK_CANDIDATES],
+ RESERVED_BUILDING_SITES,{roadClearance:2,gap:.4}).map(styleBoroughBuilding);
+// All existing game interaction spots and vehicle door clearances are reserved.
+// Expansion density must never turn an old job or a purchased car into a trap.
+const OLD_JOB_STOPS=[
+ [-6,-16],[6,22],[-44,-8],[-60,-10],[-76,-8],[-44,6],
+ [8,-82],[6,68],[-92,-77],[80,1.8],[57,6],[21,6],
+ [36,6],[25,58],[-82,-71],[6.4,16],
+];
+const STOP_CLEARANCES=OLD_JOB_STOPS.map(([x,z])=>({x,z,w:8,d:8}));
+const GARAGE_CLEARANCES=GARAGES.flatMap(g=>[
+ {x:g.x,z:g.z,w:13,d:13},
+ ...g.pads.map(p=>({x:p.x,z:p.z,w:13,d:13}))
+]);
+const newInfill=placeCandidates(generateStreetInfill(ROAD_SEGMENTS),[
+ ...RESERVED_BUILDING_SITES,...ACTIVITY_ZONES,...oldBuildings,
+ ...EXPLORER_SITES.map(p=>({x:p.x,z:p.z,w:10,d:10})),
+ ...BUSINESSES.map(b=>({...kioskPosition(b),w:9,d:7})),
+ ...STOP_CLEARANCES,...GARAGE_CLEARANCES,
+],{roadClearance:2,gap:1.1});
+export const BUILDINGS=[...oldBuildings,...newInfill];
 
 export const PALMS = [[-118,-102],[-100,-118],[-75,-115],[-65,-75],[-105,-62],[-101,-37],[-82,-53]];
 
@@ -62,7 +87,8 @@ export const PIGEONS = [
 export const GARY = { x: 8, z: 25 };
 export const BUS_STOP = { x: 24, z: 7.4, rotation: Math.PI };
 
-export const FOUNTAIN = { x: 0, z: 0 };
+// Save-compatible discovery target now sits beside a safe corner, not in traffic.
+export const CIVIC_CROSSING = { x: -7.5, z: 7.5 };
 
 export const PARKED_CARS = [
   { id: 'sedan-1', name: 'Civic Sedan', x: 8.4, z: 33, color: '#7d9b93', rotation: Math.PI / 2 },
@@ -125,6 +151,9 @@ export const SIGNAL_POSTS = placeCandidates(BOROUGH_SIGNAL_CANDIDATES,
 export const NYC_SIGN_POSTS = placeCandidates(NYC_SIGN_POST_CANDIDATES,
  [...BUILDINGS,...PARKING_BAYS,...ACTIVITY_ZONES,...TREES.map(t=>({...t,w:2,d:2})),...SIGNAL_POSTS],
  {roadClearance:.35,gap:.3});
+export const CITY_SIGNAL_POSTS = placeCandidates(CORNER_SIGNAL_CANDIDATES,
+ [...BUILDINGS,...PARKING_BAYS,...ACTIVITY_ZONES,...TREES.map(t=>({...t,w:2,d:2})),
+ ...SIGNAL_POSTS,...NYC_SIGN_POSTS],{roadClearance:.3,gap:.4});
 export const DISTRICT_COLLIDERS = [
   ...EXPLORER_SITES.map(p=>({x:p.x+1.9,z:p.z-.5,halfX:.08,halfZ:.08})),
   {x:184,z:52,halfX:10,halfZ:.08},
@@ -144,6 +173,7 @@ export const DISTRICT_COLLIDERS = [
 
 const roadProps = [
   ...SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:3.4})),
+  ...CITY_SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:3.6})),
   ...NYC_SIGN_POSTS.map(p=>({x:p.x,z:p.z,halfX:.16,halfZ:.16,height:4.8})),
   ...BUSINESSES.map(b=>({...kioskPosition(b),halfX:2.65,halfZ:1.5})),
   ...DISTRICT_COLLIDERS,
@@ -178,7 +208,6 @@ export function blocked(x,z,radius=.42,feetY=0){
  if(Math.abs(x)+radius>WORLD_RADIUS||Math.abs(z)+radius>WORLD_RADIUS)return true;
  if(x+radius>NYC_RIVER.x-NYC_RIVER.w/2&&z<NYC_RIVER.z+NYC_RIVER.d/2&&z>NYC_RIVER.z-NYC_RIVER.d/2)return true;
  if(z+radius>93||(z>75&&Math.abs(x)+radius>10))return true;
- if(Math.hypot(x,z)<3.1+radius)return true;
  // Rotation expands a local square radius by up to sqrt(2) in world space.
  const margin=radius*Math.SQRT2;
  for(let gx=Math.floor((x-margin)/CELL);gx<=Math.floor((x+margin)/CELL);gx++)for(let gz=Math.floor((z-margin)/CELL);gz<=Math.floor((z+margin)/CELL);gz++){
@@ -202,6 +231,7 @@ export function validateWorld() {
   for(const t of TREES)if(roadOverlap({...t,w:4,d:4},2)||BUILDINGS.some(b=>overlaps({...t,w:4,d:4},footprint(b),.4)))issues.push('Tree outside planting zone');
   for(const p of SIGNAL_POSTS)if(roadOverlap(footprint(p),.3)||BUILDINGS.some(b=>overlaps(footprint(p),footprint(b),.1)))issues.push('Signal in road or building');
   for(const p of NYC_SIGN_POSTS)if(roadOverlap(footprint(p),.3)||BUILDINGS.some(b=>overlaps(footprint(p),footprint(b),.1)))issues.push('NYC street sign in road or building');
+  for(const p of CITY_SIGNAL_POSTS)if(roadOverlap(footprint(p),.25)||BUILDINGS.some(b=>overlaps(footprint(p),footprint(b),.1)))issues.push('Rebuilt city signal in road or building');
   if(blocked(SPAWN.x,SPAWN.z)||onRoad(SPAWN.x,SPAWN.z))issues.push('Unsafe spawn');
   for(const p of ACTIVITY_SITES)if(blocked(p.x,p.z))issues.push(`Blocked activity: ${p.id}`);
   return issues;

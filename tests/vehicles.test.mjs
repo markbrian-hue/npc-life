@@ -23,12 +23,15 @@ test('cars accelerate, brake before reversing, steer and reject moving exits', (
   for(let i=0;i<30;i++)stepVehicle(car,{...drive,steer:1},1/60,[car]);
   assert.ok(car.heading>0);
 });
-test('vehicle hull cannot tunnel through fountain island, buildings or other cars', () => {
-  for(const [x,z,heading] of [[-13,0,0],[-16,-7,Math.PI/2]]) {
-    const car={...createFleet()[0],x,z,heading,speed:23};
-    for(let i=0;i<60;i++)stepVehicle(car,drive,.1,[car]);
-    assert.equal(carBlocked(car,[car]),false);assert.equal(car.speed,0);
-  }
+test('vehicles pass the rebuilt Broadway intersection and still stop at solid buildings', () => {
+  const through={...createFleet()[0],x:-13,z:0,heading:0,speed:14};
+  for(let i=0;i<20;i++)stepVehicle(through,drive,.1,[through]);
+  assert.ok(through.x>2,'removed fountain no longer acts as an invisible central barrier');
+  assert.equal(carBlocked(through,[through]),false);
+  const stopped={...createFleet()[0],x:-16,z:-7,heading:Math.PI/2,speed:23};
+  for(let i=0;i<60;i++)stepVehicle(stopped,drive,.1,[stopped]);
+  assert.equal(carBlocked(stopped,[stopped]),false);
+  assert.equal(stopped.speed,0,'building still stops the vehicle');
   const car={...createFleet()[0],x:-40,z:0,heading:0,speed:23};
   const other={...createFleet()[1],x:-30,z:0,heading:0};
   for(let i=0;i<20;i++)stepVehicle(car,drive,.1,[car,other]);

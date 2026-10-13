@@ -7,7 +7,7 @@ import {walkingRoute} from './pathing.mjs';
 import {createFleet,stepTraffic,nycTrafficPose,NYC_TRAFFIC_LENGTH,carBlocked} from '../shared/vehicles.mjs';
 
 test('connected northern Manhattan grid genuinely increases playable world size',()=>{
- assert.equal(WORLD_RADIUS,340);
+ assert.equal(WORLD_RADIUS,460);
  assert.ok(NYC_EXPANSION_ROADS.length>=15);
  assert.ok(ROAD_SEGMENTS.length>=31);
  assert.ok(roadAt(0,-184),'former Northgate approach still joins the city');
@@ -18,7 +18,8 @@ test('connected northern Manhattan grid genuinely increases playable world size'
  assert.equal(blocked(0,-263),false,'player can enter Midtown');
  assert.equal(blocked(260,-307),false,'player can reach Brooklyn Row');
  assert.equal(blocked(0,-339),false,'expanded north border is walkable');
- assert.equal(blocked(0,-341),true,'world still has finite physical limits');
+ assert.equal(blocked(0,-441),false,'new northern avenue is open');
+ assert.equal(blocked(0,-461),true,'world still has finite physical limits');
  assert.equal(blocked(NYC_RIVER.x,NYC_RIVER.z),true,'deep river is not a walkable field');
  assert.ok(inNYCExpansion(0,-263));
  assert.equal(inNYCExpansion(0,0),false);
