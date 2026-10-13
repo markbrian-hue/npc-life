@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {NYC_EXPANSION_ROADS,NYC_BLOCK_CANDIDATES,NYC_PUBLIC_SPACES,NYC_DISTRICTS,NYC_CROSSINGS,NYC_RIVER,inNYCExpansion} from '../shared/nycExpansion.mjs';
-import {ROAD_SEGMENTS,BUILDINGS,WORLD_RADIUS,SPAWN,ACTIVITY_SITES,blocked,roadAt,roadOverlap,footprint,validateWorld,TREES} from '../shared/world.mjs';
+import {ROAD_SEGMENTS,BUILDINGS,NYC_SIGN_POSTS,WORLD_RADIUS,SPAWN,ACTIVITY_SITES,blocked,roadAt,roadOverlap,footprint,validateWorld,TREES} from '../shared/world.mjs';
 import {platformsAt,ROOFTOP_LADDERS} from '../shared/verticalTraversal.mjs';
 import {walkingRoute} from './pathing.mjs';
 
@@ -48,6 +48,8 @@ test('Manhattan plazas, street crossings, water and trees are deterministic and 
   assert.ok(!BUILDINGS.some(b=>Math.abs(b.x-p.x)<b.w/2&&Math.abs(b.z-p.z)<b.d/2),'unoccupied plaza: '+p.id);
  }
  for(const tree of TREES)assert.equal(roadAt(tree.x,tree.z,2),false,'tree not on road');
+ assert.ok(NYC_SIGN_POSTS.length>=3,'real sidewalk street signs survive zoning');
+ for(const post of NYC_SIGN_POSTS){assert.equal(blocked(post.x,post.z,.08),true,post.name);assert.equal(roadAt(post.x,post.z),false,post.name);}
  const newLadders=ROOFTOP_LADDERS.filter(l=>l.building.z<-214);
  assert.ok(newLadders.length>=3,'elevated exploration can reach the new blocks');
  for(const ladder of newLadders)assert.equal(blocked(ladder.landing.x,ladder.landing.z,.42,ladder.roof),false);
