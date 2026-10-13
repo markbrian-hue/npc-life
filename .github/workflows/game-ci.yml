@@ -6,11 +6,13 @@ on:
       - 'feat/npc-career-and-city-bulletin'
       - 'feat/living-city-survival-weather'
       - 'feat/city-mobility-and-visual-foundation'
+      - 'feat/terrain-responsive-suspension'
   pull_request:
     branches:
       - main
       - 'feat/npc-career-and-city-bulletin'
       - 'feat/living-city-survival-weather'
+      - 'feat/city-mobility-and-visual-foundation'
 
 jobs:
   verify:

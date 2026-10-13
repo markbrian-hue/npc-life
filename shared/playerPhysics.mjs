@@ -1,6 +1,7 @@
+import {roadSurfaceHeight} from './roadSurface.mjs';
 import {ROAD_SEGMENTS,roadBounds,inBox,PARK_PATHS,onRoad} from './world.mjs';
 export const PLAYER_STEP=1/120;
-export function groundHeight(x,z){if(onRoad(x,z))return 0;for(const r of ROAD_SEGMENTS){const b=roadBounds(r,2.1);if(inBox(x,z,b)){const road=roadBounds(r),edge=Math.max(Math.abs(x-road.x)-road.w/2,Math.abs(z-road.z)-road.d/2);return Math.min(.06,Math.max(0,edge)*.12);}}if(PARK_PATHS.some(p=>inBox(x,z,p)))return .035;return 0;}
+export function groundHeight(x,z){if(onRoad(x,z))return roadSurfaceHeight(x,z);for(const r of ROAD_SEGMENTS){const b=roadBounds(r,2.1);if(inBox(x,z,b)){const road=roadBounds(r),edge=Math.max(Math.abs(x-road.x)-road.w/2,Math.abs(z-road.z)-road.d/2);return Math.min(.06,Math.max(0,edge)*.12);}}if(PARK_PATHS.some(p=>inBox(x,z,p)))return .035;return 0;}
 export function surfaceAt(x,z){return onRoad(x,z)?'road':ROAD_SEGMENTS.some(r=>inBox(x,z,roadBounds(r,2.1)))?'pavement':PARK_PATHS.some(p=>inBox(x,z,p))?'gravel':'grass';}
 export const freshPlayer=(x,z)=>({x,z,y:groundHeight(x,z),vx:0,vz:0,vy:0,grounded:true,jump:0,coyote:.1,landed:0});
 /** Responsive kinematic controller: fixed steps, swept substeps, buffered jump. */

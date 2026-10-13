@@ -1,9 +1,10 @@
 import { PARKED_CARS, blocked, onRoad, ROUNDABOUT } from './world.mjs';
 import {VEHICLE_BY_ID,GARAGES} from './vehicleCatalog.mjs';
+import {suspensionState,stepSuspension} from './vehicleSuspension.mjs';
 export const PHYSICS_STEP=1/120;
 const simulation=new WeakMap();
 export const neutralControls=()=>({throttle:0,steer:0,brake:true});
-export function vehicleState(model='sedan'){return {model,speed:0,steer:0,driver:'',braking:true,traffic:false,distance:0,lean:0,pitch:0,roll:0,rpm:900,impact:0,signal:0,rim:'alloy'};}
+export function vehicleState(model='sedan'){return {model,speed:0,steer:0,driver:'',braking:true,traffic:false,distance:0,lean:0,pitch:0,roll:0,rpm:900,impact:0,signal:0,rim:'alloy',suspension:suspensionState()};}
 export const vehicleSpec=car=>VEHICLE_BY_ID[car.model]||VEHICLE_BY_ID.sedan;
 export function createFleet(){return [...PARKED_CARS.map((c,i)=>({...c,...vehicleState(['sedan','coupe','wagon','hatch','sedan','roadster'][i]),heading:c.rotation})),...createTraffic(),
  {id:'club-scooter',name:'Club Scooter',x:-80,z:-59,color:'#b6a76f',rotation:Math.PI/2,heading:Math.PI/2,...vehicleState('scooter')},
@@ -18,7 +19,7 @@ export function vehicleRenderPose(car){const state=simulation.get(car),alpha=sta
 function integrate(car,input,dt,fleet,wetness){const v=vehicleSpec(car),wet=Math.min(1,Math.max(0,wetness)),bike=v.category==='Motorcycles';
  const throttle=Number.isFinite(input.throttle)?Math.max(-1,Math.min(1,input.throttle)):0,steer=Number.isFinite(input.steer)?Math.max(-1,Math.min(1,input.steer)):0;
  const before=car.speed,surface=onRoad(car.x,car.z)?1:v.body==='offroad'?.8:.56;
- const grip=v.grip*surface*(1-wet*(bike?.32:.25));
+ const grip=v.grip*surface*(car.suspension?.load??1)*(1-wet*(bike?.32:.25));
  car.steer+=(steer*v.steering/(1+Math.abs(car.speed)*.045)-car.steer)*(1-Math.exp(-Math.max(4,8*1400/v.mass)*dt));
  car.braking=!!input.brake||throttle*car.speed<-.2;
  const deceleration=car.braking?v.brake*(1-wet*.24):.65+Math.abs(car.speed)*.035;
@@ -29,10 +30,18 @@ function integrate(car,input,dt,fleet,wetness){const v=vehicleSpec(car),wet=Math
  const requested=car.speed/v.wheelbase*Math.tan(car.steer),yaw=Math.sign(requested)*Math.min(Math.abs(requested),Math.abs(car.speed)>.5?grip*7.5/Math.abs(car.speed):2);
  const heading=car.heading+yaw*dt,next={...car,heading,x:car.x+Math.cos(heading)*car.speed*dt,z:car.z-Math.sin(heading)*car.speed*dt};
  car.impact=Math.max(0,car.impact-dt*3);
- if(carBlocked(next,fleet)){car.impact=Math.min(1,Math.abs(car.speed)/15);car.speed=0;car.braking=true;}
+ if(carBlocked(next,fleet)){
+  // Sweep to the last clear contact pose instead of stopping a whole step
+  // short. No restitution: walls cannot launch or bounce a vehicle.
+  let low=0,high=1;
+  for(let i=0;i<10;i++){const t=(low+high)/2,probe={...car,x:car.x+(next.x-car.x)*t,z:car.z+(next.z-car.z)*t,heading:car.heading+yaw*dt*t};if(carBlocked(probe,fleet))high=t;else low=t;}
+  const traveled=Math.hypot(next.x-car.x,next.z-car.z)*low;
+  car.x+=(next.x-car.x)*low;car.z+=(next.z-car.z)*low;car.heading+=yaw*dt*low;car.distance+=traveled;
+  car.impact=Math.max(car.impact,Math.min(1,Math.abs(car.speed)/15));car.speed=0;car.braking=true;
+ }
  else{car.x=next.x;car.z=next.z;car.heading=Math.atan2(Math.sin(heading),Math.cos(heading));car.distance+=Math.abs(car.speed)*dt;}
  const accel=(car.speed-before)/dt,lean=bike?Math.max(-.48,Math.min(.48,-Math.atan(car.speed*yaw/9.81))):0;
- car.lean+=(lean-car.lean)*(1-Math.exp(-6*dt));car.pitch+=((Math.max(-.06,Math.min(.06,-accel*.005)))-car.pitch)*(1-Math.exp(-7*dt));car.roll+=((bike?0:-yaw*Math.abs(car.speed)*.0025)-car.roll)*(1-Math.exp(-6*dt));car.rpm=900+Math.abs(car.speed)/v.maxSpeed*5500;car.signal=Math.abs(steer)>.25?Math.sign(steer):0;
+ car.lean+=(lean-car.lean)*(1-Math.exp(-6*dt));stepSuspension(car,v,dt,Math.max(-18,Math.min(12,accel)),yaw*car.speed);car.rpm=900+Math.abs(car.speed)/v.maxSpeed*5500;car.signal=Math.abs(steer)>.25?Math.sign(steer):0;
 }
 /** Exact fixed steps with an accumulator; identical integrator in solo and rooms. */
 export function stepVehicle(car,input,seconds,fleet=[],wetness=0){let state=simulation.get(car);if(!state){state={accumulator:0,previous:{x:car.x,z:car.z,heading:car.heading}};simulation.set(car,state);}state.accumulator+=Math.min(.25,Math.max(0,Number.isFinite(seconds)?seconds:0));
@@ -51,11 +60,15 @@ export const TRAFFIC_LENGTH=routeLengths.reduce((a,b)=>a+b,0);
 export function trafficPose(distance){let remaining=((distance%TRAFFIC_LENGTH)+TRAFFIC_LENGTH)%TRAFFIC_LENGTH;for(let i=0;i<routeLengths.length;i++){const length=routeLengths[i];if(remaining<=length){const a=TRAFFIC_POINTS[i],b=TRAFFIC_POINTS[(i+1)%TRAFFIC_POINTS.length],t=length?remaining/length:0;return {x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,heading:Math.atan2(-(b.z-a.z),b.x-a.x)};}remaining-=length;}return {...TRAFFIC_POINTS[0],heading:0};}
 export function createTraffic(){return ['#ab9774','#698d81','#8c9fab'].map((color,i)=>({id:`traffic-${i}`,name:'City traffic',color,rotation:0,...trafficPose(i*TRAFFIC_LENGTH/3),...vehicleState(['sedan','taxi','delivery'][i]),speed:0,steer:0,driver:'traffic',braking:false,traffic:true,distance:i*TRAFFIC_LENGTH/3}));}
 export function stepTraffic(car,seconds,fleet,people=[]){
-  let remaining=Math.min(seconds,.1);
-  while(remaining>0){const dt=Math.min(remaining,1/60);remaining-=dt;
+  let state=simulation.get(car);if(!state){state={accumulator:0,previous:{x:car.x,z:car.z,heading:car.heading}};simulation.set(car,state);}
+  state.accumulator+=Math.min(.25,Math.max(0,Number.isFinite(seconds)?seconds:0));
+  while(state.accumulator+1e-9>=PHYSICS_STEP){const dt=PHYSICS_STEP;state.accumulator=Math.max(0,state.accumulator-dt);state.previous={x:car.x,z:car.z,heading:car.heading};
+    const before=car.speed,previousHeading=car.heading;
     const look=trafficPose(car.distance+4);
     const stopped=people.some(p=>Math.hypot(p.x-look.x,p.z-look.z)<2);
     const speed=stopped?0:Math.min(7,car.speed+3*dt),distance=car.distance+speed*dt,next={...car,...trafficPose(distance)};
     if(stopped||carBlocked(next,fleet)){car.speed=0;car.braking=true;}else{Object.assign(car,next,{distance,speed,braking:false});}
+    const yaw=Math.atan2(Math.sin(car.heading-previousHeading),Math.cos(car.heading-previousHeading))/dt;
+    stepSuspension(car,vehicleSpec(car),dt,Math.max(-18,Math.min(12,(car.speed-before)/dt)),yaw*car.speed);
   }
 }

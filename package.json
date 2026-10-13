@@ -15,7 +15,8 @@
     "test:foundation": "node tests/foundation-browser.mjs",
     "typecheck": "tsc --noEmit",
     "test:living": "node tests/living-city-browser.mjs",
-    "test:mobility": "node tests/mobility-browser.mjs"
+    "test:mobility": "node tests/mobility-browser.mjs",
+    "test:suspension": "node tests/suspension-browser.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.0.0",
