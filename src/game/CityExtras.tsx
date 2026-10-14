@@ -1,6 +1,7 @@
 import {groundHeight} from '../../shared/playerPhysics.mjs';
 import {pedestrianBodies,residentBlocked} from './pedestrianBodies';
 import { blocked } from './world';
+import {PEDESTRIAN_ROUTES} from '../../shared/sidewalkRoutes.mjs';
 import { Character } from './Character';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
@@ -207,6 +208,21 @@ function StaticCitizen({
   );
 }
 
+// District pedestrians stroll long, collision-checked sidewalk runs across the
+// whole map instead of pacing a few metres near spawn.
+const SHIRTS=['#c46f5d','#5f86a8','#d7b45f','#7c9c6b','#a77fb3','#e0956b','#4f7d7a','#b75f78','#8e8a6b'];
+const PANTS=['#38434c','#4b3f36','#2f3a4a','#55524a','#3d4b3f'];
+const HAIR=['#2b2522','#6a4a33','#a37d4f','#3b3134','#c9c0b3'];
+const DISTRICT_WALKERS:readonly WalkerDef[]=PEDESTRIAN_ROUTES.map((route,i)=>({
+  id:'district-walker:'+route.id,
+  shirt:SHIRTS[i%SHIRTS.length],pants:PANTS[i%PANTS.length],hair:HAIR[(i*3)%HAIR.length],
+  speed:1.05+(i%5)*.09,
+  path:[[route.from.x,route.from.z],[route.to.x,route.to.z]],
+}));
+const ALL_WALKERS=[...WALKERS,...DISTRICT_WALKERS];
+/** Beyond this distance a walker is hidden, so distant crowds cost no draw calls. */
+const WALKER_DRAW_DISTANCE=110;
+
 function WalkingCitizen({
   data,
   player,
@@ -243,6 +259,7 @@ function WalkingCitizen({
       dzPlayer
     );
 
+    actor.visible=playerDistance<WALKER_DRAW_DISTANCE;
     if(playerDistance>65)return;
     const reactingToPlayer =
       playerDistance < 3.6;
@@ -637,7 +654,7 @@ export function CityExtras({
         player={player}
       />
 
-      {WALKERS.map((data) => (
+      {ALL_WALKERS.map((data) => (
         <WalkingCitizen
           key={data.id}
           data={data}
