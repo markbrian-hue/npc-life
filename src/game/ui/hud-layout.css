@@ -107,3 +107,28 @@
   .game-shell .hud-layout .economy { padding: 8px 10px; }
   .game-shell .hud-layout .economy strong { font-size: 17px; }
 }
+
+@media (max-height: 720px) {
+  /* Short screens: corner buttons flow into rows instead of tall columns. */
+  .hud-top-right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: flex-start;
+    align-content: flex-start;
+  }
+  .hud-bottom-right {
+    flex-direction: row;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    align-items: flex-end;
+    align-content: flex-end;
+  }
+  .game-shell .hud-layout .alpha8-minimap { width: 150px !important; }
+  .game-shell .hud-layout .branding > div:not(.brand-logo) { display: none; }
+  .game-shell .hud-layout .brand-logo { width: 34px; height: 34px; font-size: 17px; box-shadow: 3px 3px 0 #172034; }
+  .game-shell .hud-layout .revival-tracker .district-status { display: none; }
+  .game-shell .hud-layout .revival-tracker p { margin: 4px 0; }
+  .hud-region { gap: 6px; }
+  .game-shell .hud-layout { row-gap: 6px; }
+}

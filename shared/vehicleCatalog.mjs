@@ -1,5 +1,14 @@
 /** Original, unbranded silhouettes. Dimensions in metres, speeds in m/s. */
-const model=(id,name,category,body,price,rep,length,width,height,power,maxSpeed,brake,mass,wheelbase=2.65)=>({id,name,category,body,price,rep,length,width,height,power,maxSpeed,brake,mass,wheelbase,grip:body==='offroad'?1.05:body==='supercar'?1.25:1,steering:category==='Motorcycles'?.52:.48,chapters:price>=1800?3:price>=1000?2:0});
+// Class handling. Grip scales the lateral acceleration a body can hold in a corner
+// (1.0 ≈ 0.76 g); steering is the maximum road-wheel angle in radians. Sports and
+// exotic bodies corner flatter and turn in sharper; tall and heavy bodies understeer.
+export const BODY_GRIP={hatch:1.02,sedan:1,wagon:.98,suv:.9,pickup:.88,van:.86,
+ coupe:1.12,muscle:.98,tuner:1.15,roadster:1.12,luxury:1,gt:1.1,supercar:1.28,hypercar:1.32,
+ scooter:.92,standard:1,sportbike:1.15,naked:1.08,cruiser:.9,touring:.92,offroad:1.05,
+ taxi:1,police:1.06,ambulance:.82,delivery:.8,bus:.72,service:.8};
+export const BODY_STEERING={bus:.38,ambulance:.42,delivery:.42,service:.42,van:.45,pickup:.45,suv:.46,
+ coupe:.5,tuner:.5,roadster:.5,supercar:.5,hypercar:.5,gt:.49};
+const model=(id,name,category,body,price,rep,length,width,height,power,maxSpeed,brake,mass,wheelbase=2.65)=>({id,name,category,body,price,rep,length,width,height,power,maxSpeed,brake,mass,wheelbase,grip:BODY_GRIP[body]??1,steering:BODY_STEERING[body]??(category==='Motorcycles'?.52:.48),chapters:price>=1800?3:price>=1000?2:0});
 export const VEHICLE_CATALOG=[
  model('hatch','Mica Hatch','Everyday','hatch',120,0,3.8,1.7,1.45,4.5,22,11,1100,2.4),
  model('sedan','Civic Meridian','Everyday','sedan',220,15,4.35,1.8,1.4,5.2,25,12,1400),
