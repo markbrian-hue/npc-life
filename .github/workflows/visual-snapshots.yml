@@ -1,0 +1,23 @@
+name: Visual review snapshots
+on:
+  push:
+    branches:
+      - 'claude/**'
+  workflow_dispatch:
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm install --no-save playwright-core@1.56.1
+      - name: Capture review snapshots
+        run: |
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$BROWSER"
+          NPC_LIFE_PLAYWRIGHT_MODULE=playwright-core NPC_LIFE_CHROMIUM="$BROWSER" node tests/visual-snapshots.mjs
