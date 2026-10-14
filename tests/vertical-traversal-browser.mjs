@@ -8,6 +8,8 @@ const vite=await createServer({server:{host:'127.0.0.1',port:5201,strictPort:tru
 await vite.listen();
 let browser;
 const errors=[];
+let lastPass='start';
+const pass=m=>{lastPass=m;console.log('PASS '+m);};
 try{
  browser=await chromium.launch({headless:true,...(process.env.NPC_LIFE_CHROMIUM?{executablePath:process.env.NPC_LIFE_CHROMIUM}:{}),args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const page=await browser.newPage({viewport:{width:900,height:600}});
@@ -37,7 +39,7 @@ try{
    await page.keyboard.up('w');
    await page.evaluate(()=>clearInterval(window.__traceTimer));
   }
-  console.log('PASS running jump lands on a parked car in a real browser');
+  pass('running jump lands on a parked car in a real browser');
  }
  const ladder=ROOFTOP_LADDERS[0];
  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:{x:p.x,z:p.z}})),ladder);
@@ -54,11 +56,11 @@ try{
   return {found:!!object,instances:object?.count??0,borough:!!borough,billboards,streetfronts,screens};
  });
  assert.ok(scene?.found&&scene.instances>20,'instanced ladder geometry present');
- console.log('PASS ladder visuals exist in actual R3F scene');
+ pass('ladder visuals exist in actual R3F scene');
  assert.ok(scene.borough,'borough streetscape mounted in existing scene');
  assert.ok(scene.billboards>=3 && scene.screens>=3,'original Midtown screens mounted');
  assert.ok(scene.streetfronts>=3,'brownstone storefront details mounted');
- console.log('PASS Midtown billboards and Eastbank storefronts render as live R3F objects');
+ pass('Midtown billboards and Eastbank storefronts render as live R3F objects');
  await page.keyboard.down('e');
  try{
   await page.waitForFunction(p=>window.__npcPosition.y>p.roof-.15,ladder,{timeout:90000});
@@ -69,13 +71,13 @@ try{
  }
  await page.waitForFunction(p=>Math.abs(window.__npcPosition.y-p.roof)<.12&&Math.hypot(window.__npcPosition.x-p.landing.x,window.__npcPosition.z-p.landing.z)<.5,ladder,{timeout:12000});
  await page.keyboard.up('e');
- console.log('PASS climb + timed mantle reaches authored roof in real browser');
+ pass('climb + timed mantle reaches authored roof in real browser');
  const before=await page.evaluate(()=>window.__npcPosition);
  await page.waitForTimeout(800);
  const after=await page.evaluate(()=>window.__npcPosition);
  assert.ok(Math.abs(after.y-ladder.roof)<.12,'stable rooftop support');
  assert.ok(Math.hypot(after.x-before.x,after.z-before.z)<.15,'no unexplained horizontal drift');
- console.log('PASS player stands stably on roof');
+ pass('player stands stably on roof');
  const destination={x:0,z:-263};
  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),destination);
  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.5,destination,{timeout:30000});
@@ -95,7 +97,7 @@ try{
  assert.ok(urban.world&&urban.ground&&urban.downtown&&urban.river,'expanded map actually mounts in R3F');
  assert.ok(urban.plaza&&urban.park,'public districts have real terrain');
  assert.ok(urban.marquees>=4,'larger skyline has original commercial billboards');
- console.log('PASS playable Midtown relocation, actual 3D megacity, river, plaza and skyline');
+ pass('playable Midtown relocation, actual 3D megacity, river, plaza and skyline');
  const streetScene=await page.evaluate(async()=>{
   const url=performance.getEntriesByType('resource').find(r=>r.name.includes('/@react-three_fiber.js?'))?.name;
   const {_roots}=await import(url);
@@ -112,9 +114,12 @@ try{
   await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),crossing);
   await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.5,crossing,{timeout:30000});
  }
- console.log('PASS original fountain replaced by accessible Broadway crossing and driveable northern grid');
+ pass('original fountain replaced by accessible Broadway crossing and driveable northern grid');
  assert.deepEqual(errors,[],'no browser runtime exceptions');
  console.log('7 actual-browser city and traversal checks passed');
+}catch(error){
+ console.log(`::error title=Browser traversal failed::after "${lastPass}": ${String(error?.message||error).split('\n')[0].slice(0,400)} | page errors: ${errors.slice(0,2).join(' | ').slice(0,300)}`);
+ throw error;
 }finally{
  await browser?.close();
  await vite.close();
