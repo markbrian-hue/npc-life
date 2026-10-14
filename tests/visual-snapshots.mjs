@@ -27,7 +27,7 @@ let browser;
 try{
  browser=await chromium.launch({headless:true,...(process.env.NPC_LIFE_CHROMIUM?{executablePath:process.env.NPC_LIFE_CHROMIUM}:{}),args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  for(const shot of SHOTS.filter(s=>!wanted.length||wanted.includes(s.name))){
-  const page=await browser.newPage({viewport:{width:640,height:400}});
+  const page=await browser.newPage({viewport:{width:960,height:540}});
   page.setDefaultTimeout(90000);
   const living={...freshLiving(),quality:'medium',autoResolution:false,cinematic:false};
   if(shot.minute)living.elapsed=(shot.minute-480+1440)%1440; // game clock starts at 08:00
@@ -54,7 +54,7 @@ try{
    console.log(`::notice title=car climb trace::car=${car.x},${car.z} yaw=${yaw.toFixed(2)} start=${start.x.toFixed(1)},${start.z.toFixed(1)} maxY=${Math.max(...trace.map(t=>t[2]))} supports=${supports.join('|')} path=${JSON.stringify(trace.filter((_,i)=>i%2===0).slice(0,18))}`);
   }
   await page.waitForTimeout(2500);
-  const jpeg=await page.screenshot({type:'jpeg',quality:60});
+  const jpeg=await page.screenshot({type:'jpeg',quality:50});
   writeFileSync(`${OUT}/${shot.name}.jpg`,jpeg);
   console.log(`snapshot ${shot.name}: ${jpeg.length} bytes`);
   await page.close();

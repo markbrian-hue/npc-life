@@ -203,3 +203,76 @@ Stairs/fire escapes, ladder descent, fall/landing consequences, HUD layout syste
 **Not verified here:** `npm run build`, typecheck, and in-browser play (blocked registry). `src/game/Player.tsx` parses cleanly with TypeScript. GitHub Actions will run build + the Chrome traversal smoke test once this branch is pushed.
 
 **Known limits:** hood heights follow the procedural shell's belt line and may differ slightly from the visible hood on some models; utility vehicles (bus, ambulance, van) have a narrow shoulder ledge at belt height; ledges above ~2.55 m (bus roof, building walls) still need a ladder; there is no fall damage or landing animation change.
+
+---
+
+## Milestones 2–7 status
+
+All work is on `claude/qa-audit-overhaul`. Every claim below was verified by local Node tests and/or GitHub Actions running the real game in Chrome (software WebGL). No FPS numbers are claimed.
+
+### M2 — HUD layout system (done)
+
+- **Root cause:** ~20 widgets each hard-coded `position:absolute` pixel offsets, then later CSS files patched each other with `!important` and `:has()` rules.
+- **Fix:** `src/game/ui/HudLayout.tsx` adds `HudProvider`, `HudRegions` and `HudSlot`. Every HUD widget is portalled into one of six grid regions in `hud-layout.css` (three columns on desktop, two below 900 px, a compact mode below 720 px tall).
+  - The full-width header is split into branding (top-left) and fortune (top-right).
+  - The toolbar has its own full-width bottom row and wraps instead of scrolling invisibly.
+  - Dialogs sit above the HUD.
+- **Verification:** `tests/hud-browser.mjs` (CI workflow *HUD layout browser audit*) loads the game at 1366×768, 1100×720, 800×600 and 390×844. In each, it checks four situations: start, shop counter, beside a car, and at a ladder. It reports overlapping widgets, off-screen widgets, widgets clipped by their region, and content overflowing inside a widget.
+
+| Viewport | Findings before | After |
+| --- | --- | --- |
+| 1366×768 | 10 | 0 |
+| 1100×720 | 8 | 0 |
+| 800×600 | 15 | 0 |
+| 390×844 | 5 | 0 |
+
+The audit now runs in strict mode, so any future overlap fails CI.
+
+### M3 — Performance (partly done)
+
+- `Player` only updates App state when the resident moves more than 5 cm. Before, standing still re-rendered App and every non-memoised child about 8 times a second.
+- District pedestrians beyond 110 m are hidden, so they cost no draw calls.
+- **Not done:** vehicle mesh instancing, and re-measuring draw calls after the city got denser. The room snapshot still carries suspension state, which an existing test requires clients to receive.
+- **Cost of new content:** fire-escape geometry is about 6,500 instanced boxes in a single draw call (~78k triangles).
+
+### M4 — Multiplayer hardening (done)
+
+- `server/multiplayer.mjs` `acceptMove()` validates movement:
+  - The first report after joining is trusted.
+  - After that, movement is limited to 14 m/s.
+  - Teleports are allowed to spawn, the motor-club bus and every explorer site.
+  - A client that keeps reporting the same rejected spot for 1.5 s is resynced, so an unknown legitimate relocation can't freeze a player.
+  - Rejected moves return HTTP 409 and keep the last valid position.
+- `tests/multiplayer-validation.test.mjs` covers this.
+
+### M5 — Living city (partly done)
+
+- `shared/sidewalkRoutes.mjs` derives 18 deterministic pedestrian routes (41–117 m) from the road plan. Each is sampled every metre against world collision and never touches the roadway, and they are spread from the old town to uptown and Brooklyn. These walkers are added to the existing eight.
+- `tests/sidewalk-routes.test.mjs` covers this.
+- **Not done:** the three named street NPCs still pace short loops (their encounter logic depends on those positions). There are no new NPC daily routines.
+
+### M6 — City density (partly done)
+
+- Street infill lots are 14 m apart (was 21 m) with 12 m frontage, every fifth lot gets a back-row building, and the Midtown grid streets are included.
+- 197 → 273 buildings, and fire escapes 156 → 214.
+- Open walkable share of the core area: 86% → 81%. All job, garage, route and reachability tests pass, and placement validation reports 0 issues.
+- **Not done:** new building models, storefront interiors, and the POLYGON-style material pass.
+
+### M7 — Vehicles (partly done)
+
+- Each body class has its own cornering grip (`BODY_GRIP`: hypercar 1.32 … bus 0.72) and steering lock (`BODY_STEERING`). Before, 26 of 30 models shared grip 1.0, including the hypercar.
+- `tests/vehicle-handling.test.mjs` drives each class through the same full-lock corner.
+- **Already present, unchanged:** price, reputation and promotion gates for premium vehicles.
+- **Not done:** new vehicle models, sound, and garage tiers.
+
+### Visual review in CI
+
+`tests/visual-snapshots.mjs` captures eight fixed views. The workflow publishes each as a neutral check run whose output holds the base64 JPEG, so the images can be reviewed without artifact downloads. Review findings:
+
+- The car-roof snapshot shows the resident standing on a parked sedan after a real running jump.
+- The rooftop snapshot shows the resident on a roof after a real ladder climb.
+- The toolbar is fully visible.
+
+### Browser verification added
+
+`tests/vertical-traversal-browser.mjs` now also asserts that a running jump lands on a parked car in Chrome.

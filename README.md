@@ -5,7 +5,9 @@ The latest development branch is **`claude/qa-audit-overhaul`**, built on `feat/
 - Walking off a car or building roof no longer traps you inside it, and a vehicle that moves into you pushes you clear.
 - Cars have a walkable hood/deck and roof that match the rendered body. Run and jump at a car from the side or the ends; you land on it or automatically pull yourself up. Walking into a ledge up to waist height (benches, planters, hood → roof) climbs it.
 - Benches, planters and the bus shelter are now real-height objects you can stand on; poles and trees stay solid.
-- 156 of 197 buildings now have fire-escape ladders (previously 26). Hold **E** to climb; press **E** again beside the rooftop landing and hold to climb back down.
+- 214 of 273 buildings now have fire-escape ladders (previously 26). Hold **E** to climb; press **E** again beside the rooftop landing and hold to climb back down.
+- The HUD is rebuilt as a screen-region grid: no widget overlaps another at 1366×768, 1100×720, 800×600 or 390×844, verified in Chrome by CI.
+- Denser street walls (273 buildings, 214 with fire escapes), pedestrians on long sidewalk routes across every district, class-specific car handling, and server-side movement validation in multiplayer rooms.
 
 ```bash
 git fetch origin
