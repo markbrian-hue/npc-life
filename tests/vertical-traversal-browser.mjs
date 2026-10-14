@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'vite';
 import {ROOFTOP_LADDERS} from '../shared/verticalTraversal.mjs';
 import {freshLiving} from '../shared/livingCity.mjs';
+import {PARKED_CARS} from '../shared/world.mjs';
 const {chromium}=await import(process.env.NPC_LIFE_PLAYWRIGHT_MODULE||'playwright');
 const vite=await createServer({server:{host:'127.0.0.1',port:5201,strictPort:true,hmr:false}});
 await vite.listen();
@@ -53,6 +54,18 @@ try{
  assert.ok(Math.abs(after.y-ladder.roof)<.12,'stable rooftop support');
  assert.ok(Math.hypot(after.x-before.x,after.z-before.z)<.15,'no unexplained horizontal drift');
  console.log('PASS player stands stably on roof');
+ // A running jump at a parked car lands the resident on the car (QA audit H1).
+ {
+  const car=PARKED_CARS[0];
+  const yaw=await page.evaluate(()=>window.__npcPosition.cameraYaw||0);
+  const start={x:car.x+Math.sin(yaw)*3.4,z:car.z+Math.cos(yaw)*3.4};
+  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),start);
+  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.6,start,{timeout:30000});
+  await page.keyboard.down('w');await page.waitForTimeout(350);await page.keyboard.press('Space');
+  await page.waitForFunction(()=>window.__npcPosition.support?.startsWith('vehicle:'),null,{timeout:6000});
+  await page.keyboard.up('w');
+  console.log('PASS running jump lands on a parked car in a real browser');
+ }
  const destination={x:0,z:-263};
  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),destination);
  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.5,destination,{timeout:30000});
@@ -91,7 +104,7 @@ try{
  }
  console.log('PASS original fountain replaced by accessible Broadway crossing and driveable northern grid');
  assert.deepEqual(errors,[],'no browser runtime exceptions');
- console.log('6 actual-browser city and traversal checks passed');
+ console.log('7 actual-browser city and traversal checks passed');
 }finally{
  await browser?.close();
  await vite.close();

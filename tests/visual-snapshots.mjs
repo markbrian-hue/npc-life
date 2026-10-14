@@ -30,7 +30,7 @@ try{
   const page=await browser.newPage({viewport:{width:640,height:400}});
   page.setDefaultTimeout(90000);
   const living={...freshLiving(),quality:'medium',autoResolution:false,cinematic:false};
-  if(shot.minute)living.elapsed=shot.minute;
+  if(shot.minute)living.elapsed=(shot.minute-480+1440)%1440; // game clock starts at 08:00
   await page.addInitScript(l=>{localStorage.setItem('npc-life:living-city-v1',JSON.stringify(l));window.__npcPosition={x:0,z:0,y:0};window.addEventListener('npc-life:position',e=>{window.__npcPosition=e.detail;});},living);
   await page.goto('http://127.0.0.1:5203');
   await page.getByRole('button',{name:'Skip, I live here already'}).click();
