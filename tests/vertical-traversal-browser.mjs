@@ -17,6 +17,28 @@ try{
  await page.goto('http://127.0.0.1:5201');
  await page.getByRole('button',{name:'Skip, I live here already'}).click();
  await page.waitForFunction(()=>Number.isFinite(window.__npcPosition?.x)&&window.__npcPosition.x!==0);
+ // A running jump at a parked car lands the resident on the car (QA audit H1).
+ {
+  const car=PARKED_CARS[0];
+  const yaw=await page.evaluate(()=>window.__npcPosition.cameraYaw||0);
+  const start={x:car.x+Math.sin(yaw)*3.4,z:car.z+Math.cos(yaw)*3.4};
+  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),start);
+  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.6,start,{timeout:30000});
+  await page.waitForTimeout(300);
+  await page.evaluate(()=>{window.__trace=[];window.__traceTimer=setInterval(()=>{const p=window.__npcPosition;window.__trace.push([+p.x.toFixed(2),+p.z.toFixed(2),+(p.y||0).toFixed(2),p.support||'']);},100);});
+  await page.keyboard.down('w');await page.waitForTimeout(350);await page.keyboard.press('Space');
+  try{
+   await page.waitForFunction(()=>window.__npcPosition.support?.startsWith('vehicle:'),null,{timeout:6000});
+  }catch(error){
+   const trace=await page.evaluate(()=>window.__trace);
+   console.log(`::error title=Browser car climb::car=${car.x},${car.z} yaw=${yaw} start=${JSON.stringify(start)} trace=${JSON.stringify(trace.slice(0,40))}`);
+   throw error;
+  }finally{
+   await page.keyboard.up('w');
+   await page.evaluate(()=>clearInterval(window.__traceTimer));
+  }
+  console.log('PASS running jump lands on a parked car in a real browser');
+ }
  const ladder=ROOFTOP_LADDERS[0];
  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:{x:p.x,z:p.z}})),ladder);
  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.25,ladder);
@@ -54,18 +76,6 @@ try{
  assert.ok(Math.abs(after.y-ladder.roof)<.12,'stable rooftop support');
  assert.ok(Math.hypot(after.x-before.x,after.z-before.z)<.15,'no unexplained horizontal drift');
  console.log('PASS player stands stably on roof');
- // A running jump at a parked car lands the resident on the car (QA audit H1).
- {
-  const car=PARKED_CARS[0];
-  const yaw=await page.evaluate(()=>window.__npcPosition.cameraYaw||0);
-  const start={x:car.x+Math.sin(yaw)*3.4,z:car.z+Math.cos(yaw)*3.4};
-  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),start);
-  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.6,start,{timeout:30000});
-  await page.keyboard.down('w');await page.waitForTimeout(350);await page.keyboard.press('Space');
-  await page.waitForFunction(()=>window.__npcPosition.support?.startsWith('vehicle:'),null,{timeout:6000});
-  await page.keyboard.up('w');
-  console.log('PASS running jump lands on a parked car in a real browser');
- }
  const destination={x:0,z:-263};
  await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),destination);
  await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.5,destination,{timeout:30000});
