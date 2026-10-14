@@ -11,7 +11,7 @@ test('first report after joining is trusted; then speed is limited',()=>{
  assert.equal(acceptMove(p,{x:60,z:0},500),false,'60 m in half a second');
 });
 
-test('fast travel to spawn, the bus and shuttle stations is allowed',()=>{
+test('fast travel to spawn, the bus and explorer sites is allowed',()=>{
  for(const point of FAST_TRAVEL_POINTS){
   const p={x:400,z:-400,placed:true,lastAccepted:0,pending:null};
   assert.equal(acceptMove(p,{x:point.x+1,z:point.z},100),true,JSON.stringify(point));

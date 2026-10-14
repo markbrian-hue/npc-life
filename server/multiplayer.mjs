@@ -14,7 +14,7 @@ const MAX_PLAYERS = 8;
 // Fastest on-foot speed is a caffeinated sprint (10.6 m/s); allow headroom for jitter.
 export const MAX_FOOT_SPEED = 14;
 // Places the client can legitimately teleport to: spawn, the motor-club bus and shuttle stations.
-export const FAST_TRAVEL_POINTS = [SPAWN, { x: -82, z: -71 }, ...EXPLORER_SITES.filter(p => p.station)];
+export const FAST_TRAVEL_POINTS = [SPAWN, { x: -82, z: -71 }, ...EXPLORER_SITES];
 const RESYNC_MS = 1500;
 /** Presence validation: speed-limited movement, known fast-travel points, or a sustained resync. */
 export function acceptMove(player, input, time) {
