@@ -1,6 +1,24 @@
+## QA audit & traversal overhaul (current development branch)
+
+The latest development branch is **`claude/qa-audit-overhaul`**, built on `feat/nyc-street-grid-rebuild`. It starts with a full QA audit ([report and roadmap](docs/qa-audit-2026-10.md)) and fixes the critical traversal bugs it found:
+
+- Walking off a car or building roof no longer traps you inside it, and a vehicle that moves into you pushes you clear.
+- Cars have a walkable hood/deck and roof that match the rendered body. Run and jump at a car from the side or the ends; you land on it or automatically pull yourself up. Walking into a ledge up to waist height (benches, planters, hood → roof) climbs it.
+- Benches, planters and the bus shelter are now real-height objects you can stand on; poles and trees stay solid.
+- 156 of 197 buildings now have fire-escape ladders (previously 26). Hold **E** to climb; press **E** again beside the rooftop landing and hold to climb back down.
+
+```bash
+git fetch origin
+git switch --track origin/claude/qa-audit-overhaul
+npm ci
+npm run dev:multi
+```
+
+Earlier milestone notes follow. Nothing has been merged into `main`.
+
 ## Blocky residents & city exploration
 
-The latest development branch is **`feat/blocky-explorers-performance`**. It adds original blocky characters, connected Northgate and Eastbank districts, seven discoveries, daily paid contracts, two more garages, and discovery-unlocked free shuttles. Rendering now uses lighter avatars, spatial detail levels, fewer foliage/shadow passes, on-demand showroom rendering and adaptive resolution.
+The **`feat/blocky-explorers-performance`** milestone It adds original blocky characters, connected Northgate and Eastbank districts, seven discoveries, daily paid contracts, two more garages, and discovery-unlocked free shuttles. Rendering now uses lighter avatars, spatial detail levels, fewer foliage/shadow passes, on-demand showroom rendering and adaptive resolution.
 
 Press **X** for the explorer board, **Z** at a marked stop, and **U** for vehicles. The clock gear contains graphics options and the FPS display. Existing missions, purchases, saves and room ownership remain compatible.
 
@@ -115,7 +133,7 @@ Open `http://localhost:3001`. `PORT` changes the production port. Rooms are held
 | Control | Action |
 | --- | --- |
 | WASD / arrows | Move relative to camera |
-| Shift / Space | Sprint / jump on foot |
+| Shift / Space | Sprint / jump on foot (jump into a ledge to pull yourself up) |
 | R / V | Enter or exit a stopped car / horn while driving |
 | W/S, A/D, Space in car | Accelerate/reverse, steer, brake |
 | Mouse drag / scroll | Orbit / zoom |
@@ -124,6 +142,7 @@ Open `http://localhost:3001`. `PORT` changes the production port. Rooms are held
 | Hold Q | Work on the nearby tracked objective |
 | N | Create or join a multiplayer room |
 | E / F | Existing interactions / special citizens |
+| Hold E at a ladder | Climb to the roof; press E again at the rooftop landing and hold to climb down |
 | B | Wave, also visible to room members |
 | I / J / K | Wardrobe / achievements / dailies |
 | M | Unemployment Simulator |

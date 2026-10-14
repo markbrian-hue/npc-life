@@ -6,14 +6,14 @@ import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound, updateEngineSound } from './gameAudio';
 import type { Vehicles } from './Vehicles';
-import { pedestrianBlocked, vehicleSpec } from '../../shared/vehicles.mjs';
+import { solidBlocked } from '../../shared/solids.mjs';
 
 import { useEffect, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import { Character } from './Character';
-import { blocked, SPAWN } from './world';
+import { SPAWN } from './world';
 import { safeCameraDistance } from './cameraCollision';
 
 export type PlayerLocation = {
@@ -260,12 +260,10 @@ export function Player({
     const fleet=vehicles.runtime.current;
     const car=fleet.cars.find(c=>c.id===fleet.ownedId);
     if (model.current) model.current.visible=!car;
-    const movementBlocked=(x:number,z:number)=>{
-      const feet=physics.current.y;
-      const solidVehicles=fleet.cars.filter(c=>feet<groundHeight(c.x,c.z)+vehicleSpec(c).height*.98-.025);
-      return blocked(x,z,AVATAR_RADIUS,feet)||pedestrianBlocked(x,z,solidVehicles)||
-        (feet<1.8&&residentBlocked(x,z,position.current.x,position.current.z));
-    };
+    // World props and vehicles share one height-aware solid model with standing support.
+    const movementBlocked=(x:number,z:number,feet=physics.current.y,step=0)=>
+      solidBlocked(x,z,AVATAR_RADIUS,feet,fleet.cars,groundHeight,step)||
+      (feet+step<1.8&&residentBlocked(x,z,position.current.x,position.current.z));
 
     const side = worldLocked || car
       ? 0

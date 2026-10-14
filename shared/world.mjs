@@ -171,38 +171,53 @@ export const DISTRICT_COLLIDERS = [
   { x: 70, z: -7.7, halfX: .6, halfZ: .6 },
 ];
 
+// Prop collision heights match the rendered models. Standable props expose a
+// walkable top; poles, trees and unidentified district structures block at every
+// height so a falling body can never drop inside them.
+const POLE=Infinity;
 const roadProps = [
-  ...SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:3.4})),
-  ...CITY_SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:3.6})),
-  ...NYC_SIGN_POSTS.map(p=>({x:p.x,z:p.z,halfX:.16,halfZ:.16,height:4.8})),
-  ...BUSINESSES.map(b=>({...kioskPosition(b),halfX:2.65,halfZ:1.5})),
-  ...DISTRICT_COLLIDERS,
-  {x:10.5,z:10.5,halfX:.75,halfZ:.75},
+  ...SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:POLE,kind:'signal'})),
+  ...CITY_SIGNAL_POSTS.map(p=>({x:p.x,z:p.z,halfX:.18,halfZ:.18,height:POLE,kind:'signal'})),
+  ...NYC_SIGN_POSTS.map(p=>({x:p.x,z:p.z,halfX:.16,halfZ:.16,height:POLE,kind:'sign'})),
+  // Kiosk collision includes counter and canopy posts, wider than the walkable body.
+  ...BUSINESSES.map(b=>({...kioskPosition(b),halfX:2.65,halfZ:1.5,height:POLE,kind:'kiosk'})),
+  ...DISTRICT_COLLIDERS.map(p=>({...p,height:POLE,kind:'district'})),
+  {x:10.5,z:10.5,halfX:.75,halfZ:.75,height:POLE,kind:'district'},
   ...BENCHES.map(({ x, z, rotation }) => ({
     x, z,
     halfX: Math.abs(Math.cos(rotation)) > 0.5 ? 1.2 : 0.6,
     halfZ: Math.abs(Math.cos(rotation)) > 0.5 ? 0.6 : 1.2,
+    // Seat slats are rendered at ~0.53-0.58 m.
+    height: .58, standable: true, kind:'bench',
   })),
   ...LAMP_POSTS.map(({ x, z }) => ({
-    x, z, halfX: 0.22, halfZ: 0.22,
+    x, z, halfX: 0.22, halfZ: 0.22, height:POLE, kind:'lamp',
   })),
+  // Planter pot rim is rendered at 0.64 m.
   ...PLANTERS.map(({ x, z }) => ({
-    x, z, halfX: 0.75, halfZ: 0.75,
+    x, z, halfX: 0.75, halfZ: 0.75, height:.68, standable:true, kind:'planter',
   })),
-  ...PALMS.map(([x,z]) => ({x,z,halfX:.4,halfZ:.4})),
+  ...PALMS.map(([x,z]) => ({x,z,halfX:.4,halfZ:.4,height:POLE,kind:'tree'})),
   ...TREES.map(({ x, z }) => ({
-    x, z, halfX: 0.4, halfZ: 0.4,
+    x, z, halfX: 0.4, halfZ: 0.4, height:POLE, kind:'tree',
   })),
-  { x: -8, z: -18, halfX: 1.7, halfZ: .85 },
-  { ...BUS_STOP, halfX: 1.75, halfZ: 0.85 },
+  { x: -8, z: -18, halfX: 1.7, halfZ: .85, height:POLE, kind:'district' },
+  // Shelter roof slab is rendered at 1.94-2.07 m.
+  { ...BUS_STOP, halfX: 1.75, halfZ: 0.85, height:2.07, standable:true, kind:'bus-stop' },
 ];
 
-export const WORLD_COLLIDERS=[...BUILDINGS.map(b=>({x:b.x,z:b.z,halfX:b.w/2,halfZ:b.d/2,height:b.h+.075,c:Math.cos(b.rotation||0),s:Math.sin(b.rotation||0)})),...roadProps.map(p=>({...p,height:p.height??8,c:1,s:0}))];
+export const WORLD_COLLIDERS=[...BUILDINGS.map((b,i)=>({id:'building:'+i,x:b.x,z:b.z,halfX:b.w/2,halfZ:b.d/2,height:b.h+.075,standable:true,c:Math.cos(b.rotation||0),s:Math.sin(b.rotation||0)})),...roadProps.map((p,i)=>({...p,id:'prop:'+i,height:p.height??POLE,standable:!!p.standable,c:1,s:0}))];
 const CELL=16,cells=new Map();
 WORLD_COLLIDERS.forEach((p,id)=>{
  const hx=Math.abs(p.c)*p.halfX+Math.abs(p.s)*p.halfZ,hz=Math.abs(p.s)*p.halfX+Math.abs(p.c)*p.halfZ;
  for(let x=Math.floor((p.x-hx)/CELL);x<=Math.floor((p.x+hx)/CELL);x++)for(let z=Math.floor((p.z-hz)/CELL);z<=Math.floor((p.z+hz)/CELL);z++){const key=`${x},${z}`;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id);}
 });
+/** Calls fn(id) for each collider whose grid cell is within `radius` of the point (may repeat ids across cells). */
+export function collidersNear(x,z,radius,fn){
+ const margin=radius*Math.SQRT2,seen=new Set();
+ for(let gx=Math.floor((x-margin)/CELL);gx<=Math.floor((x+margin)/CELL);gx++)for(let gz=Math.floor((z-margin)/CELL);gz<=Math.floor((z+margin)/CELL);gz++)
+  for(const id of cells.get(`${gx},${gz}`)||[])if(!seen.has(id)){seen.add(id);fn(id);}
+}
 export function blocked(x,z,radius=.42,feetY=0){
  if(!Number.isFinite(x)||!Number.isFinite(z)||!Number.isFinite(radius)||!Number.isFinite(feetY)||radius<0)return true;
  if(Math.abs(x)+radius>WORLD_RADIUS||Math.abs(z)+radius>WORLD_RADIUS)return true;

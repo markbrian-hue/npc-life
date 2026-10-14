@@ -6,6 +6,7 @@ on:
       - 'feat/nyc-districts-streetscape'
       - 'feat/nyc-expanded-megacity'
       - 'feat/nyc-street-grid-rebuild'
+      - 'claude/**'
   workflow_dispatch:
 jobs:
   traverse:
