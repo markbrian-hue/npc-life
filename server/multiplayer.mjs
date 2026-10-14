@@ -2,6 +2,7 @@ import {groundHeight} from '../shared/playerPhysics.mjs';
 import {environmentAt} from '../shared/livingCity.mjs';
 import { WORLD_RADIUS, SPAWN, blocked } from '../shared/world.mjs';
 import { createFleet, stepTraffic, stepVehicle, neutralControls, exitPosition } from '../shared/vehicles.mjs';
+import { EXPLORER_SITES } from '../shared/exploration.mjs';
 import { createServer } from 'node:http';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
@@ -10,6 +11,23 @@ import { fileURLToPath } from 'node:url';
 
 const COLORS = ['#e5b36a', '#a3c6b0', '#c2a3cc', '#8dc5d7', '#df9385', '#c8c878', '#b3b7e0', '#e7bac7'];
 const MAX_PLAYERS = 8;
+// Fastest on-foot speed is a caffeinated sprint (10.6 m/s); allow headroom for jitter.
+export const MAX_FOOT_SPEED = 14;
+// Places the client can legitimately teleport to: spawn, the motor-club bus and shuttle stations.
+export const FAST_TRAVEL_POINTS = [SPAWN, { x: -82, z: -71 }, ...EXPLORER_SITES.filter(p => p.station)];
+const RESYNC_MS = 1500;
+/** Presence validation: speed-limited movement, known fast-travel points, or a sustained resync. */
+export function acceptMove(player, input, time) {
+  if (!player.placed) return true;
+  const elapsed = Math.min(2, Math.max(0, (time - player.lastAccepted) / 1000));
+  const distance = Math.hypot(input.x - player.x, input.z - player.z);
+  if (distance <= MAX_FOOT_SPEED * elapsed + 1) return true;
+  if (FAST_TRAVEL_POINTS.some(p => Math.hypot(input.x - p.x, input.z - p.z) < 4)) return true;
+  const pending = player.pending;
+  if (pending && Math.hypot(pending.x - input.x, pending.z - input.z) < 1) return time - pending.since >= RESYNC_MS;
+  player.pending = { x: input.x, z: input.z, since: time };
+  return false;
+}
 export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}) {
   const rooms = new Map(), sessions = new Map(), joins = new Map();
   function snapshot(room) { return { environment:{seconds:Math.max(0,(now()-room.started)/1000),seed:room.seed}, code: room.code, cars: room.cars, players: [...room.players.values()].map(({ id, name, color, x, y, z, heading, waveUntil, vehicleId }) => ({ id, name, color, x, y, z, heading, vehicleId, waving: waveUntil > now() })) }; }
@@ -64,7 +82,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
           }
           if (room.players.size >= MAX_PLAYERS) return reply(res, 409, { error: 'This room is full (8 residents).' });
           const taken = new Set([...room.players.values()].map(p => p.color));
-          const player = { id: randomUUID(), token: randomBytes(24).toString('hex'), room: room.code, name, color: COLORS.find(c => !taken.has(c)), x: SPAWN.x, y: 0, z: SPAWN.z, heading: 0, vehicleId: '', controls: neutralControls(), waveUntil: 0, lastSeen: now(), lastMove: now(), stream: null };
+          const player = { id: randomUUID(), token: randomBytes(24).toString('hex'), room: room.code, name, color: COLORS.find(c => !taken.has(c)), x: SPAWN.x, y: 0, z: SPAWN.z, heading: 0, vehicleId: '', controls: neutralControls(), waveUntil: 0, lastSeen: now(), lastMove: now(), placed: false, lastAccepted: now(), pending: null, stream: null };
           room.players.set(player.id, player); sessions.set(player.token, player);
           return reply(res, 200, { id: player.id, token: player.token, ...snapshot(room) });
         }
@@ -94,7 +112,7 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
             const car=room.cars.find(c=>c.driver===player.id);
             const position=car && exitPosition(car,room.cars);
             if (!position) return reply(res,409,{error:'Stop the car where a door has clear space before exiting.'});
-            car.driver=''; car.speed=0; player.vehicleId=''; player.controls=neutralControls(); Object.assign(player,position);
+            car.driver=''; car.speed=0; player.vehicleId=''; player.controls=neutralControls(); Object.assign(player,position,{placed:true,lastAccepted:now(),pending:null});
             broadcast(room); return reply(res,200,{position,...snapshot(room)});
           }
           return reply(res,400,{error:'Invalid vehicle action.'});
@@ -108,9 +126,13 @@ export function createGameServer({ dist = resolve('dist'), now = Date.now } = {}
           player.lastMove=now();
           const c=input.controls;
           player.controls=c && [-1,0,1].includes(c.throttle) && [-1,0,1].includes(c.steer) && typeof c.brake==='boolean' ? c : neutralControls();
-          if (!player.vehicleId && !blocked(input.x,input.z,.42,input.y)) Object.assign(player, { x: input.x, y: input.y, z: input.z, heading: input.heading });
+          let rejected = false;
+          if (!player.vehicleId && !blocked(input.x,input.z,.42,input.y)) {
+            if (acceptMove(player, input, now())) { Object.assign(player, { x: input.x, y: input.y, z: input.z, heading: input.heading, placed: true, lastAccepted: now(), pending: null }); }
+            else rejected = true;
+          }
           if (input.wave === true) player.waveUntil = now() + 1600;
-          return reply(res, 200, { ok: true });
+          return rejected ? reply(res, 409, { error: 'Movement too fast for this resident.' }) : reply(res, 200, { ok: true });
         }
         return reply(res, 404, { error: 'Unknown endpoint.' });
       }
