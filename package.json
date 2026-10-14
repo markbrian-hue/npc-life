@@ -19,7 +19,8 @@
     "test:suspension": "node tests/suspension-browser.mjs",
     "test:art": "node tests/art-browser.mjs",
     "test:exploration": "node tests/exploration-browser.mjs",
-    "test:performance": "node tests/performance-browser.mjs"
+    "test:performance": "node tests/performance-browser.mjs",
+    "test:hud": "node tests/hud-browser.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "^9.0.0",
