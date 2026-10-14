@@ -71,6 +71,7 @@ export function Player({
   const footstep=useRef(0), previousCarSpeed=useRef(0);
   const walkBlend = useRef(0);
   const reporting = useRef(0);
+  const lastReported = useRef<PlayerLocation>({x:Infinity,z:Infinity});
 
   const orbit = useRef({
     yaw: 0.6,
@@ -503,8 +504,12 @@ export function Player({
         z: position.current.z,
       };
 
-      // Keep the existing App.tsx callback working.
-      onMove(location);
+      // Only re-render App when the resident actually moved; standing still used
+      // to rebuild every HUD and non-memoized scene component ~8 times a second.
+      if(Math.hypot(location.x-lastReported.current.x,location.z-lastReported.current.z)>.05){
+        lastReported.current=location;
+        onMove(location);
+      }
 
       // NEW: Feed the improved minimap without
       // changing existing parent component state.
