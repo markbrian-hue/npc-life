@@ -64,21 +64,24 @@ export const CORNER_SIGNAL_CANDIDATES=CITY_CROSSINGS.filter((p,i)=>
 // placeCandidates function chooses real accepted lots; rejected lots are
 // neither drawn nor collidable. Never introduce invisible building facades.
 const facade=['#b9a794','#a89180','#c1b2a1','#8699a7','#a5aaae','#b19d91','#b2a39b'];
+// Street walls: lots are 14 m apart along each corridor (12 m frontage, so a
+// narrow service gap remains between buildings, like NYC rowhouses and walk-ups).
+// Every fifth lot also gets a deeper back-row building for skyline depth.
+export const INFILL_PITCH=14;
 export function generateStreetInfill(roads){
  const candidates=[];
  const corridors=roads.filter(r=>r.id.startsWith('civic-')||r.id==='midtown-north-link'||r.id.startsWith('north-')||
  r.id.startsWith('east-')||r.id.startsWith('west-')||r.id.startsWith('uptown-')||r.id.startsWith('bypass-')||
- r.id.startsWith('dock-')||r.id.startsWith('campus-'));
+ r.id.startsWith('dock-')||r.id.startsWith('campus-')||r.id.startsWith('nyc-avenue-')||r.id.startsWith('nyc-street-'));
  for(const r of corridors){
-  const count=Math.min(24,Math.floor(r.length/21));
-  for(let j=0;j<count;j++)for(const side of [-1,1]){
-   // Two rows of buildings on selected long Manhattan streets for visible depth.
-   const along=(j+.5-count/2)*21,depth=r.width/2+9.2+(j%5===0?13:0);
+  const count=Math.min(40,Math.floor(r.length/INFILL_PITCH));
+  for(let j=0;j<count;j++)for(const side of [-1,1])for(const row of j%5===0?[0,1]:[0]){
+   const along=(j+.5-count/2)*INFILL_PITCH,depth=r.width/2+9.2+row*13;
    const x=r.x+(r.axis==='x'?along:side*depth),z=r.z+(r.axis==='z'?along:side*depth);
    if(z>76||z< -455||x<-276||x>289)continue;
    const index=candidates.length,west=x<-72,east=x>145,office=!west&&!east&&z< -155;
    const kind=west||east?'brownstone':office?'tower':'prewar';
-   candidates.push({x,z,w:r.axis==='z'?9.5:11,d:r.axis==='z'?12:9.5,
+   candidates.push({x,z,w:r.axis==='z'?9.5:12,d:r.axis==='z'?12:9.5,
     h:kind==='brownstone'?10+index%5*1.7:kind==='tower'?23+index%8*4:13+index%6*2.8,
     kind,color:facade[index%facade.length],roof:'#505c61',rotation:0,
     borough:west?'west-end':east?'eastbank':office?'midtown':'civic',source:'street-infill'});

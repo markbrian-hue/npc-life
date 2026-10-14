@@ -10,8 +10,10 @@ import {ROOFTOP_LADDERS,vehicleRoof} from '../shared/verticalTraversal.mjs';
 import {vehicleState} from '../shared/vehicles.mjs';
 import {AVATAR_RADIUS} from '../shared/avatarDimensions.mjs';
 
-// An open 24 m square in the northern grid, verified below.
-const SITE={x:-200,z:-364};
+// Neon Plaza is a reserved public space, so city infill can never build on it.
+import {NYC_PUBLIC_SPACES} from '../shared/nycExpansion.mjs';
+const plaza=NYC_PUBLIC_SPACES.find(p=>p.id==='neon-plaza');
+const SITE={x:plaza.x,z:plaza.z};
 const still={x:0,z:0,jump:false,climb:false};
 const bodyBlocked=(s,cars)=>(x,z,feet=s.y,step=0)=>solidBlocked(x,z,AVATAR_RADIUS,feet,cars,groundHeight,step);
 const run=(s,cars,input,frames)=>{const b=bodyBlocked(s,cars);for(let i=0;i<frames;i++)stepPlayer(s,input,PLAYER_STEP,b,cars);return s;};
