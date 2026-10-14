@@ -65,6 +65,14 @@ try{
      if(box.bottom-box.top<r.height-4||box.right-box.left<r.width-4)clipped.push(`${label(w.e)} (${Math.round(box.right-box.left)}×${Math.round(box.bottom-box.top)} of ${Math.round(r.width)}×${Math.round(r.height)}px visible)`);
      return box;
     });
+    // Content that overflows inside a widget (hidden scroll) is unreachable too.
+    for(const w of top){
+     const inner=w.e.classList.contains('hud-slot')&&w.e.firstElementChild?w.e.firstElementChild:w.e;
+     if(inner.scrollWidth>inner.clientWidth+4||inner.scrollHeight>inner.clientHeight+4){
+      const s=getComputedStyle(inner);
+      if(s.overflowX!=='visible'||s.overflowY!=='visible')clipped.push(`${label(w.e)} content ${inner.scrollWidth}×${inner.scrollHeight} in ${inner.clientWidth}×${inner.clientHeight}px`);
+     }
+    }
     for(let i=0;i<top.length;i++){
      const a=shown[i];
      if(a.right-a.left<1||a.bottom-a.top<1)continue;

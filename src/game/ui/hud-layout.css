@@ -13,11 +13,12 @@
   pointer-events: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
-  grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto) minmax(0, auto);
   grid-template-areas:
     "tl tc tr"
     ".  .  . "
-    "bl bc br";
+    ".  bc br"
+    "bl bl br";
   gap: 10px 14px;
   padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
     max(14px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
@@ -74,6 +75,15 @@
 .game-shell .hud-layout .game-header { display: flex; pointer-events: none; }
 .game-shell .hud-layout .game-header .economy { pointer-events: auto; }
 
+/* The toolbar wraps onto a second line instead of scrolling invisibly. */
+.game-shell .hud-layout .bottom-bar {
+  flex-wrap: wrap;
+  overflow: visible !important;
+  max-width: 100% !important;
+  row-gap: 6px;
+  padding-bottom: 0;
+}
+
 /* Empty toast box must not occupy space. */
 .game-shell .hud-layout .center-message:empty { display: none; }
 .game-shell .hud-layout .hud-slot:has(> .center-message:empty) { display: none; }
@@ -89,8 +99,8 @@
       "tl tr"
       "tc tc"
       ".  . "
-      "bc bc"
-      "bl br";
+      "bc br"
+      "bl bl";
     gap: 8px 10px;
     padding: 10px;
   }

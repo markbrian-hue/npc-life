@@ -45,11 +45,13 @@ try{
    const start={x:car.x+Math.sin(yaw)*3.4,z:car.z+Math.cos(yaw)*3.4};
    await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),start);
    await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.6,start,{timeout:30000});
-   await page.keyboard.down('w');await page.waitForTimeout(200);await page.keyboard.press('Space');
+   await page.evaluate(()=>{window.__trace=[];window.__traceTimer=setInterval(()=>{const p=window.__npcPosition;window.__trace.push([+p.x.toFixed(2),+p.z.toFixed(2),+(p.y||0).toFixed(2),p.support||'',p.locomotion||'']);},100);});
+   await page.keyboard.down('w');await page.waitForTimeout(350);await page.keyboard.press('Space');
    await page.waitForFunction(()=>window.__npcPosition.support?.startsWith('vehicle:'),null,{timeout:3000}).catch(()=>{});
-   await page.keyboard.up('w');
-   const pos=await page.evaluate(()=>window.__npcPosition);
-   console.log(`::notice title=car-roof position::y=${pos.y?.toFixed(2)} support=${pos.support}`);
+   await page.waitForTimeout(300);await page.keyboard.up('w');
+   const trace=await page.evaluate(()=>{clearInterval(window.__traceTimer);return window.__trace;});
+   const supports=[...new Set(trace.map(t=>t[3]).filter(Boolean))];
+   console.log(`::notice title=car climb trace::car=${car.x},${car.z} yaw=${yaw.toFixed(2)} start=${start.x.toFixed(1)},${start.z.toFixed(1)} maxY=${Math.max(...trace.map(t=>t[2]))} supports=${supports.join('|')} path=${JSON.stringify(trace.filter((_,i)=>i%2===0).slice(0,18))}`);
   }
   await page.waitForTimeout(2500);
   const jpeg=await page.screenshot({type:'jpeg',quality:60});
