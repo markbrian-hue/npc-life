@@ -4,10 +4,13 @@ on:
     branches:
       - 'claude/**'
   workflow_dispatch:
+permissions:
+  contents: read
+  checks: write
 jobs:
   snapshots:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,4 +23,25 @@ jobs:
         run: |
           BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           test -n "$BROWSER"
-          NPC_LIFE_PLAYWRIGHT_MODULE=playwright-core NPC_LIFE_CHROMIUM="$BROWSER" node tests/visual-snapshots.mjs
+          NPC_LIFE_PLAYWRIGHT_MODULE=playwright-core NPC_LIFE_CHROMIUM="$BROWSER" SNAPSHOT_DIR=snapshots node tests/visual-snapshots.mjs
+      - name: Publish each snapshot as a check run (base64 JPEG in the output)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in snapshots/*.jpg; do
+            name="$(basename "$f" .jpg)"
+            python3 - "$f" "$name" > body.json <<'PY'
+          import base64, json, os, sys
+          data = base64.b64encode(open(sys.argv[1], 'rb').read()).decode()
+          print(json.dumps({
+              "name": "snapshot: " + sys.argv[2],
+              "head_sha": os.environ["GITHUB_SHA"],
+              "status": "completed",
+              "conclusion": "neutral",
+              "output": {"title": "Review snapshot " + sys.argv[2],
+                         "summary": data[:65000], "text": data[65000:130000]},
+          }))
+          PY
+            gh api "repos/${GITHUB_REPOSITORY}/check-runs" --input body.json > /dev/null
+            echo "published $name ($(stat -c %s "$f") bytes)"
+          done

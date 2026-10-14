@@ -1,8 +1,9 @@
-// Visual review snapshots for development branches. Small JPEG screenshots of
-// fixed locations are embedded in GitHub annotations (base64), so reviewers
-// without artifact access can still inspect layout, density and lighting.
+// Visual review snapshots for development branches. JPEG screenshots of fixed
+// locations are written to SNAPSHOT_DIR; CI publishes each as a neutral check run
+// so reviewers without artifact access can inspect layout, density and lighting.
 // Usage: node tests/visual-snapshots.mjs [name ...]
 import {createServer} from 'vite';
+import {mkdirSync,writeFileSync} from 'node:fs';
 import {freshLiving} from '../shared/livingCity.mjs';
 import {ROOFTOP_LADDERS} from '../shared/verticalTraversal.mjs';
 import {PARKED_CARS} from '../shared/world.mjs';
@@ -19,6 +20,7 @@ const SHOTS=[
  {name:'night-midtown',at:{x:0,z:-263},yaw:Math.PI/2,minute:22*60},
 ];
 const wanted=process.argv.slice(2);
+const OUT=process.env.SNAPSHOT_DIR||'snapshots';mkdirSync(OUT,{recursive:true});
 const vite=await createServer({server:{host:'127.0.0.1',port:5203,strictPort:true,hmr:false}});
 await vite.listen();
 let browser;
@@ -43,8 +45,8 @@ try{
    console.log(`::notice title=car-roof position::y=${pos.y?.toFixed(2)} support=${pos.support}`);
   }
   await page.waitForTimeout(2500);
-  const jpeg=await page.screenshot({type:'jpeg',quality:55});
-  console.log(`::notice title=snapshot:${shot.name}::${jpeg.toString('base64')}`);
+  const jpeg=await page.screenshot({type:'jpeg',quality:60});
+  writeFileSync(`${OUT}/${shot.name}.jpg`,jpeg);
   console.log(`snapshot ${shot.name}: ${jpeg.length} bytes`);
   await page.close();
  }
