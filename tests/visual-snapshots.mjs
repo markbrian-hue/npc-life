@@ -40,7 +40,14 @@ try{
   if(shot.climb){await page.keyboard.down('e');await page.waitForFunction(()=>window.__npcPosition.support?.startsWith('building:'),null,{timeout:90000}).catch(()=>{});await page.keyboard.up('e');}
   if(shot.name==='car-roof'){
    // Run at the car and jump: verifies the new climb onto vehicles in a real browser.
-   await page.keyboard.down('w');await page.waitForTimeout(250);await page.keyboard.press('Space');await page.waitForTimeout(900);await page.keyboard.up('w');
+   // W moves along the camera's forward vector (-sin yaw, -cos yaw): start 3.4 m behind the car on that line.
+   const yaw=await page.evaluate(()=>window.__npcPosition.cameraYaw||0);
+   const start={x:car.x+Math.sin(yaw)*3.4,z:car.z+Math.cos(yaw)*3.4};
+   await page.evaluate(p=>window.dispatchEvent(new CustomEvent('npc-life:relocate',{detail:p})),start);
+   await page.waitForFunction(p=>Math.hypot(window.__npcPosition.x-p.x,window.__npcPosition.z-p.z)<.6,start,{timeout:30000});
+   await page.keyboard.down('w');await page.waitForTimeout(200);await page.keyboard.press('Space');
+   await page.waitForFunction(()=>window.__npcPosition.support?.startsWith('vehicle:'),null,{timeout:3000}).catch(()=>{});
+   await page.keyboard.up('w');
    const pos=await page.evaluate(()=>window.__npcPosition);
    console.log(`::notice title=car-roof position::y=${pos.y?.toFixed(2)} support=${pos.support}`);
   }

@@ -125,6 +125,8 @@
     align-content: flex-end;
   }
   .game-shell .hud-layout .alpha8-minimap { width: 150px !important; }
+  .game-shell .hud-layout .alpha8-map-bottom { display: none !important; }
+  .game-shell .hud-layout .revival-tracker h2 { font-size: 15px; margin: 2px 0; }
   .game-shell .hud-layout .branding > div:not(.brand-logo) { display: none; }
   .game-shell .hud-layout .brand-logo { width: 34px; height: 34px; font-size: 17px; box-shadow: 3px 3px 0 #172034; }
   .game-shell .hud-layout .revival-tracker .district-status { display: none; }
