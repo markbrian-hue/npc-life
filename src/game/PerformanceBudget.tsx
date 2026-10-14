@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {HudSlot} from './ui/HudLayout';
 import {useFrame,useThree} from '@react-three/fiber';
 import {budgetState,resolutionCap,sampleBudget} from '../../shared/renderBudget.mjs';
 export function PerformanceBudget({quality,automatic}:{quality:string;automatic:boolean}){
@@ -16,5 +17,5 @@ export function PerformanceBudget({quality,automatic}:{quality:string;automatic:
 }
 export function PerformanceHUD({visible}:{visible:boolean}){
  const [stats,setStats]=useState({fps:0,scale:100});useEffect(()=>{if(!visible)return;const update=(e:Event)=>setStats((e as CustomEvent).detail);window.addEventListener('npc-life:performance',update);return()=>window.removeEventListener('npc-life:performance',update);},[visible]);
- return visible?<output className="performance-hud" aria-label="Rendering performance">{stats.fps||'—'} FPS <span>· {stats.scale}% render scale</span></output>:null;
+ return visible?<HudSlot region="bottom-left" order={1}><output className="performance-hud" aria-label="Rendering performance">{stats.fps||'—'} FPS <span>· {stats.scale}% render scale</span></output></HudSlot>:null;
 }

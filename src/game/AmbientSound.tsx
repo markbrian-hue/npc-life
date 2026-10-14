@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import {HudSlot} from './ui/HudLayout';
 import {
   playGameSound,
   setAudioChannel,
@@ -45,7 +46,7 @@ export function AmbientSound() {
   }
 
   return (
-    <details
+    <HudSlot region="bottom-left" order={2}><details
       className="npc-sound-panel"
       role="group"
       aria-label="Game audio controls"
@@ -90,6 +91,6 @@ export function AmbientSound() {
 
       {(['sfx','ambience'] as const).map(channel=><label className="npc-volume" key={channel}>{channel==='sfx'?'SFX':'Ambience'}: {channel==='sfx'?sfx:ambience}%<input type="range" min="0" max="100" step="5" value={channel==='sfx'?sfx:ambience} onChange={e=>{const v=Number(e.target.value);if(channel==='sfx')setSfx(v);else setAmbience(v);setAudioChannel(channel,v/100);}}/></label>)}
       <small aria-live="polite">{message}</small>
-    </details>
+    </details></HudSlot>
   );
 }

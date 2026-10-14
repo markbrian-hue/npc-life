@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
+import {HudSlot} from './ui/HudLayout';
 import {BUSINESSES, ITEMS, ITEM_BY_ID, LIVING_KEY, loadLiving, stepNeeds, environmentAt, eventAt, isOpen, purchaseItem, consumeItem, claimSample, clampNeed, communityMeal} from '../../shared/livingCity.mjs';
 import {useGameUI, isTyping} from './ui/GameUI';
 import {GameDialog} from './ui/GameDialog';
@@ -80,15 +81,15 @@ export function LivingCityUI({city,player}:{city:LivingCity;player:Pos}) {
  const event=eventAt(env),aidNear=Math.hypot(player.x-6,player.z-22)<4;
  const count=Object.values(view.inventory).reduce((a,b)=>a+b,0);
  return <>
-  <aside className="living-hud" aria-label="Player needs and environment">
+  <HudSlot region="top-left" order={1}><aside className="living-hud" aria-label="Player needs and environment">
    <div className="living-clock"><b>{timeLabel(env.minute)}</b><span>DAY {env.day} · {env.label}</span><button onClick={()=>store.open('living-settings')} aria-label="Living city settings">⚙</button></div>
    <div className="needs-row">{(['hunger','thirst','energy'] as const).map((key,i)=><div key={key} className={view.needs[key]<20?'need-low':''} title={`${key}: ${Math.round(view.needs[key])}/100`}><span>{['♨','◈','ϟ'][i]} {key}</span><meter min={0} max={100} value={view.needs[key]} aria-label={key}/><b>{Math.round(view.needs[key])}</b></div>)}</div>
    {Math.min(...Object.values(view.needs))<20&&<small role="status">Low needs: O to eat · G at bureau for free food/water · T at benches to rest</small>}
    {view.buff>0&&<small>Caffeine sprint boost · {Math.ceil(view.buff)}s</small>}
    {event&&<small className="living-event">{event.title}</small>}
-  </aside>
-  <button className="food-bag-access" onClick={()=>store.open('food-bag')}>FOOD BAG · {count} <kbd>O</kbd></button>
-  {menu===null&&(city.near||aidNear)&&<button className="food-prompt" onClick={()=>city.near?city.openShop(city.near.id):city.aid()}><kbd>G</kbd> {city.near?`${city.near.name} · ${isOpen(city.near,env.minute)?'menu':'closed'}`:'Free community meal & water'}</button>}
+  </aside></HudSlot>
+  <HudSlot region="top-right" order={5}><button className="food-bag-access" onClick={()=>store.open('food-bag')}>FOOD BAG · {count} <kbd>O</kbd></button></HudSlot>
+  {menu===null&&(city.near||aidNear)&&<HudSlot region="bottom-center" order={3}><button className="food-prompt" onClick={()=>city.near?city.openShop(city.near.id):city.aid()}><kbd>G</kbd> {city.near?`${city.near.name} · ${isOpen(city.near,env.minute)?'menu':'closed'}`:'Free community meal & water'}</button></HudSlot>}
   <GameDialog id="food-shop" label={shop.name} className="living-dialog" onClose={()=>store.close('food-shop')}>
    <header><div><small>RESIDENT FOOD SERVICES · {shop.cashier}</small><h2>{shop.name}</h2></div><button aria-label="Close food shop" onClick={()=>store.close('food-shop')}>×</button></header>
    <p role="status">{city.message}</p><p>{shop.open===0?'Open 24 hours':`Open ${shop.open}:00–${shop.close}:00`} · {count}/60 packed items · Eat from your bag later.</p>

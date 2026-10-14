@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from 'react';
+import {HudSlot} from './ui/HudLayout';
 import {EXPLORATION_KEY,EXPLORER_SITES,CONTRACT_BY_ID,loadExploration,explorerDay,dailyContracts,acceptContract,advanceContract,contractTarget,stampPassport,shuttleDestination} from '../../shared/exploration.mjs';
 import {useGameUI,isTyping} from './ui/GameUI';
 import {GameDialog} from './ui/GameDialog';
@@ -33,8 +34,8 @@ export function ExplorationUI({explore}:{explore:Exploration}){
  const {store,menu}=useGameUI(),{record,target,player}=explore,near=EXPLORER_SITES.find(p=>Math.hypot(p.x-player.x,p.z-player.z)<2.8),active=record.active?CONTRACT_BY_ID[record.active.id]:null;
  const s=(v:number)=>(v+WORLD_RADIUS)*400/(WORLD_RADIUS*2),available=dailyContracts(explore.day);
  return <>
-  {target&&<aside className="shift-tracker contract-tracker" aria-label="Active daily contract"><small>DAILY CONTRACT · {record.active!.stage+1}/{active!.stops.length}</small><b>{active!.title}</b><span>{target.action}</span><small>{Math.ceil(Math.hypot(player.x-target.x,player.z-target.z))}m · <kbd>Z</kbd> at the marker</small><button onClick={()=>store.open('explorer')}>Route details <kbd>X</kbd></button></aside>}
-  {menu===null&&near&&((!record.visits.includes(near.id))||target?.id===near.id)&&<button className="explorer-prompt" onClick={explore.interact}><kbd>Z</kbd> {target?.id===near.id?target.action:`Discover ${near.name}`}</button>}
+  {target&&<HudSlot region="top-left" order={4}><aside className="shift-tracker contract-tracker" aria-label="Active daily contract"><small>DAILY CONTRACT · {record.active!.stage+1}/{active!.stops.length}</small><b>{active!.title}</b><span>{target.action}</span><small>{Math.ceil(Math.hypot(player.x-target.x,player.z-target.z))}m · <kbd>Z</kbd> at the marker</small><button onClick={()=>store.open('explorer')}>Route details <kbd>X</kbd></button></aside></HudSlot>}
+  {menu===null&&near&&((!record.visits.includes(near.id))||target?.id===near.id)&&<HudSlot region="bottom-center" order={5}><button className="explorer-prompt" onClick={explore.interact}><kbd>Z</kbd> {target?.id===near.id?target.action:`Discover ${near.name}`}</button></HudSlot>}
   <GameDialog id="explorer" label="Daily contracts and explorer passport" className="explorer-dialog" onClose={()=>store.close('explorer')}>
    <header><div><small>NPC LIFE / GO A LITTLE FURTHER</small><h2>Beyond the usual.</h2><p>Daily contracts. New places. A city worth knowing.</p></div><button aria-label="Close explorer board" onClick={()=>store.close('explorer')}>×</button></header>
    <div className="explorer-summary"><span><b>{record.visits.length}/{EXPLORER_SITES.length}</b> places discovered</span><span><b>{record.finished}</b> contracts finished</span><span><b>{record.passportRewarded?'CITY EXPLORER':'120 COINS'}</b> {record.passportRewarded?'passport complete':'full passport bonus'}</span></div>

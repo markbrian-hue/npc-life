@@ -1,4 +1,5 @@
 import { GameDialog } from './ui/GameDialog';
+import {HudSlot} from './ui/HudLayout';
 import { useGameUI, useMenuState, isTyping } from './ui/GameUI';
 
 import {
@@ -64,7 +65,7 @@ function TourGuide({
   ];
 
   return (
-    <section
+    <HudSlot region="top-right" order={7}><section
       className="alpha9-guide"
       aria-label="City orientation guide"
     >
@@ -137,7 +138,7 @@ function TourGuide({
           </button>
         )}
       </div>
-    </section>
+    </section></HudSlot>
   );
 }
 
@@ -303,7 +304,7 @@ export function Alpha9Experience() {
 
   return createPortal(
     <>
-      <div className="alpha9-toolbar">
+      <HudSlot region="top-right" order={3}><div className="alpha9-toolbar">
         <button
           type="button"
           title="City orientation guide"
@@ -331,7 +332,7 @@ export function Alpha9Experience() {
         >
           Arcade <kbd>M</kbd>
         </button>
-      </div>
+      </div></HudSlot>
 
       {guideVisible &&
         tour.status !== 'new' &&

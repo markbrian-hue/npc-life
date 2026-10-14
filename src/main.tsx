@@ -12,6 +12,7 @@ import { ReleaseCenter } from './game/ReleaseCenter';
 import { GameErrorBoundary } from './game/GameErrorBoundary';
 
 import { GameUIProvider } from './game/ui/GameUI';
+import { HudProvider } from './game/ui/HudLayout';
 import { loadTour } from './game/alpha9';
 
 import './styles.css';
@@ -26,6 +27,8 @@ import './game/ui/retro.css';
 import './game/city-revival.css';
 import './game/living-city.css';
 import './game/garage.css';
+// Loaded last: the HUD region grid overrides legacy per-widget pixel offsets.
+import './game/ui/hud-layout.css';
 
 ReactDOM.createRoot(
   document.getElementById('root')!
@@ -33,10 +36,12 @@ ReactDOM.createRoot(
   <React.StrictMode>
     <GameErrorBoundary>
       <GameUIProvider initialMenu={loadTour().status === 'new' ? 'welcome' : 'release'}>
+      <HudProvider>
       <App />
       <AmbientSound />
       <Alpha9Experience />
       <ReleaseCenter />
+      </HudProvider>
       </GameUIProvider>
     </GameErrorBoundary>
   </React.StrictMode>

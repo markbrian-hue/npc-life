@@ -1,0 +1,109 @@
+/* HUD region grid (see HudLayout.tsx).
+   Every in-game widget is portalled into one of six regions. Regions are grid
+   cells, so a top widget and a bottom widget, or two widgets in neighbouring
+   columns, can never be laid over each other. Rows are minmax(0, auto): when
+   the screen is short they share the height and scroll inside, rather than
+   pushing the bottom row off screen. This file is imported last on purpose:
+   it neutralises the legacy absolute pixel offsets of each widget. */
+
+.game-shell .hud-layout {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  grid-template-rows: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+  grid-template-areas:
+    "tl tc tr"
+    ".  .  . "
+    "bl bc br";
+  gap: 10px 14px;
+  padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(14px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  box-sizing: border-box;
+}
+
+.hud-region {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.hud-region::-webkit-scrollbar { display: none; }
+
+.hud-top-left      { grid-area: tl; flex-direction: column;         align-items: flex-start; }
+.hud-top-center    { grid-area: tc; flex-direction: column;         align-items: center; }
+.hud-top-right     { grid-area: tr; flex-direction: column;         align-items: flex-end; }
+.hud-bottom-left   { grid-area: bl; flex-direction: column-reverse; align-items: flex-start; }
+.hud-bottom-center { grid-area: bc; flex-direction: column-reverse; align-items: center; }
+.hud-bottom-right  { grid-area: br; flex-direction: column-reverse; align-items: flex-end; }
+
+/* The centre column never squeezes the side columns below a readable width. */
+.hud-top-center, .hud-bottom-center { max-width: min(520px, 44vw); }
+
+.hud-slot {
+  pointer-events: auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+}
+.hud-top-center > .hud-slot, .hud-bottom-center > .hud-slot { justify-content: center; }
+.hud-top-right > .hud-slot, .hud-bottom-right > .hud-slot { justify-content: flex-end; }
+
+/* Widgets keep their look but lose their old screen placement. */
+.game-shell .hud-layout .hud-slot > * {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* Split header parts: each half sits in its own corner. */
+.game-shell .hud-layout .game-header { display: flex; pointer-events: none; }
+.game-shell .hud-layout .game-header .economy { pointer-events: auto; }
+
+/* Empty toast box must not occupy space. */
+.game-shell .hud-layout .center-message:empty { display: none; }
+.game-shell .hud-layout .hud-slot:has(> .center-message:empty) { display: none; }
+
+/* In-game dialogs always sit above the HUD. */
+.game-shell .game-dialog { z-index: 40; }
+
+@media (max-width: 900px) {
+  .game-shell .hud-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto) minmax(0, auto) minmax(0, 1fr) minmax(0, auto) minmax(0, auto);
+    grid-template-areas:
+      "tl tr"
+      "tc tc"
+      ".  . "
+      "bc bc"
+      "bl br";
+    gap: 8px 10px;
+    padding: 10px;
+  }
+  .hud-top-center, .hud-bottom-center { max-width: none; }
+  .hud-region { gap: 8px; }
+}
+
+@media (max-width: 600px) {
+  /* Phones: compact widgets so two columns stay readable. */
+  .game-shell .hud-layout { font-size: 11px; }
+  .game-shell .hud-layout .branding h1 { font-size: 20px; }
+  .game-shell .hud-layout .branding p { display: none; }
+  .game-shell .hud-layout .brand-logo { width: 36px; height: 36px; font-size: 18px; }
+  .game-shell .hud-layout .economy { padding: 8px 10px; }
+  .game-shell .hud-layout .economy strong { font-size: 17px; }
+}

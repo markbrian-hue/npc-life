@@ -1,4 +1,5 @@
 import type {MutableRefObject} from 'react';
+import {HudSlot} from './ui/HudLayout';
 import type {LivingRuntime} from './LivingCity';
 import { citizenPositions } from './citizenPositions';
 import { GameDialog } from './ui/GameDialog';
@@ -204,17 +205,17 @@ export function CityEncounters({
     <>
       {/* Nearby interaction prompt */}
       {!disabled && !selected && near && (
-        <button
+        <HudSlot region="bottom-center" order={6}><button
           className="encounter-prompt"
           onClick={() => open(near)}
         >
           <kbd>F</kbd>
           Talk to {near.name} · {near.title}
-        </button>
+        </button></HudSlot>
       )}
 
       {/* Daily street-gossip progress */}
-      <div
+      <HudSlot region="top-right" order={6}><div
         className="encounter-hud"
         aria-label="Daily conversations"
       >
@@ -223,7 +224,7 @@ export function CityEncounters({
           {freshEncounters(progress).rewarded.length}/
           {STREET_NPCS.length}
         </strong>
-      </div>
+      </div></HudSlot>
 
       {/* Conversation modal */}
       {selected && menu === 'encounter' && (

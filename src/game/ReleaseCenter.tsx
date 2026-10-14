@@ -1,4 +1,5 @@
 import { GameDialog } from './ui/GameDialog';
+import {HudSlot} from './ui/HudLayout';
 import { useGameUI, useMenuState, isTyping } from './ui/GameUI';
 
 import { useEffect, useRef, useState } from 'react';
@@ -202,7 +203,7 @@ export function ReleaseCenter() {
   return createPortal(
     <>
       {!open && (
-        <button
+        <HudSlot region="top-right" order={4}><button
           type="button"
           className="release-menu-button"
           onClick={() => {
@@ -214,7 +215,7 @@ export function ReleaseCenter() {
           <span>☰</span>
           {' '}Menu
           <kbd>ESC</kbd>
-        </button>
+        </button></HudSlot>
       )}
 
       {open && (

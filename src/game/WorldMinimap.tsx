@@ -1,4 +1,5 @@
 import {EXPLORER_SITES} from '../../shared/exploration.mjs';
+import {HudSlot} from './ui/HudLayout';
 import { CityMapLayer } from './CityMapLayer';
 import { DISTRICTS } from './campaign';
 import { WORLD_RADIUS } from './world';
@@ -80,7 +81,7 @@ export function WorldMinimap({ target }: { target: { x: number; z: number } }) {
 
   return mount
     ? createPortal(
-        <aside
+        <HudSlot region="bottom-right" order={0}><aside
           className="alpha8-minimap"
           aria-label="Accurate map of Idiot City"
         >
@@ -195,7 +196,7 @@ export function WorldMinimap({ target }: { target: { x: number; z: number } }) {
 
             <span>↑ -Z</span>
           </div>
-        </aside>,
+        </aside></HudSlot>,
         mount
       )
     : null;

@@ -15,6 +15,7 @@ import { WorldMinimap } from './game/WorldMinimap';
 import { DistrictWorld } from './game/DistrictWorld';
 import { CityRevival, useCityRevival } from './game/CityRevival';
 import { GameGlyph } from './game/ui/GameGlyph';
+import { HudRegions, HudSlot } from './game/ui/HudLayout';
 import { GameDialog } from './game/ui/GameDialog';
 import { useGameUI, useMenuState, isTyping } from './game/ui/GameUI';
 
@@ -1028,6 +1029,7 @@ export default function App() {
 
   return (
     <div className="game-shell">
+      <HudRegions />
       {/* Existing city + reactive citizens */}
       <Canvas
         shadows={city.view.quality!=='low'}
@@ -1111,8 +1113,8 @@ export default function App() {
       <WorldMinimap target={explore.target || life.target || revival.task} />
       <MultiplayerMenu multiplayer={multiplayer} />
 
-      {/* Header */}
-      <header className="game-header">
+      {/* Header: branding top-left, fortune top-right */}
+      <HudSlot region="top-left" order={0}><header className="game-header game-header-brand">
         <div className="branding">
           <div className="brand-logo">
             N<span>!</span>
@@ -1125,7 +1127,8 @@ export default function App() {
             </p>
           </div>
         </div>
-
+      </header></HudSlot>
+      <HudSlot region="top-right" order={0}><div className="game-header game-header-economy">
         <div className="economy">
           <span className="coin-icon">◆</span>
           <div>
@@ -1136,19 +1139,19 @@ export default function App() {
             </strong>
           </div>
         </div>
-      </header>
+      </div></HudSlot>
 
       {/* Reputation HUD */}
-      <div className="alpha6-hud">
+      <HudSlot region="top-right" order={2}><div className="alpha6-hud">
         <small>NPC REPUTATION</small>
         <strong>{reputationTier.title}</strong>
         <span>
           {reputation} REP · K for daily challenges
         </span>
-      </div>
+      </div></HudSlot>
 
       {/* Quest tracker */}
-      <section
+      <HudSlot region="top-left" order={5}><section
         className={`quest-panel ${quest.job === 'none' ? 'idle-job' : ''}`}
         aria-live="polite"
       >
@@ -1190,11 +1193,11 @@ export default function App() {
           ACHIEVEMENTS: {unlockedCount}/
           {ACHIEVEMENTS.length}
         </div>
-      </section>
+      </section></HudSlot>
 
       {/* City events */}
       {cityEvent !== 'none' && (
-        <div
+        <HudSlot region="top-center" order={1}><div
           className="event-banner"
           role="status"
         >
@@ -1202,29 +1205,29 @@ export default function App() {
           {cityEvent === 'low-gravity'
             ? 'LOW GRAVITY'
             : 'GIANT DUCK INVASION'}
-        </div>
+        </div></HudSlot>
       )}
 
       {/* Messages and existing interaction */}
-      <div
+      <HudSlot region="bottom-center" order={1}><div
         className="center-message"
         aria-live="polite"
       >
         {toast}
-      </div>
+      </div></HudSlot>
 
       {nearby && !locked && (
-        <button
+        <HudSlot region="bottom-center" order={2}><button
           className="interaction"
           onClick={interact}
         >
           <span className="keycap">E</span>
           {nearby.label}
-        </button>
+        </button></HudSlot>
       )}
 
       {/* Bottom toolbar */}
-      <div className="bottom-bar">
+      <HudSlot region="bottom-left" order={0}><div className="bottom-bar">
         <button onClick={() => store.open('city-journal')}>City map <span>C</span></button>
         <button
           className="help-toggle"
@@ -1279,7 +1282,7 @@ export default function App() {
         >
           Wave <span>B</span>
         </button>
-      </div>
+      </div></HudSlot>
 
       {/* Help panel */}
       {showHelp && (

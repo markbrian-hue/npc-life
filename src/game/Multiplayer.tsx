@@ -1,4 +1,5 @@
 import { Character } from './Character';
+import {HudSlot} from './ui/HudLayout';
 import { createFleet, neutralControls } from '../../shared/vehicles.mjs';
 import { SPAWN } from './world';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -84,7 +85,7 @@ export function MultiplayerMenu({ multiplayer }: { multiplayer: Multiplayer }) {
   }, [store]);
   const { session, players, connected, error, busy, join, leave } = multiplayer;
   return <>
-    <div className="room-control"><button onClick={() => store.open('multiplayer')}>{session && connected && <span className="online-dot" />}{session ? `${connected ? 'ROOM' : 'CONNECTING'} ${session.code} · ${players.length}/8` : 'PLAY WITH FRIENDS'} <kbd>N</kbd></button></div>
+    <HudSlot region="top-right" order={1}><div className="room-control"><button onClick={() => store.open('multiplayer')}>{session && connected && <span className="online-dot" />}{session ? `${connected ? 'ROOM' : 'CONNECTING'} ${session.code} · ${players.length}/8` : 'PLAY WITH FRIENDS'} <kbd>N</kbd></button></div></HudSlot>
     <GameDialog id="multiplayer" label="Play with friends" className="multiplayer-menu" onClose={() => store.close('multiplayer')}>
       <header className="dossier-heading"><div><small>IDIOT CITY / RESIDENT ASSEMBLY</small><h2>{session ? `Room ${session.code}` : 'Better with other idiots.'}</h2></div><button onClick={() => store.close('multiplayer')} aria-label="Close multiplayer">×</button></header>
       {session ? <>

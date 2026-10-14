@@ -1,4 +1,5 @@
 import {groundHeight} from '../../shared/playerPhysics.mjs';
+import {HudSlot} from './ui/HudLayout';
 import type {LivingRuntime} from './LivingCity';
 import type {MutableRefObject} from 'react';
 import { playGameSound } from './gameAudio';
@@ -104,7 +105,7 @@ export function VehiclesWorld({vehicles,environment}:{vehicles:Vehicles;environm
 export function VehicleHUD({vehicles}:{vehicles:Vehicles}) {
   const {status,message}=vehicles;
   if(!status.name&&!status.near&&!message)return null;
-  return <aside className="vehicle-hud" role="status">{status.name?<><b>{status.name}</b><strong>{status.speed} <small>KM/H</small></strong><span>W/S accelerate · A/D steer · SPACE brake · V horn · R exit</span></>:<><b>{status.near||'MOTOR POOL'}</b><span>{status.near?'R · Get in and drive':''}</span></>}{message&&<span>{message}</span>}</aside>;
+  return <HudSlot region="bottom-center" order={0}><aside className="vehicle-hud" role="status">{status.name?<><b>{status.name}</b><strong>{status.speed} <small>KM/H</small></strong><span>W/S accelerate · A/D steer · SPACE brake · V horn · R exit</span></>:<><b>{status.near||'MOTOR POOL'}</b><span>{status.near?'R · Get in and drive':''}</span></>}{message&&<span>{message}</span>}</aside></HudSlot>;
 }
 
 function DrivingLights({vehicles,environment}:{vehicles:Vehicles;environment:MutableRefObject<LivingRuntime>}){

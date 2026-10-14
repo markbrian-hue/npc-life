@@ -1,4 +1,5 @@
 import { CityMapLayer } from './CityMapLayer';
+import {HudSlot} from './ui/HudLayout';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CAMPAIGN_KEY, DISTRICTS, MISSIONS, currentTask, districtAt, loadCampaign, type Campaign } from './campaign';
 import { GameDialog } from './ui/GameDialog';
@@ -64,7 +65,7 @@ export function CityRevival({ revival, player }: { revival: Revival; player: { x
   const north = task.z < player.z - 3, south = task.z > player.z + 3, east = task.x > player.x + 3, west = task.x < player.x - 3;
   const bearing = `${north ? 'N' : south ? 'S' : ''}${east ? 'E' : west ? 'W' : ''}` || 'HERE';
   return <>
-    <section className="revival-tracker" aria-label="City revival mission">
+    <HudSlot region="top-left" order={2}><section className="revival-tracker" aria-label="City revival mission">
       <div className="revival-kicker"><span>{completed ? 'CITY KEEPER / COURIER' : `CITY REVIVAL / ${campaign.step + 1} OF ${MISSIONS.length}`}</span><button onClick={() => store.open('city-journal')} aria-label="Open city journal C">C ↗</button></div>
       <h2>{task.title}</h2>
       <p>{ready ? task.action : `${bearing} · ${Math.ceil(distance)}m to objective`}</p>
@@ -72,8 +73,8 @@ export function CityRevival({ revival, player }: { revival: Revival; player: { x
       {ready && <button className="mission-hold" onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); setWorking(true); }} onPointerUp={() => setWorking(false)} onPointerCancel={() => setWorking(false)} onLostPointerCapture={() => setWorking(false)} onKeyDown={e => { if (!e.repeat && ['Space', 'Enter'].includes(e.code)) { e.preventDefault(); e.stopPropagation(); setWorking(true); } }} onKeyUp={e => { if (['Space', 'Enter'].includes(e.code)) { e.stopPropagation(); setWorking(false); } }} onBlur={() => setWorking(false)}>
         <span style={{ width: `${progress * 100}%` }} /><b>HOLD Q · {task.action}</b>
       </button>}
-    </section>
-    <div className="district-location"><span style={{ background: district.color }} />{district.name}<small>{completed ? 'CITY KEEPER' : 'RESIDENT ON DUTY'}</small></div>
+    </section></HudSlot>
+    <HudSlot region="top-center" order={0}><div className="district-location"><span style={{ background: district.color }} />{district.name}<small>{completed ? 'CITY KEEPER' : 'RESIDENT ON DUTY'}</small></div></HudSlot>
     <GameDialog id="city-journal" label="City journal" className="city-journal" onClose={() => store.close('city-journal')}>
       <header className="dossier-heading"><div><small>DEPARTMENT OF GETTING THINGS DONE</small><h2>The city is your quest.</h2></div><button onClick={() => store.close('city-journal')} aria-label="Close city journal">×</button></header>
       <p>Restore four districts. Reopen the festival. Become the NPC this city accidentally needed.</p>

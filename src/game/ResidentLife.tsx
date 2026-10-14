@@ -1,4 +1,5 @@
 import type {MutableRefObject} from 'react';
+import {HudSlot} from './ui/HudLayout';
 import {environmentAt,jobAvailable} from '../../shared/livingCity.mjs';
 import { CAREER_CHAPTERS, DAILY_BULLETIN, addDistrict, districtNear, careerReady, careerMetrics, claimCareerChapter, claimBulletin, dailyProgress, currentBulletin, careerDayStamp, finishCareerShift, finishCareerCourt } from '../../shared/career.mjs';
 import { useEffect, useRef, useState } from 'react';
@@ -96,9 +97,9 @@ export function ResidentLifeUI({life}:{life:ResidentLife}){
   const shoot=()=>{if(!playing||shotLock.current||finishLock.current)return;shotLock.current=true;setTimeout(()=>{shotLock.current=false;},250);const hit=meter>.34&&meter<.66,next={attempts:shots.attempts+1,hits:shots.hits+Number(hit)};setShots(next);playGameSound(hit?'coin':'error');if(next.attempts===5){finishLock.current=true;setPlaying(false);if(next.hits>=3)life.courtWin();}};
   return <>
     <BaristaShift life={life}/>
-    <div className="resident-access"><button onClick={()=>store.open('resident-phone')}>NPC CAREER <kbd>L</kbd></button></div>
-    {life.active&&<aside className="shift-tracker"><b>{life.job?.title}</b><span>{life.target?.action} · {Math.ceil(Math.hypot(life.player.x-life.target!.x,life.player.z-life.target!.z))}m</span><small>{life.active.deadline?`${Math.max(0,Math.ceil((life.active.deadline-life.now)/1000))}s · `:''}T at marker · L for details</small></aside>}
-    {!life.active&&(life.near||life.nearBench||life.resting)&&menu===null&&<button className="resident-prompt" onClick={life.interact}><kbd>T</kbd> {life.resting?'Stand up':life.nearBench?'Sit on bench':life.near?.id==='coffee'?'Last Chance Coffee menu':life.near?.id==='bus'?'Free shuttle to Juniper':life.near?.name}</button>}
+    <HudSlot region="bottom-right" order={1}><div className="resident-access"><button onClick={()=>store.open('resident-phone')}>NPC CAREER <kbd>L</kbd></button></div></HudSlot>
+    {life.active&&<HudSlot region="top-left" order={3}><aside className="shift-tracker"><b>{life.job?.title}</b><span>{life.target?.action} · {Math.ceil(Math.hypot(life.player.x-life.target!.x,life.player.z-life.target!.z))}m</span><small>{life.active.deadline?`${Math.max(0,Math.ceil((life.active.deadline-life.now)/1000))}s · `:''}T at marker · L for details</small></aside></HudSlot>}
+    {!life.active&&(life.near||life.nearBench||life.resting)&&menu===null&&<HudSlot region="bottom-center" order={4}><button className="resident-prompt" onClick={life.interact}><kbd>T</kbd> {life.resting?'Stand up':life.nearBench?'Sit on bench':life.near?.id==='coffee'?'Last Chance Coffee menu':life.near?.id==='bus'?'Free shuttle to Juniper':life.near?.name}</button></HudSlot>}
     <GameDialog id="resident-phone" label="Resident record" className="resident-phone" onClose={()=>store.close('resident-phone')}>
       <header className="dossier-heading"><div><small>DEPARTMENT OF ORDINARY PEOPLE</small><h2>Your next questionable opportunity.</h2></div><button onClick={()=>store.close('resident-phone')} aria-label="Close resident record">×</button></header>
       <p className="resident-notice" role="status">{life.notice}</p><p>{done} shifts completed · {life.rep} reputation · {unlocked.length}/{LIFE_ACHIEVEMENTS.length} resident achievements</p>
